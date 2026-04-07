@@ -1,0 +1,34 @@
+# ==========================================
+# .gitignore | Sistema de Certificados CASIS
+# ==========================================
+
+# 1. Pastas do Sistema Operacional e IDEs
+# Ignora arquivos de configuração da sua máquina e editor
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/
+
+# 2. Ignorados do Backend (Spring Boot / Maven)
+# Ignora os binários compilados e logs do Java
+/backend/target/
+/backend/logs/
+/backend/*.log
+/backend/application-dev.properties # Caso você crie um arquivo com senhas de email reais para teste local
+
+# 3. Ignorados do Frontend (React / Vite)
+# Ignora os pacotes gigantescos do Node e a build final
+/frontend/node_modules/
+/frontend/dist/
+/frontend/dist-ssr/
+/frontend/.eslintcache
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+
+# 4. Variáveis de Ambiente
+# NUNCA subir senhas do email do CA para o GitHub
+.env
+.env.local
+.env.*.local
