@@ -14,6 +14,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
+import org.springframework.core.io.ClassPathResource;
+import java.util.Base64;
+import java.io.InputStream;
+
 /**
  * Motor de renderização. Funde os dados dinâmicos com o template HTML
  * e "plota" o resultado final em um arquivo PDF na memória RAM.
@@ -46,6 +50,17 @@ public class PdfService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("'Londrina, 'dd' de 'MMMM' de 'yyyy", Locale.of("pt", "BR"));
         context.setVariable("dataEmissao", LocalDate.now().format(formatter));
 
+        // Lê a imagem da pasta resources e converte para Base64 em memória
+        try (InputStream is = new ClassPathResource("static/images/bg_certificado_evento.png").getInputStream()) {
+            String base64Image = Base64.getEncoder().encodeToString(is.readAllBytes());
+            context.setVariable("imagemFundoBase64", "data:image/png;base64," + base64Image);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao carregar a imagem de fundo do certificado.", e);
+        }
+
+        // Além disso, vamos garantir que o RA seja passado pro HTML:
+        context.setVariable("documento", aluno.getDocumento() != null ? aluno.getDocumento() : "N/A");
+
         // 2. Renderiza o HTML (Escolhe o arquivo .html baseado no tipo)
         String templateName = "certificado_evento";
 
@@ -55,9 +70,6 @@ public class PdfService {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
             ITextRenderer renderer = new ITextRenderer();
-
-            // Dica de Ouro: Permite o uso de fontes externas (como Arial ou Montserrat do sistema)
-            renderer.getFontResolver().addFont("fonts/Montserrat-Regular.ttf", BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
 
             renderer.setDocumentFromString(htmlProcessado);
             renderer.layout();
