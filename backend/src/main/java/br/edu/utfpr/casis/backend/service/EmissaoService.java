@@ -17,7 +17,7 @@ public class EmissaoService {
 
     private final CsvService csvService;
     private final PdfService pdfService;
-    //private final EmailService emailService; serviço que vai mandar o Email
+    private final EmailService emailService;
 
     /**
      * Orquestra o fluxo de extração, geração e envio.
@@ -36,8 +36,8 @@ public class EmissaoService {
                 // Alinhamento corrigido: passando o DTO completo para o PdfService
                 byte[] pdf = pdfService.gerarCertificado(aluno, requestDTO);
 
-                // Mock do envio de e-mail (só para testar a geração do PDF primeiro)
-                log.info("PDF gerado em memória para {}. (Envio de email pendente de implementação)", aluno.getNome());
+                // Passando o DTO completo para o EmailService
+                emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), requestDTO.nomeEvento(), pdf);
 
             } catch (Exception e) {
                 // Em lotes, se der erro em 1 aluno, não queremos parar os outros 99.
