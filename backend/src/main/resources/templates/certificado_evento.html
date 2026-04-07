@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Certificado CASIS</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Corta qualquer conteúdo fantasma */
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Corta qualquer conteúdo fantasma */
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .imagem-fundo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* ALINHAMENTOS CORRIGIDOS */
+
+        .nome-aluno {
+            position: absolute;
+            top: 395px;
+            width: 100%;
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #2A6B65;
+            font-family: Georgia, serif;
+        }
+
+        .texto-descritivo {
+            position: absolute;
+            top: 465px;
+            left: 14%;
+            width: 72%;
+            text-align: center;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #333333;
+        }
+
+        .data-assinatura {
+            position: absolute;
+            top: 575px;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            font-style: italic;
+            color: #555555;
+        }
+    </style>
+</head>
+<body>
+
+<div class="certificado-container">
+
+    <img class="imagem-fundo" th:src="${imagemFundoBase64}" alt="Fundo do Certificado" />
+
+    <div class="nome-aluno" th:text="${nomeAluno}">Alan Turing da Silva</div>
+
+    <div class="texto-descritivo">
+        portador(a) do RA <strong th:text="${documento}">0000000</strong> aluno(a) do curso de Bacharelado Sistemas de Informação, participou da <strong th:text="${nomeEvento}">I SEMANA DE TECNOLOGIA DO CASIS</strong>, promovida pelo Centro Acadêmico de Sistemas de Informação (CASIS) realizado no período de <span th:text="${dataRealizacao}">01 a 05 de Abril de 2026</span>, com carga horária total de <strong th:text="${cargaHoraria} + ' horas'">10 horas</strong>.
+    </div>
+
+    <div class="data-assinatura" th:text="${dataEmissao}">
+        Londrina, 10 de Abril de 2026
+    </div>
+
+</div>
+
+</body>
+</html>
