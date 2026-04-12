@@ -68,7 +68,7 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family: var(--heading), sans-serif;
   font-weight: 500;
   color: var(--text-h);
 }
@@ -97,7 +97,7 @@ p {
 
 code,
 .counter {
-  font-family: var(--mono);
+  font-family: var(--mono), sans-serif;
   display: inline-flex;
   border-radius: 4px;
   color: var(--text-h);
@@ -108,4 +108,96 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+.results-area {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.results-summary {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat .label { font-size: 12px; color: #888; text-transform: uppercase; }
+.stat .value { font-size: 24px; font-weight: bold; }
+.stat .value.success { color: var(--python-green); }
+.stat .value.error { color: #ff5252; }
+
+.table-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.results-table th {
+  position: sticky;
+  top: 0;
+  background: #252525;
+  padding: 10px;
+  text-align: left;
+  color: #888;
+}
+
+.results-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.results-table .name { font-weight: 600; color: #fff; }
+.results-table .email { font-size: 11px; color: #888; }
+
+.status-cell { text-align: center; }
+.icon-success { color: var(--python-green); }
+.icon-error { color: #ff5252; }
+
+.error-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  color: #ff5252;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: #aaa;
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

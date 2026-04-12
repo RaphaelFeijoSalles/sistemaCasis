@@ -1,7 +1,10 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
-import { UploadCloud, CheckCircle, Loader2, FileSpreadsheet } from 'lucide-react';
+import {
+  UploadCloud, CheckCircle, Loader2, FileSpreadsheet,
+  AlertCircle, ChevronLeft, MailCheck, MailWarning
+} from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -14,17 +17,18 @@ function App() {
   const [arquivoCsv, setArquivoCsv] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Manipulador de input de texto
+  // Novo estado para armazenar o relatório vindo do backend
+  const [resultados, setResultados] = useState(null);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Configuração da área de Drag and Drop (aceita apenas .csv)
   const onDrop = useCallback(acceptedFiles => {
     if (acceptedFiles.length > 0) {
       setArquivoCsv(acceptedFiles[0]);
-      toast.success('Planilha carregada com sucesso!');
+      toast.success('Planilha carregada!');
     }
   }, []);
 
@@ -34,19 +38,16 @@ function App() {
     maxFiles: 1
   });
 
-  // Função de disparo para a API Spring Boot
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!arquivoCsv) {
-      toast.error('Você esqueceu de anexar a planilha CSV!');
+      toast.error('Anexe a planilha CSV!');
       return;
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading('Processando lote e disparando e-mails...');
+    const toastId = toast.loading('Emitindo certificados...');
 
-    // O FormData permite empacotar arquivos binários junto com strings
     const payload = new FormData();
     payload.append('nomeEvento', formData.nomeEvento);
     payload.append('dataRealizacao', formData.dataRealizacao);
@@ -54,22 +55,25 @@ function App() {
     payload.append('arquivoCsv', arquivoCsv);
 
     try {
-      const response = await axios.post('http://localhost:8080/api/certificados/emitir-lote', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      // O backend agora retorna List<ResultadoEmissaoDTO>
+      const response = await axios.post('http://localhost:8080/api/certificados/emitir-lote', payload);
 
-      toast.success(response.data, { id: toastId, duration: 5000 });
-
-      // Limpa o formulário após o sucesso
-      setFormData({ nomeEvento: '', dataRealizacao: '', cargaHoraria: '' });
-      setArquivoCsv(null);
+      setResultados(response.data);
+      toast.success('Processamento concluído!', { id: toastId });
 
     } catch (error) {
-      const msgErro = error.response?.data || 'Erro de conexão com o servidor.';
-      toast.error(msgErro, { id: toastId, duration: 6000 });
+      const msgErro = error.response?.data || 'Erro de conexão.';
+      toast.error(msgErro, { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Função para voltar ao formulário e limpar tudo
+  const resetForm = () => {
+    setResultados(null);
+    setArquivoCsv(null);
+    setFormData({ nomeEvento: '', dataRealizacao: '', cargaHoraria: '' });
   };
 
   return (
@@ -78,76 +82,97 @@ function App() {
 
         <div className="header">
           <h1>Emissão de Certificados</h1>
-          <p>Sistema Oficial do CASIS - Eventos</p>
+          <p>Sistema Oficial do CASIS - v1.0</p>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Nome Oficial do Evento</label>
-            <input
-                type="text"
-                name="nomeEvento"
-                required
-                placeholder="Ex: I Semana de Tecnologia"
-                value={formData.nomeEvento}
-                onChange={handleInputChange}
-            />
-          </div>
+        {!resultados ? (
+            /* --- VISÃO DO FORMULÁRIO --- */
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Nome Oficial do Evento</label>
+                <input type="text" name="nomeEvento" required value={formData.nomeEvento} onChange={handleInputChange} placeholder="Ex: Semana acadêmica"/>
+              </div>
 
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label>Data de Realização</label>
-              <input
-                  type="date"
-                  name="dataRealizacao"
-                  required
-                  value={formData.dataRealizacao}
-                  onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="form-group" style={{ flex: 1 }}>
-              <label>Carga Horária (Horas)</label>
-              <input
-                  type="number"
-                  name="cargaHoraria"
-                  required
-                  min="1"
-                  placeholder="Ex: 10"
-                  value={formData.cargaHoraria}
-                  onChange={handleInputChange}
-              />
-            </div>
-          </div>
-
-          <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
-            <input {...getInputProps()} />
-            {arquivoCsv ? (
-                <div>
-                  <CheckCircle size={40} color="#4CAF50" style={{ margin: '0 auto' }} />
-                  <p style={{ color: '#E0E0E0', fontWeight: 'bold' }}>{arquivoCsv.name}</p>
-                  <p style={{ fontSize: '12px' }}>Clique para trocar de arquivo</p>
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Data</label>
+                  <input type="date" name="dataRealizacao" required value={formData.dataRealizacao} onChange={handleInputChange}/>
                 </div>
-            ) : (
-                <div>
-                  <UploadCloud size={40} color="#888" style={{ margin: '0 auto' }} />
-                  {isDragActive ? (
-                      <p style={{ color: '#4CAF50' }}>Solte a planilha aqui...</p>
-                  ) : (
-                      <p>Arraste a planilha CSV do Forms aqui,<br/>ou clique para selecionar</p>
-                  )}
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Horas</label>
+                  <input type="number" name="cargaHoraria" required value={formData.cargaHoraria} onChange={handleInputChange} placeholder="Ex: 2"/>
                 </div>
-            )}
-          </div>
+              </div>
 
-          <button type="submit" className="btn-submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-                <><Loader2 className="spin" size={20} /> Processando...</>
-            ) : (
-                <><FileSpreadsheet size={20} /> Emitir e Enviar E-mails</>
-            )}
-          </button>
-        </form>
+              <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
+                <input {...getInputProps()} />
+                {arquivoCsv ? (
+                    <div className="file-info">
+                      <FileSpreadsheet size={32} color="#4CAF50" />
+                      <span>{arquivoCsv.name}</span>
+                    </div>
+                ) : (
+                    <div className="drop-info">
+                      <UploadCloud size={32} />
+                      <p>Arraste o CSV de presença aqui</p>
+                    </div>
+                )}
+              </div>
+
+              <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="spin" /> : 'Disparar Certificados'}
+              </button>
+            </form>
+        ) : (
+            /* --- VISÃO DO RELATÓRIO (BLINDAGEM) --- */
+            <div className="results-area">
+              <div className="results-summary">
+                <div className="stat">
+                  <span className="label">Sucessos</span>
+                  <span className="value success">{resultados.filter(r => r.sucesso).length}</span>
+                </div>
+                <div className="stat">
+                  <span className="label">Falhas</span>
+                  <span className="value error">{resultados.filter(r => !r.sucesso).length}</span>
+                </div>
+              </div>
+
+              <div className="table-wrapper">
+                <table className="results-table">
+                  <thead>
+                  <tr>
+                    <th>Participante</th>
+                    <th>Status</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  {resultados.map((res, index) => (
+                      <tr key={index} className={res.sucesso ? 'row-success' : 'row-error'}>
+                        <td>
+                          <div className="name">{res.nome}</div>
+                          <div className="email">{res.email}</div>
+                        </td>
+                        <td className="status-cell">
+                          {res.sucesso ? (
+                              <MailCheck size={18} className="icon-success" />
+                          ) : (
+                              <div className="error-hint" title={res.mensagemErro}>
+                                <MailWarning size={18} className="icon-error" />
+                                <span>Erro</span>
+                              </div>
+                          )}
+                        </td>
+                      </tr>
+                  ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <button onClick={resetForm} className="btn-secondary">
+                <ChevronLeft size={18} /> Novo Lote
+              </button>
+            </div>
+        )}
       </div>
   );
 }

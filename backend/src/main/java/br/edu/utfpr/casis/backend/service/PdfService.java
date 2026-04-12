@@ -46,9 +46,13 @@ public class PdfService {
         context.setVariable("nomeEvento", dadosEvento.nomeEvento());
         context.setVariable("cargaHoraria", dadosEvento.cargaHoraria());
 
+        // Formata a data de realização (Ex: 15 de Março de 2026)
+        DateTimeFormatter diaMesAno = DateTimeFormatter.ofPattern("dd' de 'MMMM' de 'yyyy", Locale.of("pt", "BR"));
+        context.setVariable("dataRealizacao", dadosEvento.dataRealizacao().format(diaMesAno));
+
         // Formata a data automática rodapé ("Londrina, 15 de Março de 2026")
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("'Londrina, 'dd' de 'MMMM' de 'yyyy", Locale.of("pt", "BR"));
-        context.setVariable("dataEmissao", LocalDate.now().format(formatter));
+        DateTimeFormatter cidadeDiaMesAno = DateTimeFormatter.ofPattern("'Londrina, 'dd' de 'MMMM' de 'yyyy", Locale.of("pt", "BR"));
+        context.setVariable("dataEmissao", LocalDate.now().format(cidadeDiaMesAno));
 
         // Lê a imagem da pasta resources e converte para Base64 em memória
         try (InputStream is = new ClassPathResource("static/images/bg_certificado_evento.png").getInputStream()) {

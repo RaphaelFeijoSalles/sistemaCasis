@@ -15,19 +15,18 @@ public class CertificadoController {
     private final EmissaoService emissaoService;
 
     @PostMapping(value = "/emitir-lote", consumes = "multipart/form-data")
-    public ResponseEntity<String> emitirCertificadosEmLote(@ModelAttribute EmissaoLoteEventoRequestDTO requestDTO) {
+    public ResponseEntity<?> emitirCertificadosEmLote(@ModelAttribute EmissaoLoteEventoRequestDTO requestDTO) {
 
         if (requestDTO.arquivoCsv() == null || requestDTO.arquivoCsv().isEmpty()) {
             return ResponseEntity.badRequest().body("Erro: O arquivo CSV é obrigatório.");
         }
 
         try {
-            // Toda a lógica pesada foi abstraída para o Service
-            emissaoService.processarEmissao(requestDTO);
+            // Guarda o relatório devolvido pelo serviço
+            var relatorio = emissaoService.processarEmissao(requestDTO);
 
-            return ResponseEntity.ok(
-                    String.format("Lote em processamento com sucesso para o evento: %s", requestDTO.nomeEvento())
-            );
+            // Devolve o JSON pro frontend
+            return ResponseEntity.ok(relatorio);
 
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Erro crítico: " + e.getMessage());
