@@ -55,8 +55,8 @@ function App() {
     payload.append('arquivoCsv', arquivoCsv);
 
     try {
-      // O backend agora retorna List<ResultadoEmissaoDTO>
-      const response = await axios.post('http://localhost:8080/api/certificados/emitir-lote', payload);
+      // O backend retorna List<ResultadoEmissaoDTO>
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/certificados/emitir-lote`, payload);
 
       setResultados(response.data);
       toast.success('Processamento concluído!', { id: toastId });

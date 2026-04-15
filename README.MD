@@ -1,65 +1,54 @@
-# 🐍 Sistema de Emissão de Certificados - CASIS
+🐍 Sistema de Emissão de Certificados - CASIS
+Sistema oficial desenvolvido para o Centro Acadêmico de Sistemas de Informação (CASIS) da UTFPR - Campus Londrina.
 
-![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
+Esta aplicação automatiza a geração e envio de certificados em lote para eventos e gestões do CA, utilizando injeção de dados em templates dinâmicos.
 
-Sistema oficial desenvolvido para o **Centro Acadêmico de Sistemas de Informação (CASIS)** da UTFPR - Campus Londrina.
+🚀 Funcionalidades
+Processamento em Lote: Leitura de arquivos .csv para emissão massiva de documentos.
 
-O objetivo desta aplicação é automatizar o fluxo de geração e envio de certificados para eventos e conclusões de gestão, substituindo o trabalho manual de design por um fluxo escalável em lote.
+Geração Dinâmica: Uso de templates Thymeleaf convertidos em PDF via OpenPDF/FlyingSaucer.
 
-## 🚀 Funcionalidades
+Relatório em Tempo Real: Interface que detalha sucessos e falhas de envio para cada participante.
 
-- **Geração Dinâmica de PDFs:** Conversão de templates HTML + Imagens de fundo em documentos PDF.
-- **Processamento em Lote:** Leitura de planilhas (`.csv`) exportadas diretamente do Google Forms de presença.
-- **Disparo de E-mails Automático:** Envio do certificado gerado diretamente para a caixa de entrada do aluno.
-- **Suporte a Múltiplos Modelos:** Preparado para emitir certificados de Eventos e de Conclusão de Gestão do CA.
-- **Interface Dark/Python:** UI voltada para uso interno da diretoria, tematizada com a identidade visual do CASIS.
+Segurança de Lote: Bloqueio de e-mails inválidos e proteção via CORS em nível de produção.
 
----
+Suporte Híbrido: Preparado para certificados de Eventos e Conclusão de Gestão.
 
-## 📂 Arquitetura do Projeto (Monorepo)
+🏗️ Arquitetura e Deploy
+O projeto utiliza uma estrutura de monorepo hospedada na nuvem:
 
-O sistema está dividido em duas frentes independentes:
+Backend (/backend): API Java 25 e Spring Boot dockerizada. Hospedado no Render.
 
-- `/backend`: API REST construída em **Java 25 e Spring Boot**. Responsável pela leitura do CSV, injeção de dados no template (Thymeleaf), geração do PDF (OpenPDF) e envio de e-mails (JavaMailSender).
-- `/frontend`: Aplicação SPA construída em **React e Vite**. Interface para upload rápido dos dados pela gestão do CA.
+Frontend (/frontend): Aplicação React + Vite. Hospedado na Vercel.
 
----
+Envio de E-mail: Integração com Gmail via JavaMailSender e autenticação por variáveis de ambiente.
 
-## 🛠️ Como executar localmente
+🛠️ Como Executar Localmente
+1. Variáveis de Ambiente
+   Crie um arquivo .env na pasta /frontend:
 
-### 1. Pré-requisitos
-- [Java JDK 17+](https://adoptium.net/)
-- [Node.js 18+](https://nodejs.org/)
-- Maven (Opcional, o projeto usa o wrapper embutido)
+Snippet de código
+VITE_API_URL=http://localhost:8080
+Configure as credenciais do Gmail no application.properties ou como variáveis de sistema:
 
-### 2. Rodando o Backend (API)
-Abra um terminal e navegue até a pasta do backend:
-```bash
-cd backend
-Compile e rode a aplicação:
+EMAIL_CASIS: E-mail oficial do CASIS.
 
-Bash
-# Se usar Windows:
-./mvnw.cmd spring-boot:run
+SENHA_CASIS: Senha de aplicativo gerada na Conta Google.
 
-# Se usar Linux/Mac:
-./mvnw spring-boot:run
-A API estará rodando em http://localhost:8080.
-
-3. Rodando o Frontend (Interface)
-Abra outro terminal e navegue até a pasta do frontend:
+2. Rodando o Backend
+   Bash
+   cd backend
+   ./mvnw spring-boot:run
+3. Rodando o Frontend
+   Bash
+   cd frontend
+   npm install
+   npm run dev
+   🐳 Docker (Produção)
+   Para gerar a imagem de produção da API:
 
 Bash
-cd frontend
-Instale as dependências e inicie o servidor de desenvolvimento:
+docker build -t casis-backend ./backend
+Aviso de Segurança: Este projeto não versiona senhas ou chaves. Todas as credenciais sensíveis devem ser configuradas exclusivamente via painel de ambiente do Render/Vercel.
 
-Bash
-npm install
-npm run dev
-O sistema estará acessível em http://localhost:5173.
-
-👨‍💻 Desenvolvido por
-Raphael Feijó Salles - Gestão CASIS
+Desenvolvido por Raphael Feijó Salles - Gestão CASIS
