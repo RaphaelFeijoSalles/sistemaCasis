@@ -7,7 +7,8 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>4.0.5</version>
-        <relativePath/> </parent>
+        <relativePath/>
+    </parent>
 
     <groupId>br.edu.utfpr.casis</groupId>
     <artifactId>backend</artifactId>
@@ -15,6 +16,7 @@
     <name>backend</name>
     <description>API REST para o sistema de emissão de certificados do CASIS</description>
     <url/>
+
     <licenses>
         <license/>
     </licenses>
@@ -30,6 +32,7 @@
 
     <properties>
         <java.version>25</java.version>
+        <tomcat.version>11.0.21</tomcat.version>
     </properties>
 
     <dependencyManagement>
@@ -44,7 +47,6 @@
                 <artifactId>jackson-core</artifactId>
                 <version>3.1.1</version>
             </dependency>
-
             <dependency>
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
@@ -106,7 +108,6 @@
             <artifactId>flying-saucer-pdf-openpdf</artifactId>
             <version>9.1.22</version>
         </dependency>
-
     </dependencies>
 
     <build>
