@@ -13,5 +13,5 @@ import lombok.experimental.SuperBuilder;
 public abstract class AlunoCertificado {
     private String nome;
     private String email;
-    private String documento; // Pode ser RA (para eventos) ou CPF (para gestão)
+    private String ra;
 }

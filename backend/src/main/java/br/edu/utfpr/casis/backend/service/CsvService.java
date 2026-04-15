@@ -43,7 +43,7 @@ public class CsvService {
                     AlunoCertificadoEvento aluno = AlunoCertificadoEvento.builder()
                             .nome(linha[0].trim())
                             .email(linha[1].trim())
-                            .documento(linha.length >= 3 ? linha[2].trim() : null)
+                            .ra(linha.length >= 3 ? linha[2].trim() : null)
                             .tipoParticipacao(TipoParticipacao.OUVINTE) // Valor padrão para emissões em lote de forms comuns
                             .build();
 

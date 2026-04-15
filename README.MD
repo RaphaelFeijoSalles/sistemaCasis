@@ -23,7 +23,7 @@ O objetivo desta aplicação é automatizar o fluxo de geração e envio de cert
 
 O sistema está dividido em duas frentes independentes:
 
-- `/backend`: API REST construída em **Java 17+ e Spring Boot**. Responsável pela leitura do CSV, injeção de dados no template (Thymeleaf), geração do PDF (OpenPDF) e envio de e-mails (JavaMailSender).
+- `/backend`: API REST construída em **Java 25 e Spring Boot**. Responsável pela leitura do CSV, injeção de dados no template (Thymeleaf), geração do PDF (OpenPDF) e envio de e-mails (JavaMailSender).
 - `/frontend`: Aplicação SPA construída em **React e Vite**. Interface para upload rápido dos dados pela gestão do CA.
 
 ---

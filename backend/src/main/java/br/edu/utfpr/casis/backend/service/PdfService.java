@@ -3,7 +3,6 @@ package br.edu.utfpr.casis.backend.service;
 import br.edu.utfpr.casis.backend.dto.EmissaoLoteEventoRequestDTO;
 import br.edu.utfpr.casis.backend.model.AlunoCertificado;
 import com.lowagie.text.DocumentException;
-import com.lowagie.text.pdf.BaseFont;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -63,7 +62,7 @@ public class PdfService {
         }
 
         // Além disso, vamos garantir que o RA seja passado pro HTML:
-        context.setVariable("documento", aluno.getDocumento() != null ? aluno.getDocumento() : "N/A");
+        context.setVariable("ra", aluno.getRa() != null ? aluno.getRa() : "N/A");
 
         // 2. Renderiza o HTML (Escolhe o arquivo .html baseado no tipo)
         String templateName = "certificado_evento";
