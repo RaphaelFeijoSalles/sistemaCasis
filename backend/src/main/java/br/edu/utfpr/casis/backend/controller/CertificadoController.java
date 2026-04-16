@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/certificados")
-@CrossOrigin(origins = {"https://sistemacasis.onrender.com", "http://localhost:5173"})
+@CrossOrigin(origins = {"https://sistema-casis.vercel.app/", "http://localhost:5173"})
 @RequiredArgsConstructor
 public class CertificadoController {
 
@@ -17,11 +17,18 @@ public class CertificadoController {
 
     // Puxa a senha das variáveis de ambiente (se não achar, usa 'senha_padrao' no localhost)
     @Value("${API_SECRET:senha_padrao_local}")
-    String apiSecret;
+    private String apiSecret;
 
     @PostMapping(value = "/emitir-lote", consumes = "multipart/form-data")
-    public ResponseEntity<?> emitirCertificadosEmLote(@ModelAttribute EmissaoLoteEventoRequestDTO requestDTO) {
+    public ResponseEntity<?> emitirCertificadosEmLote(
+            // O Spring pega a senha que o usuário digitou no React
+            @RequestHeader(value = "X-API-KEY", required = false) String chaveAcesso,
+            @ModelAttribute EmissaoLoteEventoRequestDTO requestDTO) {
 
+        // A ApiSecret é usada para comparação
+        if (chaveAcesso == null || !chaveAcesso.equals(apiSecret)) {
+            return ResponseEntity.status(403).body("Acesso negado: Chave de autorização inválida.");
+        }
 
         if (requestDTO.arquivoCsv() == null || requestDTO.arquivoCsv().isEmpty()) {
             return ResponseEntity.badRequest().body("Erro: O arquivo CSV é obrigatório.");

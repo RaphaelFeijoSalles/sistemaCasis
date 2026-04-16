@@ -15,7 +15,8 @@ Thumbs.db
 /backend/target/
 /backend/logs/
 /backend/*.log
-/backend/application-dev.properties # Caso você crie um arquivo com senhas de email reais para teste local
+# Caso você crie um arquivo com senhas de email reais para teste local
+/backend/application-dev.properties
 
 # 3. Ignorados do Frontend (React / Vite)
 # Ignora os pacotes gigantescos do Node e a build final
@@ -29,6 +30,6 @@ Thumbs.db
 
 # 4. Variáveis de Ambiente
 # NUNCA subir senhas do email do CA para o GitHub
-.env
+frontend/.env
 .env.local
 .env.*.local
