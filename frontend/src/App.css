@@ -1,21 +1,15 @@
 :root {
+  /* Cores extraídas diretamente da imagem cobra_bg.png */
   --bg-dark: #121212;
   --panel-dark: #1E1E1E;
-  --python-green: #4CAF50;
-  --python-green-hover: #45a049;
-  --text-light: #E0E0E0;
-  --border-color: #333;
-}
-
-body {
-  background-color: var(--bg-dark);
-  color: var(--text-light);
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  --accent-primary: #2A6B65; /* Teal/green oficial */
+  --accent-secondary: #21544F; /* Hovers */
+  --text-primary: #E0E0E0;
+  --text-secondary: #AAAAAA;
+  --border-color: #333333;
+  --error: #ff5252;
+  --success: #4CAF50;
+  --success-hover: #45a049;
 }
 
 #root {
@@ -24,115 +18,163 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+
+  /* Injetando o asset gerado pelo agente Python */
+
+  /* POSITIONING FIX: Ensure the watermark is full, not clipped */
+  /* Remove the negative offsets that cause clipping */
+  background-position: right 5% bottom 5%; /* Small 5% offset from corner */
+
+  /* Subtle Opacity and Size */
+  background-repeat: no-repeat;
+  /* Fixed size for consistent presentation on big screens, clamp allows scaling */
+  background-size: clamp(300px, 40vw, 600px);
+  background-attachment: fixed;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  margin: 0;
+  overflow-x: hidden;
 }
 
 .casis-container {
   background-color: var(--panel-dark);
-  padding: 40px;
+  padding: 2.5rem;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  width: 100%;
+  width: 90%;
   max-width: 600px;
-  border-top: 4px solid var(--python-green);
+  border-top: 4px solid var(--accent-primary);
+  z-index: 10; /* Garante que fica acima da cobra */
+  animation: fadeIn 0.3s ease-in;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 2rem;
 }
 
 .header h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 1.5rem;
   color: #fff;
 }
 
 .header p {
-  color: #888;
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .form-group label {
-  margin-bottom: 8px;
-  font-size: 14px;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #aaa;
+  color: #ccc;
 }
 
 .form-group input {
-  padding: 12px;
+  padding: 0.75rem;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   background-color: var(--bg-dark);
   color: #fff;
-  font-size: 16px;
+  font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
 }
 
 .form-group input:focus {
-  border-color: var(--python-green);
+  border-color: var(--success); /* Unified color variable for Success Green */
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.responsive-row {
+  display: flex;
+  gap: 1.25rem;
+}
+
+@media (max-width: 480px) {
+  .responsive-row {
+    flex-direction: column;
+    gap: 0;
+  }
 }
 
 .dropzone {
   border: 2px dashed var(--border-color);
   border-radius: 8px;
-  padding: 40px 20px;
+  padding: 2rem 1rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
-  background-color: rgba(255, 255, 255, 0.02);
-  margin-bottom: 24px;
+  background-color: rgba(255, 255, 255, 0.01);
+  margin-bottom: 2rem; /* Consistent large vertical spacing before main action */
+  color: #888;
+}
+
+.dropzone:hover {
+    border-color: var(--success);
+    color: var(--success-hover);
 }
 
 .dropzone.active {
-  border-color: var(--python-green);
-  background-color: rgba(76, 175, 80, 0.05);
+  border-color: var(--accent-primary);
+  background-color: rgba(42, 107, 101, 0.05);
+  color: var(--accent-primary);
 }
 
-.dropzone p {
-  margin: 10px 0 0 0;
-  color: #888;
-  font-size: 14px;
+.file-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #fff;
+  font-weight: bold;
 }
+
+.file-info span { max-width: 250px; overflow: hidden; text-overflow: ellipsis; }
 
 .btn-submit {
   width: 100%;
-  padding: 14px;
-  background-color: var(--python-green);
+  padding: 0.9rem;
+  background-color: var(--accent-primary); /* Explicitly set green */
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  transition: background-color 0.2s;
+  gap: 0.6rem;
+  transition: all 0.2s;
 }
 
 .btn-submit:hover:not(:disabled) {
-  background-color: var(--python-green-hover);
+  background-color: var(--accent-secondary); /* Create a success-hover variable (e.g., #45a049) */
+  transform: translateY(-1px);
 }
 
 .btn-submit:disabled {
-  background-color: #555;
+  background-color: #444;
+  color: #888;
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
-.spin {
-  animation: spin 1s linear infinite;
-}
+.spin { animation: spin 1s linear infinite; }
 
-@keyframes spin {
-  100% { transform: rotate(360deg); }
-}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
