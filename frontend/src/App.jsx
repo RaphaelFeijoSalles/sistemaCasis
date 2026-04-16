@@ -2,17 +2,20 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import {
-  UploadCloud, CheckCircle, Loader2, FileSpreadsheet,
-  AlertCircle, ChevronLeft, MailCheck, MailWarning
+  UploadCloud, Loader2, FileSpreadsheet,ChevronLeft,
+  MailCheck, MailWarning
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import './App.css';
 
 function App() {
+  const [apiKey, setApiKey] = useState(localStorage.getItem('casis_api_key'))
+
   const [formData, setFormData] = useState({
     nomeEvento: '',
     dataRealizacao: '',
     cargaHoraria: ''
+
   });
   const [arquivoCsv, setArquivoCsv] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +59,13 @@ function App() {
 
     try {
       // O backend retorna List<ResultadoEmissaoDTO>
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/certificados/emitir-lote`, payload);
+      // Atualize a chamada do axios para incluir o Header de segurança:
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/certificados/emitir-lote`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-API-KEY': apiKey //
+        }
+      });
 
       setResultados(response.data);
       toast.success('Processamento concluído!', { id: toastId });
