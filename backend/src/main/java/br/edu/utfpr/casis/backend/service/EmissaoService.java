@@ -20,38 +20,44 @@ public class EmissaoService {
     private final CsvService csvService;
     private final PdfService pdfService;
     private final EmailService emailService;
+    private final GoogleDriveService driveService;
 
     /**
      * Orquestra o fluxo de extração, geração e envio.
      */
+
+
     public List<ResultadoEmissaoDTO> processarEmissao(EmissaoLoteEventoRequestDTO requestDTO) {
 
-        // 1. Descobre de onde vêm os dados (Aplica o Padrão Strategy internamente)
         FonteDadosCertificadoStrategy fonteDados = definirEstrategia(requestDTO);
         List<AlunoCertificado> alunos = fonteDados.obterAlunos();
-
         List<ResultadoEmissaoDTO> relatorio = new ArrayList<>();
 
-        log.info("Iniciando geração e envio de {} certificados.", alunos.size());
+        // 1. Resolve a pasta do Google Drive APENAS UMA VEZ antes do loop
+        String folderId = driveService.obterOuCriarPastaEvento(requestDTO.nomeEvento());
 
-        // 2. Itera e processa
+        log.info("Iniciando geração, envio e backup de {} certificados.", alunos.size());
+
         for (AlunoCertificado aluno : alunos) {
             try {
-                // Passando o DTO completo para o PdfService
+                // Gera o PDF
                 byte[] pdf = pdfService.gerarCertificado(aluno, requestDTO);
 
-                // Passando o DTO completo para o EmailService
+                // Envia por E-mail
                 emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), requestDTO.nomeEvento(), pdf);
 
-                // Se chegou aqui, tudo deu certo
-                relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), true, null));
-            } catch (Exception e) {
+                // NOVO: Faz o Backup no Google Drive
+                String nomePdf = "Certificado_" + aluno.getNome().replaceAll("\\s+", "_") + ".pdf";
+                driveService.fazerUploadCertificado(pdf, nomePdf, folderId);
 
-                relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), false, e.getMessage()));
-                // Em lotes, se der erro em 1 aluno, não queremos parar os outros 99.
+                relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), true, null));
+
+            } catch (Exception e) {
                 log.error("Falha ao emitir para o aluno: {}", aluno.getEmail(), e);
+                relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), false, e.getMessage()));
             }
         }
+
         return relatorio;
     }
 
