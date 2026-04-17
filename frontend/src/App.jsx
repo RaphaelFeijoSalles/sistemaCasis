@@ -97,7 +97,7 @@ function App() {
                 {arquivoCsv ? (
                     <div className="file-info"><FileSpreadsheet size={32} /><span>{arquivoCsv.name}</span></div>
                 ) : (
-                    <div><UploadCloud size={32} style={{ margin: '0 auto' }} /><p>Arraste a planilha CSV aqui</p></div>
+                    <div><UploadCloud size={32} style={{ margin: '0 auto' }} /><p>Clieque ou arraste a planilha CSV aqui</p></div>
                 )}
               </div>
 
