@@ -18,11 +18,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
-/**
- * Classe responsável por cuidar de tudo que envolve o GoogleDrive.
- * Motivo principal: ter controle da geração/backup dos certificados.
- */
 @Slf4j
 @Service
 public class GoogleDriveService {
@@ -56,47 +51,68 @@ public class GoogleDriveService {
     }
 
     /**
-     * Retorna a pasta: cria se não existir, simplesmente retorna se já existir.
+     * Orquestra a criação da estrutura de pastas em dois níveis:
+     * Nível 1: Pasta do Semestre (Ex: "2026-1") dentro da raiz.
+     * Nível 2: Pasta do Evento (Ex: "Apadrinhamento") dentro do semestre.
      */
     public String obterOuCriarPastaEvento(String nomeEvento, LocalDate dataEvento) {
         try {
             Drive driveService = obterServico();
 
-            String nomeLimpo = nomeEvento != null ? nomeEvento.trim() : "Evento";
             int ano = dataEvento.getYear();
             int semestre = dataEvento.getMonthValue() <= 6 ? 1 : 2;
 
-            // Exemplo: "Recepção de Calouros 2026/1"
-            String nomePasta = String.format("%s %d/%d", nomeLimpo, ano, semestre);
-            String nomePesquisa = nomePasta.replace("'", "\\'");
+            // 1. Define os nomes exatos das pastas
+            String nomePastaSemestre = String.format("%d-%d", ano, semestre);
+            String nomePastaEvento = nomeEvento != null ? nomeEvento.trim() : "Evento";
 
-            String query = String.format("mimeType='application/vnd.google-apps.folder' and name='%s' and '%s' in parents and trashed=false",
-                    nomePesquisa, pastaRaizId);
+            // 2. Garante que a pasta "Ano-Semestre" (Ex: 2026-1) existe na RAIZ
+            String idPastaSemestre = obterOuCriarSubpasta(driveService, nomePastaSemestre, pastaRaizId);
 
-            FileList result = driveService.files().list()
-                    .setQ(query)
-                    .setSpaces("drive")
-                    .execute();
+            // 3. Garante que a pasta "Evento" (Ex: Apadrinhamento) existe DENTRO do Semestre
 
-            if (!result.getFiles().isEmpty()) {
-                log.info("Pasta do evento '{}' encontrada no Drive.", nomePasta);
-                return result.getFiles().getFirst().getId();
-            }
-
-            File fileMetadata = new File();
-            fileMetadata.setName(nomePasta);
-            fileMetadata.setMimeType("application/vnd.google-apps.folder");
-            fileMetadata.setParents(Collections.singletonList(pastaRaizId));
-
-            File folder = driveService.files().create(fileMetadata).setFields("id").execute();
-            log.info("Nova pasta '{}' criada no Drive com sucesso.", nomePasta);
-
-            return folder.getId();
+            // Retorna o ID da pasta final onde os PDFs serão salvos
+            return obterOuCriarSubpasta(driveService, nomePastaEvento, idPastaSemestre);
 
         } catch (Exception e) {
-            log.error("Erro ao gerir pasta no Google Drive", e);
+            log.error("Erro ao gerir a estrutura de pastas no Google Drive", e);
             throw new RuntimeException("Falha na comunicação com o Google Drive.", e);
         }
+    }
+
+    /**
+     * Método auxiliar genérico que busca ou cria uma pasta dentro de um ID pai (parent) específico.
+     * Isso evita repetição de código e nos permite criar N sub-níveis no futuro.
+     */
+    private String obterOuCriarSubpasta(Drive driveService, String nomePasta, String parentId) throws Exception {
+        // Escapa aspas simples para não quebrar a Query
+        String nomePesquisa = nomePasta.replace("'", "\\'");
+
+        // Query: Procura uma pasta com este nome exato E que seja filha deste parentId específico
+        String query = String.format("mimeType='application/vnd.google-apps.folder' and name='%s' and '%s' in parents and trashed=false",
+                nomePesquisa, parentId);
+
+        FileList result = driveService.files().list()
+                .setQ(query)
+                .setSpaces("drive")
+                .execute();
+
+        // Se encontrou, apenas devolve o ID existente
+        if (!result.getFiles().isEmpty()) {
+            log.info("Pasta '{}' encontrada no Drive.", nomePasta);
+            return result.getFiles().getFirst().getId();
+        }
+
+        // Se não encontrou, cria a pasta aninhada
+        File fileMetadata = new File();
+        fileMetadata.setName(nomePasta);
+        fileMetadata.setMimeType("application/vnd.google-apps.folder");
+        fileMetadata.setParents(Collections.singletonList(parentId));
+
+        File folder = driveService.files().create(fileMetadata).setFields("id").execute();
+        log.info("Nova subpasta '{}' criada no Drive com sucesso.", nomePasta);
+
+        return folder.getId();
     }
 
     /**
@@ -122,7 +138,7 @@ public class GoogleDriveService {
     }
 
     /**
-     * Efetua o upload do certificado para a pasta correta
+     * Efetua o upload do certificado em PDF para a pasta correta.
      */
     public void fazerUploadCertificado(byte[] pdfBytes, String nomeFicheiro, String folderId) {
         try {
