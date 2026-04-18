@@ -6,6 +6,6 @@ package br.edu.utfpr.casis.backend.dto;
 public record ResultadoEmissaoDTO(
         String nome,
         String email,
-        boolean sucesso,
+        StatusEmissao status,
         String mensagemErro
 ) {}
