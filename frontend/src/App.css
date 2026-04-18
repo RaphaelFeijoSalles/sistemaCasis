@@ -1,75 +1,63 @@
-:root {
-  /* Cores extraídas diretamente da imagem cobra_bg.png */
-  --bg-dark: #121212;
-  --panel-dark: #1E1E1E;
-  --accent-primary: #2A6B65; /* Teal/green oficial */
-  --accent-secondary: #21544F; /* Hovers */
-  --text-primary: #E0E0E0;
-  --text-secondary: #AAAAAA;
-  --border-color: #333333;
-  --error: #ff5252;
-  --success: #4CAF50;
-  --success-hover: #45a049;
-}
-
+/* ==========================================================================
+   1. LAYOUT PRINCIPAL E BACKGROUND (A Marca d'Água)
+   ========================================================================== */
 #root {
   width: 100%;
   min-height: 100vh;
+
+  /* Flexbox para centralizar tudo na tela */
   display: flex;
+  flex-direction: column; /* FIX: Garante que o footer fique ABAIXO do form, e não ao lado */
   justify-content: center;
   align-items: center;
+  gap: 2rem; /* Espaço de respiro entre o container do form e o footer */
+
   position: relative;
 
-  /* Injetando o asset gerado pelo agente Python */
-
-  /* POSITIONING FIX: Ensure the watermark is full, not clipped */
-  /* Remove the negative offsets that cause clipping */
-  background-position: right 5% bottom 5%; /* Small 5% offset from corner */
-
-  /* Subtle Opacity and Size */
+  /* Injeção da marca d'água gerada em Python */
+  background-image: url('./assets/cobra_bg.png');
+  background-position: right 5% bottom 5%;
   background-repeat: no-repeat;
-  /* Fixed size for consistent presentation on big screens, clamp allows scaling */
-  background-size: clamp(300px, 40vw, 600px);
-  background-attachment: fixed;
+  background-size: clamp(300px, 40vw, 600px); /* Responsivo: cresce com a tela, mas tem limites */
+  background-attachment: fixed; /* A cobra não rola junto com a página */
 }
 
-body {
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  margin: 0;
-  overflow-x: hidden;
-}
-
+/* Container Principal (O "Cartão" do Formulário/Tabela) */
 .casis-container {
   background-color: var(--panel-dark);
   padding: 2.5rem;
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); /* Sombra profunda para destacar do fundo */
   width: 90%;
-  max-width: 600px;
+  max-width: 600px; /* Não deixa o form esticar infinitamente em telas ultrawide */
   border-top: 4px solid var(--accent-primary);
-  z-index: 10; /* Garante que fica acima da cobra */
-  animation: fadeIn 0.3s ease-in;
+  z-index: 10;
+  animation: fadeIn 0.3s ease-in; /* Animação de entrada suave */
 }
 
+/* ==========================================================================
+   2. CABEÇALHO DO FORMULÁRIO
+   ========================================================================== */
 .header {
   text-align: center;
   margin-bottom: 2rem;
 }
 
 .header h1 {
-  margin: 0;
   font-size: 1.5rem;
   color: #fff;
+  letter-spacing: -0.5px;
 }
 
 .header p {
   color: var(--text-secondary);
   font-size: 0.9rem;
-  margin-top: 0.25rem;
+  margin-top: 0.4rem;
 }
 
+/* ==========================================================================
+   3. INPUTS E FORMULÁRIOS
+   ========================================================================== */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -84,6 +72,7 @@ body {
 }
 
 .form-group input {
+  width: 100%; /* Força preenchimento, importante para inputs de data em mobile */
   padding: 0.75rem;
   border-radius: 6px;
   border: 1px solid var(--border-color);
@@ -91,46 +80,51 @@ body {
   color: #fff;
   font-size: 1rem;
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .form-group input:focus {
-  border-color: var(--success); /* Unified color variable for Success Green */
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  border-color: var(--success);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2); /* Halo verde no foco */
 }
 
+/* Grid de Responsividade (Lado a lado em PC, empilhado em Mobile) */
 .responsive-row {
   display: flex;
   gap: 1.25rem;
 }
 
-@media (max-width: 480px) {
+/* Aumentamos de 480px para 600px para evitar que inputs fiquem esmagados */
+@media (max-width: 600px) {
   .responsive-row {
     flex-direction: column;
-    gap: 0;
+    gap: 1.25rem; /* Mantém o respiro vertical entre campos */
   }
 }
 
+/* ==========================================================================
+   4. ÁREA DE DRAG & DROP (CSV)
+   ========================================================================== */
 .dropzone {
   border: 2px dashed var(--border-color);
   border-radius: 8px;
   padding: 2rem 1rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   background-color: rgba(255, 255, 255, 0.01);
-  margin-bottom: 2rem; /* Consistent large vertical spacing before main action */
+  margin-bottom: 2rem;
   color: #888;
 }
 
 .dropzone:hover {
-    border-color: var(--success);
-    color: var(--success-hover);
+  border-color: var(--success);
+  color: var(--success-hover);
 }
 
 .dropzone.active {
   border-color: var(--accent-primary);
-  background-color: rgba(42, 107, 101, 0.05);
+  background-color: rgba(42, 107, 101, 0.05); /* Fundo levemente teal ao arrastar */
   color: var(--accent-primary);
 }
 
@@ -143,12 +137,20 @@ body {
   font-weight: bold;
 }
 
-.file-info span { max-width: 250px; overflow: hidden; text-overflow: ellipsis; }
+.file-info span {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Corta nomes gigantes de arquivos (ex: planilha_...csv) */
+  white-space: nowrap;
+}
 
+/* ==========================================================================
+   5. BOTÕES DE AÇÃO
+   ========================================================================== */
 .btn-submit {
   width: 100%;
   padding: 0.9rem;
-  background-color: var(--accent-primary); /* Explicitly set green */
+  background-color: var(--accent-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -163,18 +165,167 @@ body {
 }
 
 .btn-submit:hover:not(:disabled) {
-  background-color: var(--accent-secondary); /* Create a success-hover variable (e.g., #45a049) */
-  transform: translateY(-1px);
+  background-color: var(--accent-secondary);
+  transform: translateY(-2px); /* Efeito tátil de levante */
 }
 
 .btn-submit:disabled {
-  background-color: #444;
-  color: #888;
+  background-color: #333;
+  color: #666;
   cursor: not-allowed;
-  opacity: 0.8;
 }
 
+/* Botão secundário (Usado no "Novo Lote" da tela de resultados) */
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+}
+
+/* ==========================================================================
+   6. TABELA E RELATÓRIO DE RESULTADOS
+   ========================================================================== */
+.results-area {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Painel superior com os contadores (Sucesso, Existente, Erro) */
+.results-summary {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.stat { display: flex; flex-direction: column; align-items: center; }
+.stat .label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat .value { font-size: 1.5rem; font-weight: bold; }
+.stat .value.success { color: var(--success); }
+.stat .value.warning { color: var(--warning); }
+.stat .value.error { color: var(--error); }
+
+/* Invólucro da tabela para permitir rolagem vertical caso haja muitos alunos */
+.table-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+/* Cabeçalho da tabela fixo no topo durante o scroll */
+.results-table th {
+  position: sticky;
+  top: 0;
+  background: #252525;
+  padding: 0.75rem;
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.results-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.results-table .name { font-weight: 600; color: #fff; }
+.results-table .email { font-size: 0.7rem; color: #888; margin-top: 0.2rem; }
+.status-cell { text-align: center; }
+
+/* Cores de fundo dinâmicas para as linhas do relatório */
+.row-success { background-color: rgba(76, 175, 80, 0.05); }
+.row-warning { background-color: rgba(255, 202, 40, 0.05); }
+.row-error { background-color: rgba(255, 82, 82, 0.05); }
+
+/* Ícones e Tags de Status */
+.icon-success { color: var(--success); }
+.icon-error { color: var(--error); }
+
+.status-warning {
+  color: var(--warning);
+  font-size: 0.7rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.error-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.65rem;
+  color: var(--error);
+}
+
+/* ==========================================================================
+   7. FOOTER DA APLICAÇÃO
+   ========================================================================== */
+.casis-footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #666;
+  z-index: 10; /* Garante que fique acima da cobra, caso ela desça muito */
+}
+
+.casis-footer a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.2s;
+}
+
+.casis-footer a:hover {
+  color: var(--success); /* Acende para verde no hover */
+}
+
+/* ==========================================================================
+   8. UTILITÁRIOS E ANIMAÇÕES
+   ========================================================================== */
 .spin { animation: spin 1s linear infinite; }
 
-@keyframes spin { 100% { transform: rotate(360deg); } }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   9. RESPONSIVIDADE DO BACKGROUND
+   ========================================================================== */
+/* Oculta a marca d'água da cobra em celulares e tablets pequenos para limpar o visual */
+@media (max-width: 1440px) {
+  #root {
+    background-image: none;
+  }
+}

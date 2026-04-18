@@ -1,123 +1,61 @@
+/* ==========================================================================
+   1. VARIÁVEIS GLOBAIS DE TEMA (Design System CASIS)
+   ========================================================================== */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #4CAF50; /* Update light accent to match green */
-  --accent-bg: rgba(76, 175, 80, 0.1);
-  --accent-border: rgba(76, 175, 80, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-          rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Cores Base Escuras (Fundo e Painéis) */
+  --bg-dark: #121212;
+  --panel-dark: #1E1E1E;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Cores de Destaque (Identidade Visual CASIS - Extraídas da Cobra) */
+  --accent-primary: #2A6B65; /* Verde/Teal oficial */
+  --accent-secondary: #21544F; /* Verde escuro para Hover */
+
+  /* Textos e Bordas */
+  --text-primary: #f3f4f6; /* Texto principal claro */
+  --text-secondary: #9ca3af; /* Texto secundário/Labels */
+  --border-color: #2e303a; /* Bordas suaves dos inputs e tabelas */
+
+  /* Cores de Feedback (Sucesso, Alerta, Erro) */
+  --success: #4CAF50;
+  --success-hover: #45a049;
+  --warning: #ffca28; /* Amarelo para os certificados "Já Emitidos" */
+  --error: #ff5252;
+
+  /* Tipografia */
+  --sans: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
-/* Ensure box-sizing border-box is applied everywhere for better padding management */
+/* ==========================================================================
+   2. RESET CSS (Padronização do Navegador)
+   ========================================================================== */
 *, *::before, *::after {
+  /* Garante que paddings não quebrem a largura (width) dos elementos */
   box-sizing: border-box;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #4CAF50; /* Standard Python Green (#4CAF50 from App.css) */
-    --accent-bg: rgba(76, 175, 80, 0.15);
-    --accent-border: rgba(76, 175, 80, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-            rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
 }
 
 body {
   margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--sans), sans-serif;
+  overflow-x: hidden; /* Evita barra de rolagem horizontal indesejada */
+
+  /* Renderização de fonte mais suave nas telas modernas */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-h1,
-h2 {
-  font-family: var(--heading), sans-serif;
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+/* ==========================================================================
+   3. TIPOGRAFIA BASE (Opcional para uso fora do App)
+   ========================================================================== */
+h1, h2, h3 {
+  font-weight: 600;
   margin: 0;
 }
 
-code {
-  font-family: var(--mono), sans-serif;
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+p {
+  margin: 0;
 }
-
-/* Polishing form groups vertical spacing consistency */
-.form-group {
-    margin-bottom: 1.25rem; /* Standardize vertical margin (using 20px equivalent) */
-}
-
-/* RESULTS AREA VISUALS */
-.results-area { animation: fadeIn 0.3s ease-in; }
-.results-summary { display: flex; justify-content: space-around; background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-.stat { display: flex; flex-direction: column; align-items: center; }
-.stat .label { font-size: 12px; color: #888; text-transform: uppercase; }
-.stat .value { font-size: 24px; font-weight: bold; }
-.stat .value.success { color: #4CAF50; }
-.stat .value.error { color: #ff5252; }
-.table-wrapper { max-height: 300px; overflow-y: auto; border: 1px solid #333; border-radius: 6px; margin-bottom: 20px; }
-.results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.results-table th { position: sticky; top: 0; background: #252525; padding: 10px; text-align: left; color: #888; }
-.results-table td { padding: 12px 10px; border-bottom: 1px solid #2a2a2a; }
-.results-table .name { font-weight: 600; color: #fff; }
-.results-table .email { font-size: 11px; color: #888; }
-.status-cell { text-align: center; }
-.icon-success { color: #4CAF50; }
-.icon-error { color: #ff5252; }
-.error-hint { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: #ff5252; }
-.btn-secondary { background: transparent; border: 1px solid #333; color: #aaa; width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-secondary:hover { background: rgba(255,255,255,0.05); color: #fff; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
