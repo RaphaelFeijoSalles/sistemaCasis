@@ -8,6 +8,8 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 @Slf4j
 @Service
@@ -15,10 +17,19 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final TemplateEngine templateEngine;
 
     // Puxa o e-mail remetente lá do application.properties
     @Value("${spring.mail.username}")
     private String remetenteOficial;
+
+    public String montarCorpoEmail(String nomeAluno, String nomeEvento) {
+        Context context = new Context();
+        context.setVariable("nome_aluno", nomeAluno);
+        context.setVariable("nome_evento", nomeEvento);
+        context.setVariable("email_contato", remetenteOficial);
+        return templateEngine.process("certificado-email", context);
+    }
 
     public void enviarCertificado(String destinatario, String nomeAluno, String nomeEvento, byte[] pdfAnexo) {
         try {
@@ -31,14 +42,7 @@ public class EmailService {
             helper.setTo(destinatario);
             helper.setSubject("Seu Certificado chegou! 🐍 - " + nomeEvento);
 
-            // Corpo do e-mail em HTML
-            String corpoEmail = String.format(
-                    "<h2 style='color: #4CAF50;'>Olá, %s!</h2>" +
-                            "<p>Obrigado por participar do evento <strong>%s</strong>.</p>" +
-                            "<p>Seu certificado oficial de participação já está disponível e segue em anexo neste e-mail (PDF).</p>" +
-                            "<br><p>Abraços,<br><strong>Diretoria CASIS</strong></p>",
-                    nomeAluno, nomeEvento
-            );
+            String corpoEmail = this.montarCorpoEmail(nomeAluno, nomeEvento);
 
             helper.setText(corpoEmail, true);
 

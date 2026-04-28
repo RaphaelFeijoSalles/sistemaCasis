@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seu Certificado do CASIS</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #E0E0E0;
+        }
+
+        .wrapper {
+            background-color: #121212;
+            padding: 40px 20px;
+            width: 100%;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #1E1E1E;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 100%;
+        }
+
+        .top-line {
+            background-color: #2A6B65;
+            height: 6px;
+        }
+
+        .header {
+            padding: 40px 40px 20px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #FFFFFF;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            color: #AAAAAA;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .content {
+            padding: 20px 40px;
+        }
+
+        .content p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+            color: #E0E0E0;
+        }
+
+        .alert-box {
+            background-color: rgba(42, 107, 101, 0.1);
+            border-left: 4px solid #2A6B65;
+            border-radius: 4px;
+            padding: 15px 20px;
+            margin-top: 10px;
+        }
+
+        .alert-box p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #CCCCCC;
+        }
+
+        .alert-box a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        .footer {
+            padding: 30px 40px 40px 40px;
+            text-align: center;
+            border-top: 1px solid #333333;
+        }
+
+        .footer p {
+            margin: 0;
+            font-size: 12px;
+            color: #888888;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+<table class="wrapper" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+        <td align="center">
+            <table class="container" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="top-line"></td>
+                </tr>
+                <tr>
+                    <td class="header">
+                        <h1>Centro Acadêmico de Sistemas de Informação</h1>
+                        <p>UTFPR Londrina</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="content">
+                        <p>Olá, <strong th:text="${nome_aluno}">Nome do Aluno</strong>,</p>
+
+                        <p>Agradecemos a sua participação no evento <strong th:text="${nome_evento}">Nome do Evento</strong>. É com grande satisfação que entregamos o seu certificado de participação.</p>
+
+                        <p>O documento oficial em formato PDF está anexado a este e-mail.</p>
+
+                        <div class="alert-box">
+                            <p>
+                                <strong>Encontrou algum erro?</strong><br>
+                                Se houver inconsistência no seu nome ou carga horária, responda a este e-mail ou entre em contato conosco através de
+                                <a th:href="'mailto:' + ${email_contato}" th:text="${email_contato}">email@exemplo.com</a>
+                                para emitirmos uma via corrigida.
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="footer">
+                        <p>Este é um e-mail automático gerado pelo Sistema Oficial de Certificados do CASIS.<br>&copy; 2026 CASIS UTFPR-LD. Todos os direitos reservados.</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
