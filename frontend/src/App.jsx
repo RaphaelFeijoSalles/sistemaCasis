@@ -6,32 +6,45 @@ import RelatorioEmissao from './components/RelatorioEmissao';
 import './App.css';
 
 function App() {
-  const [formData, setFormData] = useState({ nomeEvento: '', dataRealizacao: '', cargaHoraria: '' });
+  const [formData, setFormData] = useState({
+    nomeEvento: '', dataRealizacao: '', cargaHoraria: '',
+    nomeParticipante: '', emailParticipante: '', raParticipante: ''
+  });
   const [arquivoCsv, setArquivoCsv] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resultados, setResultados] = useState(null);
   const [apiKey, setApiKey] = useState(localStorage.getItem('casis_api_key') || '');
+  const [emissaoTipo, setEmissaoTipo] = useState('lote');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!arquivoCsv) return toast.error('Anexe a planilha CSV!');
+    if (emissaoTipo === 'lote' && !arquivoCsv) return toast.error('Anexe a planilha CSV!');
     if (!apiKey) return toast.error('Informe a senha de autorização!');
 
     setIsSubmitting(true);
-    const toastId = toast.loading('Processando lote e salvando no Drive...');
-
-    const payload = new FormData();
-    payload.append('nomeEvento', formData.nomeEvento);
-    payload.append('dataRealizacao', formData.dataRealizacao);
-    payload.append('cargaHoraria', formData.cargaHoraria);
-    payload.append('arquivoCsv', arquivoCsv);
+    const toastId = toast.loading(emissaoTipo === 'lote' ? 'Processando lote...' : 'Gerando certificado único...');
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/certificados/emitir-lote`, payload, {
-        headers: { 'X-API-KEY': apiKey }
-      });
+      let response;
+      if (emissaoTipo === 'lote') {
+        const payload = new FormData();
+        payload.append('nomeEvento', formData.nomeEvento);
+        payload.append('dataRealizacao', formData.dataRealizacao);
+        payload.append('cargaHoraria', formData.cargaHoraria);
+        payload.append('arquivoCsv', arquivoCsv);
 
-      setResultados(response.data);
+        response = await axios.post(`${import.meta.env.VITE_API_URL}/api/certificados/emitir-lote`, payload, {
+          headers: { 'X-API-KEY': apiKey }
+        });
+        setResultados(response.data);
+      } else {
+        response = await axios.post(`${import.meta.env.VITE_API_URL}/api/certificados/emitir-unitario`, formData, {
+          headers: { 'X-API-KEY': apiKey }
+        });
+        // Transforma o objeto único num Array de 1 item para a tabela RelatorioEmissao conseguir ler
+        setResultados([response.data]);
+      }
+
       toast.success('Emissão concluída!', { id: toastId, duration: 5000 });
       setArquivoCsv(null);
     } catch (error) {
@@ -63,6 +76,7 @@ function App() {
                   arquivoCsv={arquivoCsv} setArquivoCsv={setArquivoCsv}
                   apiKey={apiKey} setApiKey={setApiKey}
                   isSubmitting={isSubmitting} onSubmit={handleSubmit}
+                  emissaoTipo={emissaoTipo} setEmissaoTipo={setEmissaoTipo}
               />
           ) : (
               <RelatorioEmissao resultados={resultados} onReset={resetForm} />
