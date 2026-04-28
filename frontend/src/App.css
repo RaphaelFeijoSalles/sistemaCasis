@@ -83,6 +83,17 @@
   transition: all 0.2s ease;
 }
 
+/* FIX: Corrige o fundo branco do preenchimento automático em navegadores WebKit (Chrome, Edge) */
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus,
+.form-group input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fff; /* Força a cor do texto para branco */
+  -webkit-box-shadow: 0 0 0 30px var(--bg-dark) inset !important; /* "Pinta" o fundo com uma sombra interna */
+  box-shadow: 0 0 0 30px var(--bg-dark) inset !important;
+}
+
+
 .form-group input:focus {
   border-color: var(--success);
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2); /* Halo verde no foco */
@@ -100,6 +111,41 @@
     flex-direction: column;
     gap: 1.25rem; /* Mantém o respiro vertical entre campos */
   }
+}
+
+/* ==========================================================================
+   3.5 TOGGLE DE TIPO DE EMISSÃO (Lote vs Individual)
+   ========================================================================== */
+.toggle-container {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 0.6rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn.active {
+  background: var(--accent-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.unit-fields {
+  animation: fadeIn 0.3s ease-in;
 }
 
 /* ==========================================================================
