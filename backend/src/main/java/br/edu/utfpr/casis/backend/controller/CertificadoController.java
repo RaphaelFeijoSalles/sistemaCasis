@@ -45,4 +45,22 @@ public class CertificadoController {
             return ResponseEntity.internalServerError().body("Erro crítico: " + e.getMessage());
         }
     }
+
+    @PostMapping("/emitir-unitario")
+    public ResponseEntity<?> emitirCertificadoIndividual(
+            @RequestHeader(value = "X-API-KEY", required = false) String chaveAcesso,
+            @RequestBody br.edu.utfpr.casis.backend.dto.EmissaoIndividualRequestDTO requestDTO) {
+
+        if (chaveAcesso == null || !chaveAcesso.equals(apiSecret)) {
+            return ResponseEntity.status(403).body("Acesso negado: Chave de autorização inválida.");
+        }
+
+        try {
+            var relatorio = emissaoService.processarEmissaoIndividual(requestDTO);
+            return ResponseEntity.ok(relatorio);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Erro crítico: " + e.getMessage());
+        }
+    }
+
 }

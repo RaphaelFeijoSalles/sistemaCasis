@@ -69,6 +69,41 @@ public class EmissaoService {
         return relatorio;
     }
 
+    public ResultadoEmissaoDTO processarEmissaoIndividual(br.edu.utfpr.casis.backend.dto.EmissaoIndividualRequestDTO dto) {
+        // 1. Cria o aluno manualmente
+        AlunoCertificado aluno = br.edu.utfpr.casis.backend.model.AlunoCertificadoEvento.builder()
+                .nome(dto.nomeParticipante().trim())
+                .email(dto.emailParticipante().trim())
+                .ra(dto.raParticipante())
+                .build();
+
+        // 2. Cria um DTO de lote "falso" (sem arquivo) só para o PdfService aceitar os dados do evento
+        EmissaoLoteEventoRequestDTO loteDto = new EmissaoLoteEventoRequestDTO(
+                dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria(), null
+        );
+
+        // 3. Resolve a pasta e checa se já existe (reaproveitando a lógica)
+        String folderId = driveService.obterOuCriarPastaEvento(dto.nomeEvento(), dto.dataRealizacao());
+        String nomePdf = "Certificado_" + aluno.getNome().trim().replaceAll("\\s+", "_") + ".pdf";
+
+        java.util.Set<String> arquivosExistentes = driveService.listarArquivosNaPasta(folderId);
+        if (arquivosExistentes.contains(nomePdf)) {
+            return new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), br.edu.utfpr.casis.backend.dto.StatusEmissao.EXISTENTE, "Certificado já consta no Drive.");
+        }
+
+        // 4. Processo normal de emissão
+        try {
+            byte[] pdf = pdfService.gerarCertificado(aluno, loteDto);
+            emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), dto.nomeEvento(), pdf);
+            driveService.fazerUploadCertificado(pdf, nomePdf, folderId);
+
+            return new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), br.edu.utfpr.casis.backend.dto.StatusEmissao.SUCESSO, null);
+        } catch (Exception e) {
+            log.error("Falha na emissão individual para: {}", aluno.getEmail(), e);
+            return new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), br.edu.utfpr.casis.backend.dto.StatusEmissao.ERRO, e.getMessage());
+        }
+    }
+
     /**
      * Factory Method interno: Define a estratégia baseada no que veio na requisição.
      */
