@@ -3,23 +3,36 @@
 # ==========================================
 
 # 1. Pastas do Sistema Operacional e IDEs
-# Ignora arquivos de configuração da sua máquina e editor
 .DS_Store
 Thumbs.db
 .idea/
+*.iws
 *.iml
+*.ipr
 .vscode/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
 
-# 2. Ignorados do Backend (Spring Boot / Maven)
-# Ignora os binários compilados e logs do Java
+# 2. Ignorados do Backend (Java / Spring Boot)
 /backend/target/
-/backend/logs/
-/backend/*.log
-# Caso você crie um arquivo com senhas de email reais para teste local
-backend/src/main/resources/application-dev.properties
+/backend/build/
+/backend/.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
 # 3. Ignorados do Frontend (React / Vite)
-# Ignora os pacotes gigantescos do Node e a build final
 /frontend/node_modules/
 /frontend/dist/
 /frontend/dist-ssr/
@@ -28,8 +41,9 @@ backend/src/main/resources/application-dev.properties
 /frontend/yarn-debug.log*
 /frontend/yarn-error.log*
 
-# 4. Variáveis de Ambiente
-# NUNCA subir senhas do email do CA para o GitHub
-frontend/.env
-.env.local
-.env.*.local
+# 4. Variáveis de Ambiente e Segredos (CRÍTICO)
+# Nunca suba arquivos de configuração locais ou senhas do CASIS
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.*.local
+/backend/src/main/resources/secrets.properties
