@@ -18,24 +18,32 @@ import java.util.Base64;
 import java.io.InputStream;
 
 /**
- * Motor de renderização. Funde os dados dinâmicos com o template HTML
- * e "plota" o resultado final em um arquivo PDF na memória RAM.
+ * Serviço responsável por gerar arquivos PDF a partir de templates HTML renderizados pelo Thymeleaf.
+ * Funde os dados dinâmicos do aluno e evento com o layout visual para criar o certificado final em memória.
  */
 @Service
 public class PdfService {
 
     private final SpringTemplateEngine templateEngine;
 
-    // Injeção de dependência via construtor (melhor do que @Autowired aqui)
+    /**
+     * Construtor com injeção de dependência para o motor de templates do Thymeleaf.
+     *
+     * @param templateEngine A instância do SpringTemplateEngine.
+     */
     public PdfService(SpringTemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
     }
 
     /**
-     * Gera um PDF individual para um aluno.
-     * * @param aluno Dados extraídos do CSV
-     * @param dadosEvento Dados preenchidos no frontend
-     * @return Array de bytes representando o arquivo PDF
+     * Gera o certificado em formato PDF para um participante específico em um evento.
+     * Renderiza um template HTML com as informações do aluno e evento e, em seguida,
+     * converte esse HTML em um array de bytes PDF usando o Flying Saucer.
+     *
+     * @param aluno Os dados do participante (nome, RA, e-mail) a constar no certificado.
+     * @param dadosEvento Os dados do evento (nome, data, carga horária).
+     * @return Um array de bytes que representa o arquivo PDF do certificado.
+     * @throws RuntimeException Se ocorrer erro na leitura da imagem de fundo ou na geração do PDF.
      */
     public byte[] gerarCertificado(AlunoCertificado aluno, EmissaoLoteEventoRequestDTO dadosEvento) {
 

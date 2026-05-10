@@ -3,12 +3,18 @@ package br.edu.utfpr.casis.backend.dto;
 import java.time.LocalDate;
 
 /**
- * Record DTO para disparar a emissão de certificados de conclusão de gestão.
- * Não recebe arquivo, pois os dados virão do Banco de Dados.
+ * DTO (Data Transfer Object) para requisições de emissão de certificados de gestão.
+ * Este DTO é projetado para um futuro onde os dados dos membros da gestão serão
+ * obtidos a partir de um banco de dados, eliminando a necessidade de envio de arquivos.
+ *
+ * @param idDiretoria ID da diretoria para a qual os certificados serão emitidos.
+ *                    Pode ser usado para buscar os membros de uma gestão específica.
+ * @param nomeGestao Nome da gestão, por exemplo, "Gestão 2025/2026".
+ * @param dataEmissaoCustomizada Data de emissão a ser utilizada no certificado.
+ *                               Permite emissão com datas retroativas.
  */
 public record EmissaoGestaoRequestDTO(
-        // Futuramente pode receber um ID de uma diretoria específica, ou ID do aluno
         Long idDiretoria,
-        String nomeGestao, // ex: "Gestão 2025/2026"
-        LocalDate dataEmissaoCustomizada // Opcional, caso queiram emitir retroativo
+        String nomeGestao,
+        LocalDate dataEmissaoCustomizada
 ) {}

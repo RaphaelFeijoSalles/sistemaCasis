@@ -11,6 +11,10 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+/**
+ * Serviço responsável pela geração e envio de e-mails com certificados anexados.
+ * Utiliza o Thymeleaf para renderizar o corpo do e-mail e o JavaMailSender para o envio.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -19,11 +23,22 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
-    // Puxa o e-mail remetente lá do application.properties
+    /**
+     * Endereço de e-mail do remetente, configurado nas propriedades da aplicação.
+     */
     @Value("${spring.mail.username}")
     private String remetenteOficial;
 
+    /**
+     * Monta o corpo do e-mail em HTML a partir do template do Thymeleaf.
+     * Injeta as variáveis dinâmicas no template.
+     *
+     * @param nomeAluno O nome do participante que receberá o certificado.
+     * @param nomeEvento O nome do evento para o qual o certificado foi gerado.
+     * @return O HTML do corpo do e-mail renderizado.
+     */
     public String montarCorpoEmail(String nomeAluno, String nomeEvento) {
+        log.debug("Montando o corpo do e-mail para o aluno: {} no evento: {}", nomeAluno, nomeEvento);
         Context context = new Context();
         context.setVariable("nome_aluno", nomeAluno);
         context.setVariable("nome_evento", nomeEvento);
@@ -31,7 +46,16 @@ public class EmailService {
         return templateEngine.process("certificado-email", context);
     }
 
+    /**
+     * Prepara a mensagem MIME e envia o certificado por e-mail com anexo em PDF.
+     *
+     * @param destinatario O endereço de e-mail do destinatário.
+     * @param nomeAluno O nome completo do participante (usado no corpo do e-mail e nome do anexo).
+     * @param nomeEvento O nome do evento (usado no assunto e no corpo do e-mail).
+     * @param pdfAnexo Array de bytes correspondente ao PDF gerado do certificado.
+     */
     public void enviarCertificado(String destinatario, String nomeAluno, String nomeEvento, byte[] pdfAnexo) {
+        log.info("Iniciando o envio do certificado por e-mail para: {}", destinatario);
         try {
             MimeMessage mensagem = mailSender.createMimeMessage();
 
@@ -51,10 +75,10 @@ public class EmailService {
             helper.addAttachment(nomeArquivo, new ByteArrayResource(pdfAnexo));
 
             mailSender.send(mensagem);
-            log.info("E-mail enviado com sucesso para: {}", destinatario);
+            log.info("E-mail com certificado enviado com sucesso para: {}", destinatario);
 
         } catch (Exception e) {
-            log.error("Erro fatal ao tentar enviar e-mail para: {}", destinatario, e);
+            log.error("Erro fatal ao tentar enviar e-mail para o destinatário: {}", destinatario, e);
         }
     }
 }

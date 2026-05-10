@@ -16,19 +16,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Serviço responsável por ler arquivos CSV e convertê-los na entidade padrão do sistema.
+ * Serviço responsável por processar e extrair dados de arquivos CSV.
+ * Converte as linhas do arquivo em instâncias de {@link AlunoCertificado}.
  */
 @Slf4j
 @Service
 public class CsvService {
 
     /**
-     * Processa a planilha de presença e extrai os dados fundamentais do aluno.
-     * * @param arquivoCsv Arquivo binário em memória enviado via formulário.
-     * @return Lista populada de AlunoCertificado, pronta para emissão.
+     * Extrai a lista de alunos a partir de um arquivo CSV de presença.
+     * O arquivo CSV deve conter, pelo menos, Nome e E-mail nas primeiras colunas.
+     * Opcionalmente, o RA pode estar na terceira coluna.
+     *
+     * @param arquivoCsv O arquivo CSV (MultipartFile) carregado via requisição HTTP.
+     * @return Uma lista de objetos {@link AlunoCertificado} representando os participantes.
+     * @throws RuntimeException Se ocorrer um erro durante a leitura ou processamento do arquivo.
      */
     public List<AlunoCertificado> extrairAlunos(MultipartFile arquivoCsv) {
         List<AlunoCertificado> alunos = new ArrayList<>();
+        log.info("Iniciando a extração de alunos a partir de arquivo CSV.");
 
         try (Reader reader = new InputStreamReader(arquivoCsv.getInputStream(), StandardCharsets.UTF_8);
              CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) {
@@ -36,9 +42,6 @@ public class CsvService {
             String[] linha;
             while ((linha = csvReader.readNext()) != null) {
                 if (linha.length >= 2 && !linha[0].trim().isEmpty()) {
-
-                    // Utiliza o Builder gerado pelo Lombok no AlunoCertificado
-                    // Dentro do while do CsvService:
 
                     AlunoCertificadoEvento aluno = AlunoCertificadoEvento.builder()
                             .nome(linha[0].trim())
@@ -50,7 +53,7 @@ public class CsvService {
                     alunos.add(aluno);
                 }
             }
-            log.info("Leitura de CSV concluída. {} alunos mapeados.", alunos.size());
+            log.info("Leitura de CSV concluída. {} alunos mapeados com sucesso.", alunos.size());
 
         } catch (Exception e) {
             log.error("Erro na conversão do arquivo CSV.", e);

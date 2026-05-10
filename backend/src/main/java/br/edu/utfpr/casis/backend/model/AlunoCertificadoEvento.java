@@ -6,13 +6,17 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
- * Representa um participante isolado de um evento do CA.
+ * Representa um participante de um evento que receberá um certificado.
+ * Estende a classe {@link AlunoCertificado} com informações específicas de eventos.
  */
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class AlunoCertificadoEvento extends AlunoCertificado {
-    // Para eventos, podemos adicionar o tipo de participação no futuro
-    private TipoParticipacao tipoParticipacao; // ex: "Ouvinte", "Palestrante", "Organizador"
+    /**
+     * Tipo de participação do aluno no evento.
+     * Exemplos: OUVINTE, PALESTRANTE, ORGANIZADOR.
+     */
+    private TipoParticipacao tipoParticipacao;
 }

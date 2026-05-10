@@ -18,6 +18,11 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Serviço responsável pela integração com a API do Google Drive.
+ * Gerencia a criação de pastas estruturadas (Ano-Semestre/Evento), listagem de arquivos
+ * para verificação de duplicidade e upload dos certificados gerados.
+ */
 @Slf4j
 @Service
 public class GoogleDriveService {
@@ -34,9 +39,17 @@ public class GoogleDriveService {
     @Value("${GOOGLE_DRIVE_PASTA_RAIZ_ID}")
     private String pastaRaizId;
 
+    /**
+     * Inicializa e retorna o serviço de comunicação com o Google Drive utilizando
+     * as credenciais OAuth 2.0 (Client ID, Client Secret e Refresh Token).
+     *
+     * @return Uma instância configurada de {@link Drive}.
+     * @throws Exception Se ocorrer erro na autenticação ou construção do serviço.
+     * @throws IllegalArgumentException Se o Refresh Token não estiver configurado.
+     */
     private Drive obterServico() throws Exception {
         if (refreshToken == null || refreshToken.trim().isEmpty()) {
-            throw new IllegalArgumentException("Refresh Token ausente no ambiente.");
+            throw new IllegalArgumentException("Refresh Token ausente no ambiente. Verifique as configurações (secrets.properties).");
         }
 
         UserCredentials credentials = UserCredentials.newBuilder()
@@ -51,11 +64,17 @@ public class GoogleDriveService {
     }
 
     /**
-     * Orquestra a criação da estrutura de pastas em dois níveis:
-     * Nível 1: Pasta do Semestre (Ex: "2026-1") dentro da raiz.
-     * Nível 2: Pasta do Evento (Ex: "Apadrinhamento") dentro do semestre.
+     * Orquestra a criação da estrutura de pastas no Google Drive em dois níveis hierárquicos:
+     * Nível 1: Pasta do Semestre (Ex: "2026-1") criada dentro da pasta raiz configurada.
+     * Nível 2: Pasta do Evento (Ex: "Apadrinhamento") criada dentro da pasta do semestre correspondente.
+     *
+     * @param nomeEvento Nome do evento, que será usado como nome da subpasta final.
+     * @param dataEvento Data do evento, usada para calcular o ano e semestre.
+     * @return O ID da pasta final (do evento) onde os PDFs deverão ser salvos.
+     * @throws RuntimeException Se houver falha na comunicação com o Google Drive.
      */
     public String obterOuCriarPastaEvento(String nomeEvento, LocalDate dataEvento) {
+        log.info("Resolvendo estrutura de pastas para o evento '{}' ocorrido em {}", nomeEvento, dataEvento);
         try {
             Drive driveService = obterServico();
 
@@ -64,31 +83,38 @@ public class GoogleDriveService {
 
             // 1. Define os nomes exatos das pastas
             String nomePastaSemestre = String.format("%d-%d", ano, semestre);
-            String nomePastaEvento = nomeEvento != null ? nomeEvento.trim() : "Evento";
+            String nomePastaEvento = nomeEvento != null && !nomeEvento.trim().isEmpty() ? nomeEvento.trim() : "Evento_Sem_Nome";
 
             // 2. Garante que a pasta "Ano-Semestre" (Ex: 2026-1) existe na RAIZ
             String idPastaSemestre = obterOuCriarSubpasta(driveService, nomePastaSemestre, pastaRaizId);
 
             // 3. Garante que a pasta "Evento" (Ex: Apadrinhamento) existe DENTRO do Semestre
-
             // Retorna o ID da pasta final onde os PDFs serão salvos
-            return obterOuCriarSubpasta(driveService, nomePastaEvento, idPastaSemestre);
+            String idFinal = obterOuCriarSubpasta(driveService, nomePastaEvento, idPastaSemestre);
+            log.info("ID da pasta de destino resolvido com sucesso: {}", idFinal);
+            return idFinal;
 
         } catch (Exception e) {
-            log.error("Erro ao gerir a estrutura de pastas no Google Drive", e);
+            log.error("Erro crítico ao gerir a estrutura de pastas no Google Drive", e);
             throw new RuntimeException("Falha na comunicação com o Google Drive.", e);
         }
     }
 
     /**
-     * Método auxiliar genérico que busca ou cria uma pasta dentro de um ID pai (parent) específico.
-     * Isso evita repetição de código e nos permite criar N sub-níveis no futuro.
+     * Método auxiliar genérico que busca uma pasta pelo nome exato dentro de um ID pai específico.
+     * Se a pasta não existir, ela é criada. Isso permite a criação de infinitos sub-níveis, se necessário.
+     *
+     * @param driveService Serviço instanciado do Google Drive API.
+     * @param nomePasta Nome da subpasta a ser procurada ou criada.
+     * @param parentId ID da pasta pai onde a subpasta deve estar contida.
+     * @return O ID da subpasta (encontrada ou recém-criada).
+     * @throws Exception Em caso de erros de API do Google.
      */
     private String obterOuCriarSubpasta(Drive driveService, String nomePasta, String parentId) throws Exception {
-        // Escapa aspas simples para não quebrar a Query
+        // Escapa aspas simples para não quebrar a Query de busca no Drive
         String nomePesquisa = nomePasta.replace("'", "\\'");
 
-        // Query: Procura uma pasta com este nome exato E que seja filha deste parentId específico
+        // Query: Procura uma pasta com este nome exato E que seja filha deste parentId específico (não pode estar na lixeira)
         String query = String.format("mimeType='application/vnd.google-apps.folder' and name='%s' and '%s' in parents and trashed=false",
                 nomePesquisa, parentId);
 
@@ -99,7 +125,7 @@ public class GoogleDriveService {
 
         // Se encontrou, apenas devolve o ID existente
         if (!result.getFiles().isEmpty()) {
-            log.info("Pasta '{}' encontrada no Drive.", nomePasta);
+            log.debug("Pasta '{}' encontrada no Drive.", nomePasta);
             return result.getFiles().getFirst().getId();
         }
 
@@ -116,9 +142,14 @@ public class GoogleDriveService {
     }
 
     /**
-     * Retorna um Set com todos os nomes de arquivos dentro de uma pasta para busca rápida.
+     * Lista o nome de todos os arquivos contidos em uma pasta específica do Google Drive.
+     * Utilizado para a mecânica de anti-duplicação (fallback em memória) antes da geração do PDF.
+     *
+     * @param folderId O ID da pasta cujos arquivos devem ser listados.
+     * @return Um conjunto (Set) contendo os nomes exatos de todos os arquivos encontrados na pasta.
      */
     public Set<String> listarArquivosNaPasta(String folderId) {
+        log.info("Listando arquivos existentes na pasta ID: {} para verificação de duplicidade.", folderId);
         try {
             Drive driveService = obterServico();
             String query = String.format("'%s' in parents and trashed=false", folderId);
@@ -128,19 +159,27 @@ public class GoogleDriveService {
                     .setFields("files(name)")
                     .execute();
 
-            return result.getFiles().stream()
+            Set<String> arquivos = result.getFiles().stream()
                     .map(File::getName)
                     .collect(Collectors.toSet());
+            
+            log.debug("{} arquivos encontrados na pasta.", arquivos.size());
+            return arquivos;
         } catch (Exception e) {
-            log.error("Erro ao listar arquivos da pasta {}", folderId);
+            log.error("Erro ao listar arquivos da pasta {}. A verificação de duplicidade pode falhar.", folderId, e);
             return Collections.emptySet();
         }
     }
 
     /**
-     * Efetua o upload do certificado em PDF para a pasta correta.
+     * Efetua o upload de um certificado em formato PDF para uma pasta específica do Google Drive.
+     *
+     * @param pdfBytes Array de bytes contendo o conteúdo do arquivo PDF.
+     * @param nomeFicheiro Nome final que o arquivo terá no Google Drive (Ex: "Certificado_Joao_Silva.pdf").
+     * @param folderId O ID da pasta de destino no Google Drive.
      */
     public void fazerUploadCertificado(byte[] pdfBytes, String nomeFicheiro, String folderId) {
+        log.debug("Iniciando upload do arquivo '{}' para o Drive.", nomeFicheiro);
         try {
             Drive driveService = obterServico();
             File fileMetadata = new File();
@@ -156,9 +195,9 @@ public class GoogleDriveService {
                     .setFields("id")
                     .execute();
 
-            log.info("Upload de {} concluído.", nomeFicheiro);
+            log.info("Upload de '{}' concluído com sucesso no Drive.", nomeFicheiro);
         } catch (Exception e) {
-            log.error("Erro ao enviar o ficheiro {} para o Drive.", nomeFicheiro, e);
+            log.error("Erro ao enviar o ficheiro '{}' para o Drive. Verifique a conexão e permissões.", nomeFicheiro, e);
         }
     }
 }

@@ -14,6 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Serviço central responsável por orquestrar todo o processo de emissão de certificados.
+ * Coordena a extração de dados, geração do PDF, envio por e-mail e backup no Google Drive.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,9 +29,11 @@ public class EmissaoService {
     private final GoogleDriveService driveService;
 
     /**
-     * Orquestra o fluxo de extração, geração e envio.
+     * Orquestra o fluxo de emissão de certificados em lote para um evento.
+     *
+     * @param requestDTO DTO contendo os dados do evento e a fonte de dados (CSV).
+     * @return Uma lista de resultados (relatório) contendo o status da emissão para cada participante.
      */
-
     public List<ResultadoEmissaoDTO> processarEmissao(EmissaoLoteEventoRequestDTO requestDTO) {
 
         FonteDadosCertificadoStrategy fonteDados = definirEstrategia(requestDTO);
@@ -69,6 +75,12 @@ public class EmissaoService {
         return relatorio;
     }
 
+    /**
+     * Processa a emissão de um certificado individual (unitário).
+     *
+     * @param dto DTO contendo os dados do evento e do participante único.
+     * @return O resultado detalhado da emissão.
+     */
     public ResultadoEmissaoDTO processarEmissaoIndividual(br.edu.utfpr.casis.backend.dto.EmissaoIndividualRequestDTO dto) {
         // 1. Cria o aluno manualmente
         AlunoCertificado aluno = br.edu.utfpr.casis.backend.model.AlunoCertificadoEvento.builder()
@@ -105,7 +117,12 @@ public class EmissaoService {
     }
 
     /**
-     * Factory Method interno: Define a estratégia baseada no que veio na requisição.
+     * Factory Method interno: Define qual estratégia de fonte de dados utilizar.
+     * Atualmente, se um CSV for fornecido, utiliza a estratégia CSV.
+     * Em versões futuras, poderá identificar se os dados vêm do Banco de Dados.
+     *
+     * @param dto DTO contendo a possível fonte de dados.
+     * @return A implementação concreta de {@link FonteDadosCertificadoStrategy}.
      */
     private FonteDadosCertificadoStrategy definirEstrategia(EmissaoLoteEventoRequestDTO dto) {
         // Se veio um arquivo, usamos a estratégia CSV (Fase 1: Eventos)

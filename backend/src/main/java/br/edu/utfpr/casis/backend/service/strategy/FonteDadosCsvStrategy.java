@@ -8,8 +8,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * Implementação da estratégia de extração de dados via arquivo CSV.
- * Utilizada majoritariamente para a emissão de certificados de Eventos isolados.
+ * Estratégia de fonte de dados que obtém os participantes a partir de um arquivo CSV.
+ * Utilizada majoritariamente para a emissão de certificados em lote para eventos.
  */
 @RequiredArgsConstructor
 public class FonteDadosCsvStrategy implements FonteDadosCertificadoStrategy {
@@ -18,8 +18,10 @@ public class FonteDadosCsvStrategy implements FonteDadosCertificadoStrategy {
     private final CsvService csvService;
 
     /**
-     * Delega a extração física do arquivo para o CsvService.
-     * * @return Lista padronizada de alunos extraída da planilha.
+     * Extrai a lista de alunos lendo o arquivo CSV fornecido, delegando a lógica
+     * de parseamento para o {@link CsvService}.
+     *
+     * @return Uma lista de instâncias de {@link AlunoCertificado}.
      */
     @Override
     public List<AlunoCertificado> obterAlunos() {
