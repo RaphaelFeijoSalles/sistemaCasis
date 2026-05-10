@@ -22,28 +22,33 @@ Thumbs.db
 /dist/
 /nbdist/
 /.nb-gradle/
+.gradle/
 
 # 2. Ignorados do Backend (Java / Spring Boot)
 /backend/target/
 /backend/build/
+/backend/out/
 /backend/.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-!**/src/main/**/build/
-!**/src/test/**/build/
+/backend/logs/
 
 # 3. Ignorados do Frontend (React / Vite)
 /frontend/node_modules/
 /frontend/dist/
 /frontend/dist-ssr/
+/frontend/build/
 /frontend/.eslintcache
 /frontend/npm-debug.log*
 /frontend/yarn-debug.log*
 /frontend/yarn-error.log*
+/frontend/pnpm-debug.log*
 
 # 4. Variáveis de Ambiente e Segredos (CRÍTICO)
-# Nunca suba arquivos de configuração locais ou senhas do CASIS
+# Nunca suba arquivos de configuração locais ou senhas do CASIS para o repositório.
 /frontend/.env
 /frontend/.env.local
 /frontend/.env.*.local
 /backend/src/main/resources/secrets.properties
+/backend/src/main/resources/application-local.properties
+*.pem
+*.key
+*.log

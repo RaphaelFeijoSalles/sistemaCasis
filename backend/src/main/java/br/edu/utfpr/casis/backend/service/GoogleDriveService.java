@@ -31,7 +31,7 @@ public class GoogleDriveService {
     @Value("${GOOGLE_REFRESH_TOKEN}")
     private String refreshToken;
 
-    @Value("${google.drive.pasta.raiz.id}")
+    @Value("${GOOGLE_DRIVE_PASTA_RAIZ_ID}")
     private String pastaRaizId;
 
     private Drive obterServico() throws Exception {
