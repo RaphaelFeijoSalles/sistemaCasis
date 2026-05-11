@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html","k":"18"},{"l":"br.edu.utfpr.casis.backend"},{"l":"br.edu.utfpr.casis.backend.controller"},{"l":"br.edu.utfpr.casis.backend.dto"},{"l":"br.edu.utfpr.casis.backend.model"},{"l":"br.edu.utfpr.casis.backend.service"},{"l":"br.edu.utfpr.casis.backend.service.strategy"}];updateSearchResults();

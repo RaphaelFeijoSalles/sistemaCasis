@@ -1,0 +1,6 @@
+br.edu.utfpr.casis.backend
+br.edu.utfpr.casis.backend.controller
+br.edu.utfpr.casis.backend.dto
+br.edu.utfpr.casis.backend.model
+br.edu.utfpr.casis.backend.service
+br.edu.utfpr.casis.backend.service.strategy
