@@ -7,6 +7,12 @@
   <a href="https://sistema-casis.vercel.app/" target="_blank">
     <img src="https://img.shields.io/badge/Acessar_Aplicação-Produção-success?style=for-the-badge&logo=vercel" alt="Acessar Aplicação" />
   </a>
+  <a href="https://sistemacasis.onrender.com/swagger-ui/index.html" target="_blank">
+    <img src="https://img.shields.io/badge/Swagger-Documentação_da_API-85EA2D?style=for-the-badge&logo=swagger&logoColor=black" alt="Swagger API" />
+  </a>
+  <a href="https://raphaelfeijosalles.github.io/sistemaCasis/" target="_blank">
+    <img src="https://img.shields.io/badge/JavaDoc-Documentação_do_Código-ED8B00?style=for-the-badge&logo=java&logoColor=white" alt="JavaDoc" />
+  </a>
   <br><br>
 
   <p>
