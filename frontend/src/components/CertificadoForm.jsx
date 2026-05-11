@@ -73,11 +73,9 @@ export default function CertificadoForm({
                                 type="email" 
                                 name="emailParticipante" 
                                 required 
-                                placeholder="nome@alunos.utfpr.edu.br" 
+                                placeholder="exemplo@email.com"
                                 value={formData.emailParticipante} 
                                 onChange={handleInputChange}
-                                pattern=".+@alunos\.utfpr\.edu\.br"
-                                title="O e-mail deve ser do domínio @alunos.utfpr.edu.br"
                             />
                         </div>
                         <div className="form-group" style={{ flex: 1 }}>
