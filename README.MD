@@ -39,7 +39,7 @@
   * ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=flat&logo=css3&logoColor=white) CSS puro focado na performance e seguindo o Design System CASIS.
   * ![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=flat&logo=vercel&logoColor=white) Hospedagem de Produção.
 * **Backend:** 
-  * ![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=flat&logo=openjdk&logoColor=white) **25** + ![Spring Boot](https://img.shields.io/badge/spring_boot-%236DB33F.svg?style=flat&logo=spring&logoColor=white) **3**: Base sólida, segura e padronizada para a API REST.
+  * ![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=flat&logo=openjdk&logoColor=white) **25** + ![Spring Boot](https://img.shields.io/badge/spring_boot-%236DB33F.svg?style=flat&logo=spring&logoColor=white) **4**: Base sólida, segura e padronizada para a API REST.
   * ![Thymeleaf](https://img.shields.io/badge/Thymeleaf-%23005C0F.svg?style=flat&logo=Thymeleaf&logoColor=white) Motor de templates para renderizar HTML (certificados e e-mails) injetando as variáveis dinâmicas.
   * **Flying Saucer:** Conversão precisa do HTML (gerado pelo Thymeleaf) para PDF.
   * **JavaMailSender:** Envio de e-mails via protocolo SMTP.
@@ -49,6 +49,55 @@
 ---
 
 ## 🔄 Entendendo o Fluxo Completo de Geração
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cliente as Interface Web
+    participant Controller as CertificadoController
+    participant Servico as EmissaoService
+    participant Estrategia as FonteDadosCsvStrategy
+    participant Csv as CsvService
+    participant Drive as GoogleDriveService
+    participant Pdf as PdfService
+    participant Email as EmailService
+
+    Cliente->>Controller: POST /emitir-lote (Arquivo CSV + Dados Evento)
+    Controller->>Servico: processarEmissao(EmissaoLoteEventoRequestDTO)
+    
+    Servico->>Estrategia: definirEstrategia() & obterAlunos()
+    Estrategia->>Csv: extrairAlunos(arquivoCsv)
+    Csv-->>Estrategia: List<AlunoCertificado>
+    Estrategia-->>Servico: List<AlunoCertificado>
+    
+    Note over Servico,Drive: Preparação e Otimização
+    Servico->>Drive: obterOuCriarPastaEvento(nomeEvento, data)
+    Drive-->>Servico: folderId (ID da pasta no Drive)
+    Servico->>Drive: listarArquivosNaPasta(folderId)
+    Drive-->>Servico: Set<String> arquivosExistentes
+    
+    loop Para cada AlunoCertificado na Lista
+        alt Certificado já existe no Set de arquivos (Drive)?
+            Servico->>Servico: Adiciona ResultadoEmissao (EXISTENTE)
+        else Certificado Inédito
+            Servico->>Pdf: gerarCertificado(aluno, dadosEvento)
+            Note right of Pdf: Thymeleaf renderiza HTML<br/>Flying Saucer cria PDF em memória
+            Pdf-->>Servico: byte[] pdfGerado
+            
+            Servico->>Email: enviarCertificado(email, nome, evento, byte[])
+            Note right of Email: Thymeleaf renderiza corpo do email<br/>JavaMailSender despacha com anexo
+            Email-->>Servico: Confirmação de envio (OK)
+            
+            Servico->>Drive: fazerUploadCertificado(byte[], nomePdf, folderId)
+            Drive-->>Servico: Confirmação de Backup
+            
+            Servico->>Servico: Adiciona ResultadoEmissao (SUCESSO)
+        end
+    end
+    
+    Servico-->>Controller: List<ResultadoEmissaoDTO> (Relatório Final)
+    Controller-->>Cliente: HTTP 200 OK (JSON com o Resumo)
+```
 
 1. **Fonte de Dados:**
    * **Via Planilha (Lote):** O usuário faz upload de um CSV com os dados dos participantes (Nome, E-mail, etc.).
