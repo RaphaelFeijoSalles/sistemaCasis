@@ -42,7 +42,7 @@
   * ![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=flat&logo=openjdk&logoColor=white) **25** + ![Spring Boot](https://img.shields.io/badge/spring_boot-%236DB33F.svg?style=flat&logo=spring&logoColor=white) **4**: Base sólida, segura e padronizada para a API REST.
   * ![Thymeleaf](https://img.shields.io/badge/Thymeleaf-%23005C0F.svg?style=flat&logo=Thymeleaf&logoColor=white) Motor de templates para renderizar HTML (certificados e e-mails) injetando as variáveis dinâmicas.
   * **Flying Saucer:** Conversão precisa do HTML (gerado pelo Thymeleaf) para PDF.
-  * **JavaMailSender:** Envio de e-mails via protocolo SMTP.
+  * **Gmail API:** Envio transacional de e-mails via HTTP REST (bypassing bloqueios SMTP do Render) encapsulando HTML e anexos em Base64.
   * ![Google Drive](https://img.shields.io/badge/Google%20Drive-4285F4?style=flat&logo=googledrive&logoColor=white) Integração via API Client para criação de pastas e backup dos certificados gerados.
   * ![Google Sheets](https://img.shields.io/badge/Google%20Sheets-34A853?style=flat&logo=googlesheets&logoColor=white) Integração via API Client para registro tabular da emissão em dupla camada de controle.
   * ![Render](https://img.shields.io/badge/Render-%2346E3B7.svg?style=flat&logo=render&logoColor=white) Hospedagem de Produção.
@@ -111,7 +111,7 @@ sequenceDiagram
 3. **Geração do PDF:** O HTML renderizado é transformado em PDF usando o **Flying Saucer**.
 4. **Verificação Anti-Duplicação:** O sistema consulta o Google Drive na pasta específica do evento para verificar se o PDF de um participante já existe. Se existir, pula a geração/envio.
 5. **Backup na Nuvem:** O novo PDF é upado para o Google Drive na estrutura de pastas correta.
-6. **Envio de E-mail:** O PDF é anexado e enviado por e-mail (usando outro template Thymeleaf para o corpo da mensagem) via **JavaMailSender** personalizado para cada participante.
+6. **Envio de E-mail:** O PDF é anexado, montado em formato MIME e disparado via **API REST do Gmail** (requisição HTTP segura na porta 443).
 7. **Registro de Controle (Dupla Camada):** Os dados da emissão (Nome, RA, Curso, etc.) são registrados sequencialmente como uma nova linha em uma planilha centralizada no Google Sheets.
 
 ---
@@ -150,7 +150,7 @@ Para testar livremente, desenvolver novas features ou estudar a arquitetura do p
 **Passo 3: Gerar o Refresh Token**
 1. Acesse o [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/).
 2. Clique na engrenagem (Configurações), marque "Use your own OAuth credentials" e cole seu Client ID e Client Secret.
-3. No Passo 1 (esquerda), cole os escopos separados por espaço: `https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets` e clique em "Authorize APIs". Aceite os termos com sua conta Google.
+3. No Passo 1 (esquerda), cole os escopos separados por espaço: `https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.send` e clique em "Authorize APIs". Aceite os termos com sua conta Google.
 4. No Passo 2, clique em "Exchange authorization code for tokens".
 5. Copie o **Refresh Token** gerado e cole na chave `GOOGLE_REFRESH_TOKEN` do seu `secrets.properties`.
 
@@ -158,7 +158,7 @@ Para testar livremente, desenvolver novas features ou estudar a arquitetura do p
 1. Crie uma pasta vazia no seu Google Drive pessoal (ex: "Testes CASIS").
 2. Abra a pasta e copie o ID que aparece na URL (após `folders/`). Cole na chave `GOOGLE_DRIVE_PASTA_RAIZ_ID` do `secrets.properties`.
 3. Crie uma planilha vazia no seu Google Sheets (para os testes da dupla camada de controle). Copie o ID da planilha (entre `/d/` e `/edit` na URL) e cole na chave `GOOGLE_SHEETS_PLANILHA_ID`.
-4. Para envio de e-mails, você pode usar seu próprio Gmail. Nas configurações da sua conta Google, ative a verificação em duas etapas e gere uma **Senha de App**. Cole seu e-mail e essa senha de 16 dígitos nas chaves `spring.mail.username` e `spring.mail.password` no `secrets.properties`.
+4. Para envio de e-mails, o sistema usará a API do Google através do Refresh Token gerado. Basta definir o seu e-mail na chave `spring.mail.username` do `secrets.properties` (ele será usado como remetente visível e assinatura no template).
 5. Defina um valor qualquer para `API_SECRET` no `secrets.properties` e no arquivo `.env` do seu frontend.
 
 Pronto! Ao rodar a aplicação, todas as integrações ocorrerão no seu Drive e e-mail pessoais.
