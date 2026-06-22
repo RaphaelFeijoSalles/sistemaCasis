@@ -27,6 +27,7 @@ public class EmissaoService {
     private final PdfService pdfService;
     private final EmailService emailService;
     private final GoogleDriveService driveService;
+    private final GoogleSheetsService sheetsService;
 
     /**
      * Orquestra o fluxo de emissão de certificados em lote para um evento.
@@ -63,6 +64,9 @@ public class EmissaoService {
                 byte[] pdf = pdfService.gerarCertificado(aluno, requestDTO);
                 emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), requestDTO.nomeEvento(), pdf);
                 driveService.fazerUploadCertificado(pdf, nomePdf, folderId);
+                
+                // Registra na planilha de controle
+                sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), null, requestDTO.dataRealizacao(), requestDTO.nomeEvento(), requestDTO.cargaHoraria());
 
                 relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), StatusEmissao.SUCESSO, null));
 
@@ -108,6 +112,9 @@ public class EmissaoService {
             byte[] pdf = pdfService.gerarCertificado(aluno, loteDto);
             emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), dto.nomeEvento(), pdf);
             driveService.fazerUploadCertificado(pdf, nomePdf, folderId);
+            
+            // Registra na planilha de controle
+            sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), null, dto.dataRealizacao(), dto.nomeEvento(), dto.cargaHoraria());
 
             return new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), br.edu.utfpr.casis.backend.dto.StatusEmissao.SUCESSO, null);
         } catch (Exception e) {
