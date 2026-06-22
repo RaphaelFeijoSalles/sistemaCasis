@@ -79,6 +79,7 @@ public class EmailService {
 
         } catch (Exception e) {
             log.error("Erro fatal ao tentar enviar e-mail para o destinatário: {}", destinatario, e);
+            throw new RuntimeException("Erro fatal ao tentar enviar e-mail para o destinatário: " + destinatario, e);
         }
     }
 }
