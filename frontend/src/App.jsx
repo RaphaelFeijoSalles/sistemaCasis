@@ -3,6 +3,7 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import CertificadoForm from './components/CertificadoForm';
 import RelatorioEmissao from './components/RelatorioEmissao';
+import AjudaEmissao from './components/AjudaEmissao';
 import './App.css';
 
 function App() {
@@ -62,7 +63,8 @@ function App() {
 
   return (
       <>
-        <div className="casis-container">
+        <div className="main-wrapper">
+          <div className="casis-container">
           <Toaster position="top-right" />
 
           <div className="header">
@@ -81,6 +83,8 @@ function App() {
           ) : (
               <RelatorioEmissao resultados={resultados} onReset={resetForm} />
           )}
+          </div>
+          {!resultados && <AjudaEmissao emissaoTipo={emissaoTipo} />}
         </div>
 
         <footer className="casis-footer">

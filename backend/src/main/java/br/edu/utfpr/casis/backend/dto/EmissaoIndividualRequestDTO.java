@@ -16,7 +16,7 @@ import java.time.LocalDate;
 public record EmissaoIndividualRequestDTO(
         String nomeEvento,
         LocalDate dataRealizacao,
-        Integer cargaHoraria,
+        Double cargaHoraria,
         String nomeParticipante,
         String emailParticipante,
         String raParticipante

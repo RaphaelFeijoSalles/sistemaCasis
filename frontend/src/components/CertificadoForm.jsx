@@ -22,6 +22,18 @@ export default function CertificadoForm({
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'text/csv': ['.csv'] }, maxFiles: 1 });
 
+    const formatarTempoTexto = (valor) => {
+        const num = parseFloat(valor);
+        if (isNaN(num) || num <= 0) return "";
+        const minutosTotais = Math.round(num * 60);
+        const h = Math.floor(minutosTotais / 60);
+        const m = minutosTotais % 60;
+        let texto = "";
+        if (h > 0) texto += `${h} hora${h > 1 ? 's' : ''}`;
+        if (m > 0) texto += `${h > 0 ? ' e ' : ''}${m} minuto${m > 1 ? 's' : ''}`;
+        return texto;
+    };
+
     return (
         <form onSubmit={onSubmit}>
             {/* O Toggle de Seleção */}
@@ -46,7 +58,12 @@ export default function CertificadoForm({
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                     <label>Carga Horária (Horas)</label>
-                    <input type="number" name="cargaHoraria" required min="1" placeholder="Ex: 2" value={formData.cargaHoraria} onChange={handleInputChange}/>
+                    <input type="number" name="cargaHoraria" step="0.5" required min="0.5" placeholder="Ex: 1.5 para 1h30m" value={formData.cargaHoraria} onChange={handleInputChange}/>
+                    {formData.cargaHoraria && (
+                        <small style={{ color: 'var(--success)', display: 'block', marginTop: '6px' }}>
+                            Sairá como: <strong>{formatarTempoTexto(formData.cargaHoraria)}</strong>
+                        </small>
+                    )}
                 </div>
             </div>
 

@@ -158,7 +158,7 @@ Para testar livremente, desenvolver novas features ou estudar a arquitetura do p
 1. Crie uma pasta vazia no seu Google Drive pessoal (ex: "Testes CASIS").
 2. Abra a pasta e copie o ID que aparece na URL (após `folders/`). Cole na chave `GOOGLE_DRIVE_PASTA_RAIZ_ID` do `secrets.properties`.
 3. Crie uma planilha vazia no seu Google Sheets (para os testes da dupla camada de controle). Copie o ID da planilha (entre `/d/` e `/edit` na URL) e cole na chave `GOOGLE_SHEETS_PLANILHA_ID`.
-4. Para envio de e-mails, o sistema usará a API do Google através do Refresh Token gerado. Basta definir o seu e-mail na chave `spring.mail.username` do `secrets.properties` (ele será usado como remetente visível e assinatura no template).
+4. Para envio de e-mails, o sistema usará a API do Google através do Refresh Token gerado. Basta definir o seu e-mail na chave `email.casis` do `secrets.properties` (ele será usado como remetente visível e assinatura no template).
 5. Defina um valor qualquer para `API_SECRET` no `secrets.properties` e no arquivo `.env` do seu frontend.
 
 Pronto! Ao rodar a aplicação, todas as integrações ocorrerão no seu Drive e e-mail pessoais.
