@@ -44,7 +44,7 @@ public class EmailService {
     /**
      * E-mail de contato, usado para assinatura no corpo do HTML.
      */
-    @Value("${spring.mail.username}")
+    @Value("${email.casis}")
     private String remetenteOficial;
 
     /**
