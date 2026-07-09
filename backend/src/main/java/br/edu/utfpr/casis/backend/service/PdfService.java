@@ -51,7 +51,7 @@ public class PdfService {
         Context context = new Context();
         context.setVariable("nomeAluno", aluno.getNome());
         context.setVariable("nomeEvento", dadosEvento.nomeEvento());
-        context.setVariable("cargaHoraria", dadosEvento.cargaHoraria());
+        context.setVariable("cargaHoraria", CargaHorariaFormatter.formatarTexto(dadosEvento.cargaHoraria()));
 
         // Formata a data de realização (Ex: 15 de Março de 2026)
         DateTimeFormatter diaMesAno = DateTimeFormatter.ofPattern("dd' de 'MMMM' de 'yyyy", Locale.of("pt", "BR"));

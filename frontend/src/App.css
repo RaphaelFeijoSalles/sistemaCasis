@@ -22,6 +22,17 @@
   background-attachment: fixed; /* A cobra não rola junto com a página */
 }
 
+/* Wrapper para alinhar form e ajuda lado a lado no desktop */
+.main-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1100px;
+}
+
 /* Container Principal (O "Cartão" do Formulário/Tabela) */
 .casis-container {
   background-color: var(--panel-dark);

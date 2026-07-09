@@ -74,7 +74,7 @@ public class GoogleSheetsService {
      * @param evento Nome do evento.
      * @param cargaHoraria Carga horária do evento.
      */
-    public void registrarEmissao(String nome, String ra, String curso, LocalDate dataEvento, String evento, Integer cargaHoraria) {
+    public void registrarEmissao(String nome, String ra, String curso, LocalDate dataEvento, String evento, Double cargaHoraria) {
         log.debug("Iniciando registro na planilha para o aluno: {}", nome);
         
         try {
@@ -87,6 +87,8 @@ public class GoogleSheetsService {
             String raFinal = (ra != null && !ra.isEmpty()) ? ra : "N/A";
             String cursoFinal = (curso != null && !curso.isEmpty()) ? curso : "Sistemas de Informação"; 
 
+            String cargaHorariaFormatada = CargaHorariaFormatter.formatarDuracaoPlanilha(cargaHoraria);
+
             // Mapeia as colunas nesta exata ordem: nome | ra | curso | data_evento | evento | carga_horaria
             List<Object> rowData = Arrays.asList(
                     nome,
@@ -94,7 +96,7 @@ public class GoogleSheetsService {
                     cursoFinal,
                     dataFormatada,
                     evento,
-                    cargaHoraria
+                    cargaHorariaFormatada
             );
 
             ValueRange body = new ValueRange().setValues(Collections.singletonList(rowData));

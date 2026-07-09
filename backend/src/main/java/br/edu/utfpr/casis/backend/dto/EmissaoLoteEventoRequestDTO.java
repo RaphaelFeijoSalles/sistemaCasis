@@ -15,6 +15,6 @@ import java.time.LocalDate;
 public record EmissaoLoteEventoRequestDTO(
         String nomeEvento,
         LocalDate dataRealizacao,
-        Integer cargaHoraria,
+        Double cargaHoraria,
         MultipartFile arquivoCsv
 ) {}

@@ -1,0 +1,108 @@
+.caixa-ajuda-desktop {
+  background-color: var(--panel-dark);
+  border-left: 4px solid var(--accent-primary);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  max-width: 350px;
+  height: fit-content;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.conteudo-ajuda h3 {
+  color: var(--text-primary);
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+  font-size: 1.2rem;
+}
+
+.conteudo-ajuda h4 {
+  color: var(--accent-primary);
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.conteudo-ajuda p, .conteudo-ajuda ul, .conteudo-ajuda ol {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.conteudo-ajuda ul, .conteudo-ajuda ol {
+  padding-left: 20px;
+  margin-bottom: 20px;
+}
+
+.conteudo-ajuda li {
+  margin-bottom: 8px;
+}
+
+.conteudo-ajuda code {
+  background: rgba(255,255,255,0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.btn-ajuda-mobile {
+  background-color: rgba(255,255,255,0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 12px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  width: 90%;
+  max-width: 600px;
+  margin: 0 auto;
+  transition: all 0.2s;
+}
+
+.btn-ajuda-mobile:hover {
+  background-color: rgba(255,255,255,0.1);
+  border-color: var(--accent-primary);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--panel-dark);
+  padding: 25px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 450px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  border-top: 4px solid var(--accent-primary);
+}
+
+.btn-fechar {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.btn-fechar:hover {
+  color: var(--error);
+}

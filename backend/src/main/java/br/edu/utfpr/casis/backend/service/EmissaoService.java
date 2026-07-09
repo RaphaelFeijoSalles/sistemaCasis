@@ -1,5 +1,6 @@
 package br.edu.utfpr.casis.backend.service;
 
+import br.edu.utfpr.casis.backend.dto.EmissaoIndividualRequestDTO;
 import br.edu.utfpr.casis.backend.dto.EmissaoLoteEventoRequestDTO;
 import br.edu.utfpr.casis.backend.dto.ResultadoEmissaoDTO;
 import br.edu.utfpr.casis.backend.dto.StatusEmissao;
@@ -85,7 +86,7 @@ public class EmissaoService {
      * @param dto DTO contendo os dados do evento e do participante único.
      * @return O resultado detalhado da emissão.
      */
-    public ResultadoEmissaoDTO processarEmissaoIndividual(br.edu.utfpr.casis.backend.dto.EmissaoIndividualRequestDTO dto) {
+    public ResultadoEmissaoDTO processarEmissaoIndividual(EmissaoIndividualRequestDTO dto) {
         // 1. Cria o aluno manualmente
         AlunoCertificado aluno = br.edu.utfpr.casis.backend.model.AlunoCertificadoEvento.builder()
                 .nome(dto.nomeParticipante().trim())
