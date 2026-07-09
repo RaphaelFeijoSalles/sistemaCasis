@@ -5,10 +5,14 @@ import br.edu.utfpr.casis.backend.model.AlunoCertificadoEvento;
 import br.edu.utfpr.casis.backend.model.TipoParticipacao;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import com.opencsv.CSVParserBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -51,47 +55,54 @@ public class CsvService {
         List<AlunoCertificado> alunos = new ArrayList<>();
         log.info("Iniciando a extração de alunos a partir de arquivo CSV.");
 
-        try (Reader reader = new InputStreamReader(arquivoCsv.getInputStream(), StandardCharsets.UTF_8);
-             CSVReader csvReader = new CSVReaderBuilder(reader).build()) {
+        try {
+            byte[] conteudoCsv = arquivoCsv.getBytes();
+            char delimitador = identificarDelimitador(conteudoCsv);
 
-            // 1. Ler a primeira linha (Cabeçalho)
-            String[] cabecalho = csvReader.readNext();
-            if (cabecalho == null || cabecalho.length == 0) {
-                throw new IllegalArgumentException("O arquivo CSV está vazio ou sem cabeçalho.");
-            }
+            try (Reader reader = new InputStreamReader(new ByteArrayInputStream(conteudoCsv), StandardCharsets.UTF_8);
+                 CSVReader csvReader = new CSVReaderBuilder(reader)
+                         .withCSVParser(new CSVParserBuilder().withSeparator(delimitador).build())
+                         .build()) {
 
-            // 2. Mapear as posições dinamicamente
-            HeaderMap map = mapearCabecalhos(cabecalho);
-            if (!map.isValido()) {
-                throw new IllegalArgumentException("Cabeçalho inválido. Não foi possível identificar as colunas de 'Nome' e 'E-mail'.");
-            }
+                // 1. Ler a primeira linha (Cabeçalho)
+                String[] cabecalho = csvReader.readNext();
+                if (cabecalho == null || cabecalho.length == 0) {
+                    throw new IllegalArgumentException("O arquivo CSV está vazio ou sem cabeçalho.");
+                }
 
-            // 3. Processar as linhas de dados
-            String[] linha;
-            while ((linha = csvReader.readNext()) != null) {
-                // Previne OutOfBounds caso uma linha venha incompleta
-                if (linha.length > Math.max(map.indexNome, map.indexEmail)) {
-                    String nome = linha[map.indexNome].trim();
-                    String email = linha[map.indexEmail].trim();
-                    
-                    String ra = null;
-                    if (map.indexRa != -1 && linha.length > map.indexRa) {
-                        ra = linha[map.indexRa].trim();
-                    }
+                // 2. Mapear as posições dinamicamente
+                HeaderMap map = mapearCabecalhos(cabecalho);
+                if (!map.isValido()) {
+                    throw new IllegalArgumentException("Cabeçalho inválido. Não foi possível identificar as colunas de 'Nome' e 'E-mail'.");
+                }
 
-                    if (!nome.isEmpty() && !email.isEmpty()) {
-                        AlunoCertificadoEvento aluno = AlunoCertificadoEvento.builder()
-                                .nome(nome)
-                                .email(email)
-                                .ra(ra)
-                                .tipoParticipacao(TipoParticipacao.OUVINTE) // Valor padrão para emissões em lote de forms comuns
-                                .build();
+                // 3. Processar as linhas de dados
+                String[] linha;
+                while ((linha = csvReader.readNext()) != null) {
+                    // Previne OutOfBounds caso uma linha venha incompleta
+                    if (linha.length > Math.max(map.indexNome, map.indexEmail)) {
+                        String nome = linha[map.indexNome].trim();
+                        String email = linha[map.indexEmail].trim();
 
-                        alunos.add(aluno);
+                        String ra = null;
+                        if (map.indexRa != -1 && linha.length > map.indexRa) {
+                            ra = linha[map.indexRa].trim();
+                        }
+
+                        if (!nome.isEmpty() && !email.isEmpty()) {
+                            AlunoCertificadoEvento aluno = AlunoCertificadoEvento.builder()
+                                    .nome(nome)
+                                    .email(email)
+                                    .ra(ra)
+                                    .tipoParticipacao(TipoParticipacao.OUVINTE) // Valor padrão para emissões em lote de forms comuns
+                                    .build();
+
+                            alunos.add(aluno);
+                        }
                     }
                 }
+                log.info("Leitura de CSV concluída. {} alunos mapeados com sucesso.", alunos.size());
             }
-            log.info("Leitura de CSV concluída. {} alunos mapeados com sucesso.", alunos.size());
 
         } catch (Exception e) {
             log.error("Erro na conversão do arquivo CSV.", e);
@@ -99,6 +110,48 @@ public class CsvService {
         }
 
         return alunos;
+    }
+
+    private char identificarDelimitador(byte[] conteudoCsv) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(conteudoCsv), StandardCharsets.UTF_8))) {
+            String linha;
+            while ((linha = reader.readLine()) != null) {
+                if (linha.trim().isEmpty()) {
+                    continue;
+                }
+
+                int ocorrenciasPontoVirgula = contarDelimitadores(linha, ';');
+                int ocorrenciasVirgula = contarDelimitadores(linha, ',');
+                char delimitador = ocorrenciasPontoVirgula > ocorrenciasVirgula ? ';' : ',';
+
+                log.info("Delimitador CSV identificado: '{}'", delimitador);
+                return delimitador;
+            }
+        }
+
+        return ',';
+    }
+
+    private int contarDelimitadores(String linha, char delimitador) {
+        int ocorrencias = 0;
+        boolean dentroDeAspas = false;
+
+        for (int i = 0; i < linha.length(); i++) {
+            char caractere = linha.charAt(i);
+
+            if (caractere == '"') {
+                boolean aspasEscapadas = dentroDeAspas && i + 1 < linha.length() && linha.charAt(i + 1) == '"';
+                if (aspasEscapadas) {
+                    i++;
+                } else {
+                    dentroDeAspas = !dentroDeAspas;
+                }
+            } else if (caractere == delimitador && !dentroDeAspas) {
+                ocorrencias++;
+            }
+        }
+
+        return ocorrencias;
     }
 
     /**
@@ -153,7 +206,7 @@ public class CsvService {
      */
     private String normalizarString(String str) {
         if (str == null) return "";
-        String minuscula = str.trim().toLowerCase();
+        String minuscula = str.replace("\uFEFF", "").trim().toLowerCase();
         // Normaliza e remove os diacríticos (acentos, cedilha, etc)
         return Normalizer.normalize(minuscula, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "");
