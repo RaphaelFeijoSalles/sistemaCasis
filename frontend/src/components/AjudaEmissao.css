@@ -36,7 +36,6 @@
 
 .btn-ajuda-desktop-floating {
   align-items: center;
-  align-self: flex-start;
   background: var(--panel-dark);
   border: 1px solid rgba(42, 107, 101, 0.55);
   border-left: 4px solid var(--accent-primary);
@@ -54,7 +53,9 @@
   opacity: 1;
   overflow: hidden;
   padding: 0.7rem 0.9rem;
-  position: relative;
+  position: absolute;
+  right: clamp(0.25rem, 2vw, 1.25rem);
+  top: var(--help-button-top, 0);
   transform: translateX(0);
   transition:
     opacity 180ms ease 110ms,

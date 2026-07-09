@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import CertificadoForm from './components/CertificadoForm';
@@ -205,6 +205,8 @@ const contarStatus = (resultados) => ({
 });
 
 function App() {
+  const mainWrapperRef = useRef(null);
+  const casisContainerRef = useRef(null);
   const [formData, setFormData] = useState({
     nomeEvento: '', dataRealizacao: '', cargaHoraria: '',
     nomeParticipante: '', emailParticipante: '', raParticipante: ''
@@ -214,6 +216,29 @@ function App() {
   const [resultados, setResultados] = useState(null);
   const [apiKey, setApiKey] = useState(localStorage.getItem('casis_api_key') || '');
   const [emissaoTipo, setEmissaoTipo] = useState('lote');
+  const [helpButtonTop, setHelpButtonTop] = useState(0);
+
+  useLayoutEffect(() => {
+    const updateHelpButtonTop = () => {
+      if (!mainWrapperRef.current || !casisContainerRef.current) return;
+
+      const wrapperTop = mainWrapperRef.current.getBoundingClientRect().top;
+      const containerTop = casisContainerRef.current.getBoundingClientRect().top;
+      setHelpButtonTop(Math.max(0, Math.round(containerTop - wrapperTop)));
+    };
+
+    updateHelpButtonTop();
+
+    const resizeObserver = new ResizeObserver(updateHelpButtonTop);
+    if (mainWrapperRef.current) resizeObserver.observe(mainWrapperRef.current);
+    if (casisContainerRef.current) resizeObserver.observe(casisContainerRef.current);
+
+    window.addEventListener('resize', updateHelpButtonTop);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateHelpButtonTop);
+    };
+  }, [arquivoCsv, emissaoTipo, formData.cargaHoraria, resultados]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -295,8 +320,12 @@ function App() {
 
   return (
       <>
-        <div className="main-wrapper">
-          <div className="casis-container">
+        <div
+            className="main-wrapper"
+            ref={mainWrapperRef}
+            style={{ '--help-button-top': `${helpButtonTop}px` }}
+        >
+          <div className="casis-container" ref={casisContainerRef}>
           <Toaster position="top-right" />
 
           <div className="header">
