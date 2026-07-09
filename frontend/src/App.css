@@ -3,14 +3,17 @@
    ========================================================================== */
 #root {
   width: 100%;
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 0;
 
   /* Flexbox para centralizar tudo na tela */
   display: flex;
   flex-direction: column; /* FIX: Garante que o footer fique ABAIXO do form, e não ao lado */
   justify-content: center;
   align-items: center;
-  gap: 2rem; /* Espaço de respiro entre o container do form e o footer */
+  gap: 0.75rem; /* Espaço de respiro entre o container do form e o footer */
+  padding: 0.75rem;
+  overflow: hidden;
 
   position: relative;
 
@@ -25,22 +28,29 @@
 /* Wrapper para alinhar form e ajuda lado a lado no desktop */
 .main-wrapper {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 20px;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
-  max-width: 1100px;
+  max-width: min(1180px, 100%);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
 }
 
 /* Container Principal (O "Cartão" do Formulário/Tabela) */
 .casis-container {
   background-color: var(--panel-dark);
-  padding: 2.5rem;
+  padding: 1.75rem 2rem;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); /* Sombra profunda para destacar do fundo */
-  width: 90%;
-  max-width: 600px; /* Não deixa o form esticar infinitamente em telas ultrawide */
+  width: 100%;
+  max-width: 560px; /* Não deixa o form esticar infinitamente em telas ultrawide */
+  flex: 0 1 560px;
+  max-height: none;
+  overflow: visible;
   border-top: 4px solid var(--accent-primary);
   z-index: 10;
   animation: fadeIn 0.3s ease-in; /* Animação de entrada suave */
@@ -51,7 +61,7 @@
    ========================================================================== */
 .header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .header h1 {
@@ -72,11 +82,11 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.8rem;
 }
 
 .form-group label {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   font-size: 0.85rem;
   font-weight: 600;
   color: #ccc;
@@ -84,7 +94,7 @@
 
 .form-group input {
   width: 100%; /* Força preenchimento, importante para inputs de data em mobile */
-  padding: 0.75rem;
+  padding: 0.66rem 0.75rem;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   background-color: var(--bg-dark);
@@ -110,6 +120,39 @@
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2); /* Halo verde no foco */
 }
 
+.form-hint,
+.field-preview,
+.file-info small,
+.dropzone-empty small {
+  color: var(--text-secondary);
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  margin-top: 0.28rem;
+}
+
+.field-preview {
+  color: var(--success);
+}
+
+.toast-message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: min(420px, 80vw);
+  line-height: 1.35;
+}
+
+.toast-message strong {
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.toast-message span {
+  color: #374151;
+  font-size: 0.85rem;
+}
+
 /* Grid de Responsividade (Lado a lado em PC, empilhado em Mobile) */
 .responsive-row {
   display: flex;
@@ -132,7 +175,7 @@
   background: rgba(0, 0, 0, 0.2);
   padding: 4px;
   border-radius: 8px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.9rem;
   border: 1px solid var(--border-color);
 }
 
@@ -174,6 +217,13 @@
   color: #888;
 }
 
+.dropzone-empty {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
 .dropzone:hover {
   border-color: var(--success);
   color: var(--success-hover);
@@ -194,6 +244,10 @@
   font-weight: bold;
 }
 
+.file-info > div {
+  min-width: 0;
+}
+
 .file-info span {
   max-width: 250px;
   overflow: hidden;
@@ -201,12 +255,33 @@
   white-space: nowrap;
 }
 
+.pending-warning {
+  align-items: flex-start;
+  border-radius: 6px;
+  display: flex;
+  gap: 0.5rem;
+  line-height: 1.35;
+}
+
+.pending-warning {
+  background: rgba(255, 202, 40, 0.08);
+  border: 1px solid rgba(255, 202, 40, 0.28);
+  color: var(--warning);
+  font-size: 0.8rem;
+  margin: -0.35rem 0 0.75rem;
+  padding: 0.58rem 0.7rem;
+}
+
+.pending-warning svg {
+  flex: 0 0 auto;
+}
+
 /* ==========================================================================
    5. BOTÕES DE AÇÃO
    ========================================================================== */
 .btn-submit {
   width: 100%;
-  padding: 0.9rem;
+  padding: 0.78rem;
   background-color: var(--accent-primary);
   color: white;
   border: none;
@@ -350,6 +425,7 @@
   font-size: 0.8rem;
   color: #666;
   z-index: 10; /* Garante que fique acima da cobra, caso ela desça muito */
+  flex: 0 0 auto;
 }
 
 .casis-footer a {
@@ -384,5 +460,87 @@
 @media (max-width: 1440px) {
   #root {
     background-image: none;
+  }
+}
+
+@media (max-width: 850px) {
+  #root {
+    gap: 0.75rem;
+    justify-content: flex-start;
+    padding: 0.75rem;
+  }
+
+  .main-wrapper {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  .casis-container {
+    width: 100%;
+    flex: 0 1 auto;
+    max-height: none;
+    padding: 1.15rem;
+  }
+
+  .header {
+    margin-bottom: 1rem;
+  }
+
+  .dropzone {
+    margin-bottom: 1rem;
+    padding: 1.15rem 1rem;
+  }
+}
+
+@media (max-width: 600px), (max-width: 850px) and (max-height: 720px) {
+  #root {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .main-wrapper {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 720px), (max-height: 720px) {
+  .casis-container {
+    padding: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 0.8rem;
+  }
+
+  .form-group input {
+    padding: 0.65rem 0.7rem;
+  }
+
+  .toggle-container {
+    margin-bottom: 0.85rem;
+  }
+
+  .pending-warning {
+    padding: 0.6rem 0.65rem;
+  }
+
+  .btn-submit {
+    padding: 0.78rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .toggle-container {
+    flex-direction: column;
+  }
+
+  .casis-footer {
+    font-size: 0.7rem;
   }
 }

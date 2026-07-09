@@ -40,12 +40,31 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
   font-family: var(--sans), sans-serif;
-  overflow-x: hidden; /* Evita barra de rolagem horizontal indesejada */
+  overflow: hidden;
 
   /* Renderização de fonte mais suave nas telas modernas */
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  height: 100%;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 600px), (max-width: 850px) and (max-height: 720px) {
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body.modal-open {
+    overflow: hidden;
+  }
 }
 
 /* ==========================================================================
