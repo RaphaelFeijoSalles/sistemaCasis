@@ -48,7 +48,12 @@ export default function AjudaEmissao({ emissaoTipo }) {
                 <li>E-mail</li>
               </ol>
             </li>
-            <li><strong>Revise:</strong> remova linhas em branco, duplicados, campos vazios, e-mails inválidos e espaços extras.</li>
+            <li><strong>Revise:</strong> exclua linhas em branco, duplicados, campos vazios, e-mails inválidos e espaços extras. Não basta limpar o conteúdo das células: apague a linha inteira para ela não ir vazia no CSV.
+              <ol>
+                <li>Google Sheets: clique no número da linha, use botão direito e escolha <strong>Excluir linha</strong>.</li>
+                <li>Excel: clique no número da linha, use botão direito e escolha <strong>Excluir</strong> ou <strong>Excluir linhas da planilha</strong>.</li>
+              </ol>
+            </li>
             <li><strong>Resultado:</strong> o lote pode terminar com sucessos, já emitidos e falhas. Confira a tabela antes de reenviar.</li>
           </ul>
         </section>
