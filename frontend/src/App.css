@@ -31,10 +31,10 @@
   flex-wrap: nowrap;
   gap: 20px;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
   max-width: min(1180px, 100%);
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
   overflow: hidden;
   position: relative;
