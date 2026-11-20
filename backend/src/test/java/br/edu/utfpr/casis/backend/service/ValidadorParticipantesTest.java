@@ -10,24 +10,99 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ValidadorParticipantesTest {
 
     private static final LocalDate DATA = LocalDate.of(2026, 11, 20);
+    private static final Double CARGA_PADRAO = 10.0;
 
     @Test
     void deveMarcarLinhaCompletaComoValida() {
-        List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345")
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", null)
         ));
 
-        assertEquals(List.of(new LinhaValidadaDTO(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", SituacaoLinha.VALIDA, List.of())), resultado);
+        assertEquals(List.of(new LinhaValidadaDTO(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345",
+                10.0, "10 horas", true, SituacaoLinha.VALIDA, List.of())), resultado);
+    }
+
+    // ---------- Horas por participante (F2) ----------
+
+    @Test
+    void deveUsarHorasDaLinhaQuandoInformadas() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", "1,5"));
+
+        assertEquals(SituacaoLinha.VALIDA, linha.situacao());
+        assertEquals(1.5, linha.horas());
+        assertEquals("1 hora e 30 minutos", linha.horasTexto());
+        assertFalse(linha.horasDoFormulario());
+    }
+
+    @Test
+    void deveUsarCargaDoFormularioSemAvisoQuandoHorasNulaOuVazia() {
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "2", ""),
+                new LinhaCsv(4, "Carla Lima", "carla@alunos.utfpr.edu.br", "3", "   ")
+        ));
+
+        for (LinhaValidadaDTO linha : resultado) {
+            assertEquals(SituacaoLinha.VALIDA, linha.situacao());
+            assertEquals(List.of(), linha.mensagens());
+            assertEquals(10.0, linha.horas());
+            assertEquals("10 horas", linha.horasTexto());
+            assertTrue(linha.horasDoFormulario());
+        }
+    }
+
+    @Test
+    void deveMarcarHorasInvalidasComoErroSemHorasNoResultado() {
+        for (String horas : List.of("abc", "0", "-2", "1:75", "1.5h")) {
+            LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", horas));
+
+            assertEquals(SituacaoLinha.ERRO, linha.situacao(), horas);
+            assertEquals(List.of("Horas inválidas: " + horas), linha.mensagens(), horas);
+            assertNull(linha.horas(), horas);
+            assertNull(linha.horasTexto(), horas);
+            assertFalse(linha.horasDoFormulario(), horas);
+        }
+    }
+
+    @Test
+    void deveAcumularErroDeHorasComErroDeEmail() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@utfpr", "12345", "abc"));
+
+        assertEquals(SituacaoLinha.ERRO, linha.situacao());
+        assertEquals(List.of("E-mail inválido: ana@utfpr", "Horas inválidas: abc"), linha.mensagens());
+    }
+
+    @Test
+    void naoDeveContarRepeticaoContraLinhaComHorasInvalidas() {
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", "abc"),
+                new LinhaCsv(3, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", "2")
+        ));
+
+        assertEquals(SituacaoLinha.ERRO, resultado.get(0).situacao());
+        assertEquals(SituacaoLinha.VALIDA, resultado.get(1).situacao());
+    }
+
+    @Test
+    void deveManterHorasNaLinhaComErroDeOutroCampo() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "ana@alunos.utfpr.edu.br", "1", "2"));
+
+        assertEquals(SituacaoLinha.ERRO, linha.situacao());
+        assertEquals(2.0, linha.horas());
+        assertEquals("2 horas", linha.horasTexto());
     }
 
     @Test
     void deveMarcarNomeVazioComoErro() {
-        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "ana@alunos.utfpr.edu.br", "12345"));
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "ana@alunos.utfpr.edu.br", "12345", null));
 
         assertEquals(SituacaoLinha.ERRO, linha.situacao());
         assertEquals(List.of("Nome não informado"), linha.mensagens());
@@ -35,7 +110,7 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveMarcarEmailVazioComoErro() {
-        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "", "12345"));
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "", "12345", null));
 
         assertEquals(SituacaoLinha.ERRO, linha.situacao());
         assertEquals(List.of("E-mail não informado"), linha.mensagens());
@@ -44,7 +119,7 @@ class ValidadorParticipantesTest {
     @Test
     void deveMarcarEmailForaDoPadraoComoErro() {
         for (String email : List.of("ana", "ana@utfpr", "ana silva@utfpr.edu.br", "@utfpr.edu.br")) {
-            LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", email, "12345"));
+            LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", email, "12345", null));
 
             assertEquals(SituacaoLinha.ERRO, linha.situacao(), email);
             assertEquals(List.of("E-mail inválido: " + email), linha.mensagens(), email);
@@ -53,7 +128,7 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveListarTodosOsErrosESemAvisoDeRaNaLinhaComErro() {
-        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "", null));
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "", null, null));
 
         assertEquals(SituacaoLinha.ERRO, linha.situacao());
         assertEquals(List.of("Nome não informado", "E-mail não informado"), linha.mensagens());
@@ -61,10 +136,10 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveMarcarEmailRepetidoComoErroSemDiferenciarMaiusculas() {
-        List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "Ana@Alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(3, "Ana S.", "ana@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(4, "Ana", "ANA@ALUNOS.UTFPR.EDU.BR", "1")
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "Ana@Alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "Ana S.", "ana@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(4, "Ana", "ANA@ALUNOS.UTFPR.EDU.BR", "1", null)
         ));
 
         assertEquals(SituacaoLinha.VALIDA, resultado.get(0).situacao());
@@ -75,9 +150,9 @@ class ValidadorParticipantesTest {
 
     @Test
     void naoDeveContarRepeticaoContraLinhaComErro() {
-        List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "", "ana@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(5, "Ana Silva", "ana@alunos.utfpr.edu.br", "1")
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "", "ana@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(5, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", null)
         ));
 
         assertEquals(SituacaoLinha.ERRO, resultado.get(0).situacao());
@@ -86,9 +161,9 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveAvisarHomonimoQueGeraMesmoNomeDePdf() {
-        List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(3, "Ana  Silva", "ana2@alunos.utfpr.edu.br", "2")
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "Ana  Silva", "ana2@alunos.utfpr.edu.br", "2", null)
         ));
 
         assertEquals(SituacaoLinha.VALIDA, resultado.get(0).situacao());
@@ -98,9 +173,9 @@ class ValidadorParticipantesTest {
 
     @Test
     void naoDeveAvisarNomesQueDiferemEmMaiusculas() {
-        List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(3, "ANA SILVA", "ana2@alunos.utfpr.edu.br", "2")
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "ANA SILVA", "ana2@alunos.utfpr.edu.br", "2", null)
         ));
 
         assertEquals(SituacaoLinha.VALIDA, resultado.get(1).situacao());
@@ -108,9 +183,9 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveAvisarRaNuloOuVazio() {
-        List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", null),
-                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "")
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", null, null),
+                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "", null)
         ));
 
         for (LinhaValidadaDTO linha : resultado) {
@@ -121,9 +196,9 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveAcumularAvisosDeHomonimoERa() {
-        List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(3, "Ana Silva", "ana2@alunos.utfpr.edu.br", null)
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "Ana Silva", "ana2@alunos.utfpr.edu.br", null, null)
         ));
 
         assertEquals(List.of(
@@ -160,6 +235,54 @@ class ValidadorParticipantesTest {
     }
 
     @Test
+    void deveRecusarCargaHorariaQueArredondaParaZeroMinutos() {
+        for (Double carga : new Double[]{0.001, 0.008}) {
+            assertMensagem("A carga horária deve ser um número maior que zero.",
+                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, carga));
+        }
+    }
+
+    @Test
+    void deveRecusarCargaHorariaAcimaDeMilHoras() {
+        for (Double carga : new Double[]{1000.01, 1000.004, 99999999999.0}) {
+            assertMensagem("A carga horária deve ser de no máximo 1.000 horas.",
+                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, carga));
+        }
+    }
+
+    @Test
+    void deveAceitarCargaHorariaNosLimites() {
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1.0 / 60));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1000.0));
+        // O mínimo é medido depois do arredondamento ao minuto (0,0084 h = 0,504 min -> 1 minuto); o máximo, antes.
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 0.0084));
+    }
+
+    @Test
+    void deveResumirValorMuitoLongoNaMensagemDeHorasInvalidas() {
+        String valor = "9".repeat(40);
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", valor));
+
+        assertEquals(List.of("Horas inválidas: " + "9".repeat(30) + "…"), linha.mensagens());
+    }
+
+    @Test
+    void naoDeveResumirValorCurtoNaMensagemDeHorasInvalidas() {
+        String valor = "a".repeat(30);
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", valor));
+
+        assertEquals(List.of("Horas inválidas: " + valor), linha.mensagens());
+    }
+
+    @Test
+    void deveMarcarHorasAcimaDoMaximoComoErroNaLinha() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", "1001"));
+
+        assertEquals(SituacaoLinha.ERRO, linha.situacao());
+        assertEquals(List.of("Horas inválidas: 1001"), linha.mensagens());
+    }
+
+    @Test
     void deveAceitarParticipanteValido() {
         assertDoesNotThrow(() -> ValidadorParticipantes.validarParticipante("Ana Silva", " ana@alunos.utfpr.edu.br "));
     }
@@ -191,7 +314,11 @@ class ValidadorParticipantesTest {
         assertEquals(esperada, erro.getMessage());
     }
 
+    private List<LinhaValidadaDTO> validar(List<LinhaCsv> linhas) {
+        return ValidadorParticipantes.validarLinhas(linhas, CARGA_PADRAO);
+    }
+
     private LinhaValidadaDTO validarUma(LinhaCsv linha) {
-        return ValidadorParticipantes.validarLinhas(List.of(linha)).getFirst();
+        return validar(List.of(linha)).getFirst();
     }
 }

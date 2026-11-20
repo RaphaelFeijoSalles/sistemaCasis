@@ -54,7 +54,8 @@ class CertificadoControllerTest {
 
     @Test
     void devePreVisualizarLoteComCamposDoFormData() throws Exception {
-        LinhaValidadaDTO linha = new LinhaValidadaDTO(2, "Ana", "ana@alunos.utfpr.edu.br", null, SituacaoLinha.AVISO, List.of("RA não informado"));
+        LinhaValidadaDTO linha = new LinhaValidadaDTO(2, "Ana", "ana@alunos.utfpr.edu.br", null,
+                1.5, "1 hora e 30 minutos", true, SituacaoLinha.AVISO, List.of("RA não informado"));
         when(emissaoService.preVisualizarLote(any())).thenReturn(new PreVisualizacaoLoteDTO(1, 0, 1, 0, List.of(linha)));
 
         mockMvc.perform(multipart(BASE + "/pre-visualizar-lote").file(csv)
@@ -67,7 +68,10 @@ class CertificadoControllerTest {
                 .andExpect(jsonPath("$.comAviso").value(1))
                 .andExpect(jsonPath("$.linhas[0].linha").value(2))
                 .andExpect(jsonPath("$.linhas[0].situacao").value("AVISO"))
-                .andExpect(jsonPath("$.linhas[0].mensagens[0]").value("RA não informado"));
+                .andExpect(jsonPath("$.linhas[0].mensagens[0]").value("RA não informado"))
+                .andExpect(jsonPath("$.linhas[0].horas").value(1.5))
+                .andExpect(jsonPath("$.linhas[0].horasTexto").value("1 hora e 30 minutos"))
+                .andExpect(jsonPath("$.linhas[0].horasDoFormulario").value(true));
 
         verify(emissaoService).preVisualizarLote(argThat((EmissaoLoteEventoRequestDTO dto) ->
                 dto.nomeEvento().equals("Semana Acadêmica")
@@ -130,6 +134,19 @@ class CertificadoControllerTest {
         mockMvc.perform(multipart(BASE + "/emitir-lote").file(csv).header("X-API-KEY", CHAVE))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().string("Erro crítico: Drive fora do ar"));
+    }
+
+    @Test
+    void deveDevolver400ComMensagemDeCargaAcimaDoMaximo() throws Exception {
+        when(emissaoService.preVisualizarLote(any())).thenThrow(new DadosInvalidosException("A carga horária deve ser de no máximo 1.000 horas."));
+
+        mockMvc.perform(multipart(BASE + "/pre-visualizar-lote").file(csv)
+                        .param("nomeEvento", "Semana Acadêmica")
+                        .param("dataRealizacao", "2026-11-20")
+                        .param("cargaHoraria", "1000.01")
+                        .header("X-API-KEY", CHAVE))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("A carga horária deve ser de no máximo 1.000 horas."));
     }
 
     // ---------- /emitir-unitario ----------

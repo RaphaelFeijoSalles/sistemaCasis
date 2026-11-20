@@ -439,6 +439,19 @@
   color: var(--error);
 }
 
+/* Coluna de horas por participante (F2) */
+.previa-horas {
+  min-width: 6.5rem;
+  color: var(--text-secondary);
+}
+
+.previa-horas-origem {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  color: #888;
+}
+
 .row-warning .previa-mensagens { color: var(--warning); }
 .row-error .previa-mensagens { color: var(--error); }
 

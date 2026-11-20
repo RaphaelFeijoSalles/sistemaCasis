@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 final class ValidadorParticipantes {
 
     private static final Pattern PADRAO_EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    private static final int TAMANHO_MAXIMO_VALOR_NA_MENSAGEM = 30;
 
     private ValidadorParticipantes() {
     }
@@ -25,20 +26,27 @@ final class ValidadorParticipantes {
     /**
      * Valida as linhas do CSV na ordem do arquivo.
      * <p>
-     * Erros (a linha não é emitida): nome vazio, e-mail vazio ou fora do padrão, e-mail repetido.
+     * Erros (a linha não é emitida): nome vazio, e-mail vazio ou fora do padrão, e-mail repetido, horas inválidas.
      * Avisos (a linha é emitida): homônimo que gera o mesmo nome de PDF, RA não informado.
      * Repetição e homônimo só são comparados com linhas anteriores que serão emitidas.
+     * <p>
+     * Horas (F2): a coluna {@code Horas} preenchida prevalece; célula vazia ou coluna ausente usa a carga do formulário.
      *
      * @param linhas linhas brutas lidas do CSV.
+     * @param cargaPadrao carga horária do formulário, em horas decimais, usada quando a linha não traz horas.
      * @return uma {@link LinhaValidadaDTO} por linha, na mesma ordem.
      */
-    static List<LinhaValidadaDTO> validarLinhas(List<LinhaCsv> linhas) {
+    static List<LinhaValidadaDTO> validarLinhas(List<LinhaCsv> linhas, Double cargaPadrao) {
         Map<String, Integer> linhaPorEmail = new HashMap<>();
         Map<String, Integer> linhaPorArquivo = new HashMap<>();
         List<LinhaValidadaDTO> resultado = new ArrayList<>();
 
         for (LinhaCsv linha : linhas) {
             List<String> erros = new ArrayList<>();
+            boolean horasDoFormulario = linha.horas() == null || linha.horas().isBlank();
+            Double horas = horasDoFormulario
+                    ? cargaPadrao
+                    : InterpretadorHoras.interpretar(linha.horas()).orElse(null);
 
             if (linha.nome().isBlank()) {
                 erros.add("Nome não informado");
@@ -53,8 +61,12 @@ final class ValidadorParticipantes {
                 erros.add("E-mail repetido (linha " + linhaPorEmail.get(chaveEmail) + ")");
             }
 
+            if (horas == null) {
+                erros.add("Horas inválidas: " + resumir(linha.horas()));
+            }
+
             if (!erros.isEmpty()) {
-                resultado.add(montar(linha, SituacaoLinha.ERRO, erros));
+                resultado.add(montar(linha, horas, horasDoFormulario, SituacaoLinha.ERRO, erros));
                 continue;
             }
 
@@ -69,7 +81,7 @@ final class ValidadorParticipantes {
 
             linhaPorEmail.put(chaveEmail, linha.linha());
             linhaPorArquivo.putIfAbsent(nomeArquivo, linha.linha());
-            resultado.add(montar(linha, avisos.isEmpty() ? SituacaoLinha.VALIDA : SituacaoLinha.AVISO, avisos));
+            resultado.add(montar(linha, horas, horasDoFormulario, avisos.isEmpty() ? SituacaoLinha.VALIDA : SituacaoLinha.AVISO, avisos));
         }
 
         return resultado;
@@ -81,7 +93,7 @@ final class ValidadorParticipantes {
      *
      * @param nomeEvento nome oficial do evento.
      * @param dataRealizacao data em que o evento ocorreu.
-     * @param cargaHoraria carga horária em horas decimais.
+     * @param cargaHoraria carga horária em horas decimais, entre 1 minuto e {@link InterpretadorHoras#MAXIMO_HORAS} horas.
      * @throws DadosInvalidosException se algum dado estiver ausente ou inválido.
      */
     static void validarEvento(String nomeEvento, LocalDate dataRealizacao, Double cargaHoraria) {
@@ -91,7 +103,10 @@ final class ValidadorParticipantes {
         if (dataRealizacao == null) {
             throw new DadosInvalidosException("A data de realização é obrigatória.");
         }
-        if (cargaHoraria == null || !Double.isFinite(cargaHoraria) || cargaHoraria <= 0) {
+        if (cargaHoraria != null && Double.isFinite(cargaHoraria) && cargaHoraria > InterpretadorHoras.MAXIMO_HORAS) {
+            throw new DadosInvalidosException("A carga horária deve ser de no máximo 1.000 horas.");
+        }
+        if (!InterpretadorHoras.dentroDosLimites(cargaHoraria)) {
             throw new DadosInvalidosException("A carga horária deve ser um número maior que zero.");
         }
     }
@@ -116,7 +131,19 @@ final class ValidadorParticipantes {
         }
     }
 
-    private static LinhaValidadaDTO montar(LinhaCsv linha, SituacaoLinha situacao, List<String> mensagens) {
-        return new LinhaValidadaDTO(linha.linha(), linha.nome(), linha.email(), linha.ra(), situacao, List.copyOf(mensagens));
+    /**
+     * Corta valores muito longos para a mensagem não ocupar a prévia inteira (ex.: uma célula com milhares de dígitos).
+     */
+    private static String resumir(String valor) {
+        return valor.length() > TAMANHO_MAXIMO_VALOR_NA_MENSAGEM
+                ? valor.substring(0, TAMANHO_MAXIMO_VALOR_NA_MENSAGEM) + "…"
+                : valor;
+    }
+
+    private static LinhaValidadaDTO montar(LinhaCsv linha, Double horas, boolean horasDoFormulario,
+                                           SituacaoLinha situacao, List<String> mensagens) {
+        String horasTexto = horas == null ? null : CargaHorariaFormatter.formatarTexto(horas);
+        return new LinhaValidadaDTO(linha.linha(), linha.nome(), linha.email(), linha.ra(),
+                horas, horasTexto, horasDoFormulario, situacao, List.copyOf(mensagens));
     }
 }

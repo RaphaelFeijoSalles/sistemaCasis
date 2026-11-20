@@ -15,7 +15,8 @@ const emailValido = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email ??
 
 const validarCargaHoraria = (valor) => {
   const numero = Number.parseFloat(String(valor).replace(',', '.'));
-  return Number.isFinite(numero) && numero > 0;
+  // Mesmos limites do backend: pelo menos 1 minuto depois do arredondamento e no máximo 1.000 horas
+  return Number.isFinite(numero) && numero <= 1000 && Math.round(numero * 60) >= 1;
 };
 
 const validarCsv = (arquivo) => {
@@ -75,7 +76,7 @@ const validarFormulario = ({ formData, arquivoCsv, apiKey, emissaoTipo }) => {
   if (!validarCargaHoraria(formData.cargaHoraria)) {
     return {
       titulo: 'Carga horária inválida',
-      detalhe: 'Use um número maior que zero. Exemplos aceitos: 2 para duas horas, 1.5 para uma hora e meia.'
+      detalhe: 'Use um número maior que zero e de no máximo 1000 horas. Exemplos aceitos: 2 para duas horas, 1.5 para uma hora e meia.'
     };
   }
 

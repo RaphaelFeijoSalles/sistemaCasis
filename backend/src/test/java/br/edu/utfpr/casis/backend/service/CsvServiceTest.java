@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CsvServiceTest {
@@ -56,8 +57,8 @@ class CsvServiceTest {
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
 
         assertEquals(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345"),
-                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "67890")
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", null),
+                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "67890", null)
         ), linhas);
     }
 
@@ -90,8 +91,8 @@ class CsvServiceTest {
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
 
         assertEquals(List.of(
-                new LinhaCsv(2, "Carla Lima", "", null),
-                new LinhaCsv(3, "", "sem-nome@alunos.utfpr.edu.br", "111")
+                new LinhaCsv(2, "Carla Lima", "", null, null),
+                new LinhaCsv(3, "", "sem-nome@alunos.utfpr.edu.br", "111", null)
         ), linhas);
     }
 
@@ -104,7 +105,73 @@ class CsvServiceTest {
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
 
-        assertEquals(List.of(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", null)), linhas);
+        assertEquals(List.of(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", null, null)), linhas);
+    }
+
+    @Test
+    void deveLerColunaHorasComTextoBruto() {
+        String csv = """
+                Nome;E-mail;RA;Horas
+                Ana Silva;ana@alunos.utfpr.edu.br;12345; 1,5\s
+                Bruno Souza;bruno@alunos.utfpr.edu.br;67890;01:30
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertEquals(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", "1,5"),
+                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "67890", "01:30")
+        ), linhas);
+    }
+
+    @Test
+    void deveReconhecerCabecalhoHorasSemDiferenciarMaiusculasEEspacos() {
+        String csv = """
+                Nome,E-mail,  HORAS\s
+                Ana Silva,ana@alunos.utfpr.edu.br,"1,5"
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertEquals("1,5", linhas.getFirst().horas());
+    }
+
+    @Test
+    void deveRetornarHorasNulaQuandoNaoHaColunaHoras() {
+        String csv = """
+                Nome;E-mail
+                Ana Silva;ana@alunos.utfpr.edu.br
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertNull(linhas.getFirst().horas());
+    }
+
+    @Test
+    void deveRetornarHorasVaziaOuNulaConformeCelula() {
+        String csv = """
+                Nome;E-mail;Horas
+                Ana Silva;ana@alunos.utfpr.edu.br;
+                Bruno Souza;bruno@alunos.utfpr.edu.br
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertEquals("", linhas.get(0).horas());
+        assertNull(linhas.get(1).horas());
+    }
+
+    @Test
+    void naoDeveReconhecerOutrosNomesDeColunaDeHoras() {
+        String csv = """
+                Nome;E-mail;Carga horária;CH;Hora
+                Ana Silva;ana@alunos.utfpr.edu.br;2;2;2
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertNull(linhas.getFirst().horas());
     }
 
     @Test

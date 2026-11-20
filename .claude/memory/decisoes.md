@@ -20,3 +20,8 @@
 - **Contexto:** F1 separou validar de executar; era preciso decidir como a confirmação chega ao backend.
 - **Decisão:** `/pre-visualizar-lote` valida sem efeitos; ao confirmar, o frontend reenvia o mesmo CSV para `/emitir-lote`, que valida de novo e pula as linhas com erro.
 - **Motivo:** sem estado no servidor (sem token nem cache) e o backend nunca confia na prévia. Detalhes em `specs/F1-validacao-pre-disparo.md`.
+
+## D-05 — Sem branch `v2.0`; features saem de `main` do fork (2026-11-20)
+- **Contexto:** o CLAUDE.md pede branches `feature/*` saindo de `v2.0`, mas essa branch nunca foi criada e a F1 saiu de `main`.
+- **Decisão:** cada feature sai de `main` do fork depois do merge da anterior (a F2 sai de `main` após o merge da F1).
+- **Motivo:** decisão do desenvolvedor; uma única linha de integração basta para um projeto com um desenvolvedor.

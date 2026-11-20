@@ -14,20 +14,27 @@
 - O lote usa `@ModelAttribute` com um record: os nomes dos campos do `FormData` (`nomeEvento`, `dataRealizacao`, `cargaHoraria`, `arquivoCsv`) têm de ser iguais aos componentes de `EmissaoLoteEventoRequestDTO`.
 - A data trafega como `yyyy-MM-dd` (input date) e vira `LocalDate`.
 - A carga horária é `Double` em horas decimais. O frontend troca `,` por `.` antes de enviar.
+- Desde a F2, o limite da carga horária (formulário e coluna `Horas`) fica em `InterpretadorHoras.dentroDosLimites`: pelo menos 1 minuto depois do arredondamento e no máximo 1.000 h. O `validarCargaHoraria` do `App.jsx` repete a regra; mude os dois juntos. O `<input>` da carga usa `step="any" min="0" max="1000"` de propósito: um `min`/`step` nativo mais restritivo bloqueia o envio antes do `validarCargaHoraria` (o `<form>` não tem `noValidate`).
+- **Deploy da F2:** backend (Render) antes do frontend (Vercel). Frontend novo com backend antigo mostra "—" na coluna Horas da prévia.
 - O endpoint unitário retorna **um objeto**; o frontend o embrulha em array para reaproveitar `RelatorioEmissao`.
 - O frontend diz "ordem esperada: Nome, RA, E-mail", mas o backend mapeia **por nome de cabeçalho**, não por posição.
 - A senha da API fica em `localStorage` (`casis_api_key`) e vai no header `X-API-KEY`.
 
 ## Ambiente e testes
-- `BackendApplicationTests.contextLoads` precisa das propriedades `GOOGLE_*`. Sem `secrets.properties`, o teste falha (o CI só gera Javadoc, não roda testes).
+- `BackendApplicationTests.contextLoads` precisa das propriedades `GOOGLE_*`. Sem `secrets.properties`, o teste falha (o CI só gera Javadoc, não roda testes). Rodar manualmente, só com credenciais de teste: `cd backend && ./mvnw test -Dtest=BackendApplicationTests` (PowerShell: `.\mvnw.cmd test "-Dtest=BackendApplicationTests"`). Passou na F2 (2026-11-20). O Claude não roda esse teste.
 - Testes de controller: use `@WebMvcTest` (Boot 4: `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`) + `@MockitoBean EmissaoService` + `@ActiveProfiles("test")`. Sem esse perfil, o `dev` importa o `secrets.properties` (veja `CertificadoControllerTest`).
 - `GOOGLE_SHEETS_PLANILHA_ID` deve ser **só o ID**, sem `/edit?gid=...`.
 - `GOOGLE_SHEETS_NOME_ABA` tem padrão `Página1`.
 - O CORS está fixo no controller: `https://sistema-casis.vercel.app/` e `http://localhost:5173`.
 - Backend em `server.port=8081` no perfil dev; o Dockerfile expõe 8080.
 
+## Git e GitHub
+- **PR a partir do fork aponta para o upstream por padrão** (web e `gh pr create`). Para ficar só no fork, troque o *base repository* para `GuilhermeSMathias/EmissorCertificadoDacomp`, ou use `gh pr create --repo GuilhermeSMathias/EmissorCertificadoDacomp --base main`. PR aberto no upstream notifica o dono original.
+- O `gh` (GitHub CLI) **não está instalado** na máquina do desenvolvedor; PRs são abertos manualmente pela web.
+
 ## Código morto ou placeholder
 - `frontend/src/components/DropzoneCsv.jsx`, `templates/certificado_gestao1.html` e `certificado_gestao2.html` estão vazios.
 - Desde a F1 (P6), o lote usa `CsvService.lerLinhas` + `ValidadorParticipantes`. `EmissaoService.definirEstrategia`, `FonteDadosCsvStrategy` e `CsvService.extrairAlunos` ficaram **sem uso**, mantidos como ponto de extensão para a F5.
+- **A coluna `Horas` (F2) só é lida por `CsvService.lerLinhas`.** `extrairAlunos` e `FonteDadosCsvStrategy` a ignoram, e `AlunoCertificado` não tem campo de horas. Reativar a Strategy na F5 sem levar as horas faz todo o lote voltar para a carga do formulário, sem erro.
 - `FonteDadosBancoStrategy` retorna lista vazia. `EmissaoGestaoRequestDTO` e `AlunoCertificadoGestao` ainda não são usados.
 - `certificado_evento.html` tem o bloco CSS `html, body` duplicado.

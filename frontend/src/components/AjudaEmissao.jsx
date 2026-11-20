@@ -46,10 +46,13 @@ export default function AjudaEmissao({ emissaoTipo }) {
                 <li>Nome completo (obrigatória)</li>
                 <li>E-mail (obrigatória)</li>
                 <li>RA (opcional; sem ele a linha gera aviso)</li>
+                <li>Horas (opcional; o cabeçalho deve ser exatamente <code>Horas</code>)</li>
               </ol>
             </li>
+            <li><strong>Horas por participante:</strong> use <code>2</code>, <code>1.5</code>, <code>1,5</code> ou <code>01:30</code> (segundos são ignorados). Célula vazia ou planilha sem a coluna usa a carga horária do formulário. Valor inválido, abaixo de 1 minuto ou acima de 1000 horas é erro e a linha não é emitida.
+              Se o CSV for separado por vírgula, um valor como <code>1,5</code> precisa estar entre aspas (o Google Sheets já exporta assim) ou use <code>1.5</code>.</li>
             <li><strong>Revise:</strong> duplicados, campos vazios, e-mails inválidos e espaços extras. Linhas totalmente em branco são ignoradas automaticamente; a pré-visualização aponta o resto.</li>
-            <li><strong>Pré-visualização:</strong> o botão do lote só valida a planilha. Linhas com <strong>erro</strong> (nome vazio, e-mail inválido ou repetido) não serão emitidas; linhas com <strong>aviso</strong> (RA vazio, nomes iguais) serão. Nada é enviado até você confirmar.</li>
+            <li><strong>Pré-visualização:</strong> o botão do lote só valida a planilha. Linhas com <strong>erro</strong> (nome vazio, e-mail inválido ou repetido, horas inválidas) não serão emitidas; linhas com <strong>aviso</strong> (RA vazio, nomes iguais) serão. Nada é enviado até você confirmar.</li>
             <li><strong>Resultado:</strong> o lote pode terminar com sucessos, já emitidos e falhas. Confira a tabela antes de reenviar.</li>
           </ul>
         </section>
@@ -71,7 +74,7 @@ export default function AjudaEmissao({ emissaoTipo }) {
         <ul>
           <li><strong>Nome do evento:</strong> aparece no certificado, no assunto do e-mail, no Drive e no registro de backup.</li>
           <li><strong>Data:</strong> é formatada automaticamente por extenso no certificado.</li>
-          <li><strong>Carga horária:</strong> use horas em decimal. <code>2</code> vira <i>2 horas</i>; <code>1.5</code> vira <i>1 hora e 30 minutos</i>.</li>
+          <li><strong>Carga horária:</strong> use horas em decimal. <code>2</code> vira <i>2 horas</i>; <code>1.5</code> vira <i>1 hora e 30 minutos</i>.{emissaoTipo === 'lote' && <> No lote, é o padrão para quem não tiver horas na coluna <code>Horas</code>.</>}</li>
           <li><strong>Senha:</strong> se estiver incorreta, a API bloqueia a emissão antes de gerar certificados.</li>
         </ul>
       </section>

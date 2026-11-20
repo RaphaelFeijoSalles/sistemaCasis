@@ -33,7 +33,7 @@ export default function PreVisualizacaoLote({ previa, isSubmitting, onConfirmar,
 
             <div className="table-wrapper">
                 <table className="results-table">
-                    <thead><tr><th>Linha</th><th>Participante</th><th>Situação</th></tr></thead>
+                    <thead><tr><th>Linha</th><th>Participante</th><th>Horas</th><th>Situação</th></tr></thead>
                     <tbody>
                     {previa.linhas.map((linha) => {
                         const situacao = SITUACOES[linha.situacao] ?? SITUACOES.ERRO;
@@ -51,6 +51,14 @@ export default function PreVisualizacaoLote({ previa, isSubmitting, onConfirmar,
                                             {linha.mensagens.map((mensagem) => <li key={mensagem}>{mensagem}</li>)}
                                         </ul>
                                     )}
+                                </td>
+                                <td className="previa-horas">
+                                    {linha.horasTexto ? (
+                                        <>
+                                            <span>{linha.horasTexto}</span>
+                                            {linha.horasDoFormulario && <span className="previa-horas-origem">(formulário)</span>}
+                                        </>
+                                    ) : '—'}
                                 </td>
                                 <td className="status-cell">
                                     <div className={situacao.classe}>
