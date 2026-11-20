@@ -14,7 +14,7 @@
 - O lote usa `@ModelAttribute` com um record: os nomes dos campos do `FormData` (`nomeEvento`, `dataRealizacao`, `cargaHoraria`, `arquivoCsv`) têm de ser iguais aos componentes de `EmissaoLoteEventoRequestDTO`.
 - A data trafega como `yyyy-MM-dd` (input date) e vira `LocalDate`.
 - A carga horária é `Double` em horas decimais. O frontend troca `,` por `.` antes de enviar.
-- Desde a F2, o limite da carga horária (formulário e coluna `Horas`) fica em `InterpretadorHoras.dentroDosLimites`: pelo menos 1 minuto depois do arredondamento e no máximo 1.000 h. O `validarCargaHoraria` do `App.jsx` repete a regra; mude os dois juntos.
+- Desde a F2, o limite da carga horária (formulário e coluna `Horas`) fica em `InterpretadorHoras.dentroDosLimites`: pelo menos 1 minuto depois do arredondamento e no máximo 1.000 h. O `validarCargaHoraria` do `App.jsx` repete a regra; mude os dois juntos. O `<input>` da carga usa `step="any" min="0" max="1000"` de propósito: um `min`/`step` nativo mais restritivo bloqueia o envio antes do `validarCargaHoraria` (o `<form>` não tem `noValidate`).
 - **Deploy da F2:** backend (Render) antes do frontend (Vercel). Frontend novo com backend antigo mostra "—" na coluna Horas da prévia.
 - O endpoint unitário retorna **um objeto**; o frontend o embrulha em array para reaproveitar `RelatorioEmissao`.
 - O frontend diz "ordem esperada: Nome, RA, E-mail", mas o backend mapeia **por nome de cabeçalho**, não por posição.

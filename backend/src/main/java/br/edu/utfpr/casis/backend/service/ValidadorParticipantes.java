@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 final class ValidadorParticipantes {
 
     private static final Pattern PADRAO_EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    private static final int TAMANHO_MAXIMO_VALOR_NA_MENSAGEM = 30;
 
     private ValidadorParticipantes() {
     }
@@ -61,7 +62,7 @@ final class ValidadorParticipantes {
             }
 
             if (horas == null) {
-                erros.add("Horas inválidas: " + linha.horas());
+                erros.add("Horas inválidas: " + resumir(linha.horas()));
             }
 
             if (!erros.isEmpty()) {
@@ -128,6 +129,15 @@ final class ValidadorParticipantes {
         if (!PADRAO_EMAIL.matcher(email.trim()).matches()) {
             throw new DadosInvalidosException("E-mail do participante inválido: " + email.trim());
         }
+    }
+
+    /**
+     * Corta valores muito longos para a mensagem não ocupar a prévia inteira (ex.: uma célula com milhares de dígitos).
+     */
+    private static String resumir(String valor) {
+        return valor.length() > TAMANHO_MAXIMO_VALOR_NA_MENSAGEM
+                ? valor.substring(0, TAMANHO_MAXIMO_VALOR_NA_MENSAGEM) + "…"
+                : valor;
     }
 
     private static LinhaValidadaDTO montar(LinhaCsv linha, Double horas, boolean horasDoFormulario,

@@ -244,7 +244,7 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveRecusarCargaHorariaAcimaDeMilHoras() {
-        for (Double carga : new Double[]{1000.01, 99999999999.0}) {
+        for (Double carga : new Double[]{1000.01, 1000.004, 99999999999.0}) {
             assertMensagem("A carga horária deve ser de no máximo 1.000 horas.",
                     () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, carga));
         }
@@ -254,6 +254,24 @@ class ValidadorParticipantesTest {
     void deveAceitarCargaHorariaNosLimites() {
         assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1.0 / 60));
         assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1000.0));
+        // O mínimo é medido depois do arredondamento ao minuto (0,0084 h = 0,504 min -> 1 minuto); o máximo, antes.
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 0.0084));
+    }
+
+    @Test
+    void deveResumirValorMuitoLongoNaMensagemDeHorasInvalidas() {
+        String valor = "9".repeat(40);
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", valor));
+
+        assertEquals(List.of("Horas inválidas: " + "9".repeat(30) + "…"), linha.mensagens());
+    }
+
+    @Test
+    void naoDeveResumirValorCurtoNaMensagemDeHorasInvalidas() {
+        String valor = "a".repeat(30);
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", valor));
+
+        assertEquals(List.of("Horas inválidas: " + valor), linha.mensagens());
     }
 
     @Test

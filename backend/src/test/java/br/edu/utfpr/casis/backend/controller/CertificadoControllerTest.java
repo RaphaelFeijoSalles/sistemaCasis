@@ -136,6 +136,19 @@ class CertificadoControllerTest {
                 .andExpect(content().string("Erro crítico: Drive fora do ar"));
     }
 
+    @Test
+    void deveDevolver400ComMensagemDeCargaAcimaDoMaximo() throws Exception {
+        when(emissaoService.preVisualizarLote(any())).thenThrow(new DadosInvalidosException("A carga horária deve ser de no máximo 1.000 horas."));
+
+        mockMvc.perform(multipart(BASE + "/pre-visualizar-lote").file(csv)
+                        .param("nomeEvento", "Semana Acadêmica")
+                        .param("dataRealizacao", "2026-11-20")
+                        .param("cargaHoraria", "1000.01")
+                        .header("X-API-KEY", CHAVE))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("A carga horária deve ser de no máximo 1.000 horas."));
+    }
+
     // ---------- /emitir-unitario ----------
 
     @Test

@@ -20,6 +20,7 @@ class InterpretadorHorasTest {
             "1,5      | 1.5",
             "'  1,5 ' | 1.5",
             "01:30    | 1.5",
+            "1:00     | 1.0",
             "1:30:00  | 1.5",
             "1:30:45  | 1.5",
             "0:30     | 0.5",
@@ -48,7 +49,7 @@ class InterpretadorHorasTest {
     }
 
     @ParameterizedTest(name = "\"{0}\" passa de 1.000 horas")
-    @ValueSource(strings = {"1000,01", "1000:01", "1001", "99999999999", "999999999999999999999999999999"})
+    @ValueSource(strings = {"1000,01", "1000,004", "1000:01", "1001", "99999999999", "999999999999999999999999999999"})
     void deveRecusarValoresAcimaDoMaximo(String texto) {
         assertTrue(InterpretadorHoras.interpretar(texto).isEmpty());
     }

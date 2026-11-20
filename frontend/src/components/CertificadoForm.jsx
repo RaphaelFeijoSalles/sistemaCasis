@@ -80,7 +80,7 @@ export default function CertificadoForm({
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                     <label>Carga Horária (Horas)</label>
-                    <input type="number" name="cargaHoraria" step="0.5" required min="0.5" max="1000" placeholder="Ex: 1.5 para 1h30m" value={formData.cargaHoraria} onChange={handleInputChange}/>
+                    <input type="number" name="cargaHoraria" step="any" required min="0" max="1000" placeholder="Ex: 1.5 para 1h30m" value={formData.cargaHoraria} onChange={handleInputChange}/>
                     <small className="form-hint">
                         Use horas em decimal. Ex.: <strong>2</strong> ou <strong>1.5</strong>.
                         {emissaoTipo === 'lote' && <> No lote, vale para quem não tiver horas na coluna <strong>Horas</strong> do CSV.</>}

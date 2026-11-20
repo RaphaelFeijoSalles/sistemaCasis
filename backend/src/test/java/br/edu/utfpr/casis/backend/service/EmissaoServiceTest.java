@@ -6,10 +6,10 @@ import br.edu.utfpr.casis.backend.dto.PreVisualizacaoLoteDTO;
 import br.edu.utfpr.casis.backend.dto.ResultadoEmissaoDTO;
 import br.edu.utfpr.casis.backend.dto.SituacaoLinha;
 import br.edu.utfpr.casis.backend.dto.StatusEmissao;
+import br.edu.utfpr.casis.backend.model.AlunoCertificado;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import br.edu.utfpr.casis.backend.model.AlunoCertificado;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -286,6 +286,24 @@ class EmissaoServiceTest {
     void deveRecusarUnitarioComEmailInvalidoAntesDeQualquerEfeito() {
         assertThrows(DadosInvalidosException.class,
                 () -> emissaoService.processarEmissaoIndividual(unitario("Ana Silva", "ana@utfpr", 2.0)));
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarUnitarioComCargaAcimaDoMaximoAntesDeQualquerEfeito() {
+        DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissaoIndividual(unitario("Ana Silva", "ana@alunos.utfpr.edu.br", 1000.01)));
+
+        assertEquals("A carga horária deve ser de no máximo 1.000 horas.", erro.getMessage());
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarLoteComCargaAbaixoDeUmMinutoAntesDeQualquerEfeito() {
+        DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissao(lote("Nome;E-mail\nAna;ana@x.com\n", 0.001)));
+
+        assertEquals("A carga horária deve ser um número maior que zero.", erro.getMessage());
         semEfeitos();
     }
 
