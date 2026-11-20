@@ -418,6 +418,49 @@
 }
 
 /* ==========================================================================
+   6.1 PRÉ-VISUALIZAÇÃO DO LOTE (F1)
+   ========================================================================== */
+.previa-numero {
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  width: 3.5rem;
+}
+
+.previa-mensagens {
+  margin: 0.35rem 0 0;
+  padding-left: 1rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.row-warning .previa-mensagens { color: var(--warning); }
+.row-error .previa-mensagens { color: var(--error); }
+
+.previa-situacao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.65rem;
+  font-weight: bold;
+}
+
+.previa-situacao.valida { color: var(--success); }
+.previa-situacao.aviso { color: var(--warning); }
+.previa-situacao.erro { color: var(--error); }
+
+.previa-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
    7. FOOTER DA APLICAÇÃO
    ========================================================================== */
 .casis-footer {
