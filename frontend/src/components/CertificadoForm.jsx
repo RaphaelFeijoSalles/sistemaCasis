@@ -1,6 +1,6 @@
 import { useDropzone } from 'react-dropzone';
 import { useCallback } from 'react';
-import { AlertCircle, Loader2, FileSpreadsheet, KeyRound, UploadCloud, User } from 'lucide-react';
+import { AlertCircle, Eye, Loader2, FileSpreadsheet, KeyRound, UploadCloud, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function CertificadoForm({
@@ -32,7 +32,7 @@ export default function CertificadoForm({
 
         if (acceptedFiles.length > 0) {
             setArquivoCsv(acceptedFiles[0]);
-            toast.success(`Planilha "${acceptedFiles[0].name}" carregada. Revise os campos do evento antes de disparar.`);
+            toast.success(`Planilha "${acceptedFiles[0].name}" carregada. Revise os campos do evento antes de pré-visualizar.`);
         }
     }, [setArquivoCsv]);
 
@@ -99,7 +99,7 @@ export default function CertificadoForm({
                             <FileSpreadsheet size={32} />
                             <div>
                                 <span>{arquivoCsv.name}</span>
-                                <small>Arquivo pronto para envio em lote.</small>
+                                <small>Arquivo pronto para pré-visualização.</small>
                             </div>
                         </div>
                     ) : (
@@ -157,9 +157,14 @@ export default function CertificadoForm({
             )}
 
             <button type="submit" className="btn-submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="spin" size={20} /> : (emissaoTipo === 'lote' ? <FileSpreadsheet size={20} /> : <User size={20} />)}
-                {isSubmitting ? 'Processando...' : 'Disparar Certificado' + (emissaoTipo === 'lote' ? 's' : '')}
+                {isSubmitting ? <Loader2 className="spin" size={20} /> : (emissaoTipo === 'lote' ? <Eye size={20} /> : <User size={20} />)}
+                {isSubmitting
+                    ? (emissaoTipo === 'lote' ? 'Validando...' : 'Processando...')
+                    : (emissaoTipo === 'lote' ? 'Pré-visualizar lote' : 'Disparar Certificado')}
             </button>
+            {emissaoTipo === 'lote' && (
+                <small className="form-hint">Nada é enviado neste passo: você confere o lote antes de confirmar a emissão.</small>
+            )}
         </form>
     );
 }

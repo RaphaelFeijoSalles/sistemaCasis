@@ -54,6 +54,7 @@ export default function AjudaEmissao({ emissaoTipo }) {
                 <li>Excel: clique no número da linha, use botão direito e escolha <strong>Excluir</strong> ou <strong>Excluir linhas da planilha</strong>.</li>
               </ol>
             </li>
+            <li><strong>Pré-visualização:</strong> o botão do lote só valida a planilha. Linhas com <strong>erro</strong> (nome vazio, e-mail inválido ou repetido) não serão emitidas; linhas com <strong>aviso</strong> (RA vazio, nomes iguais) serão. Nada é enviado até você confirmar.</li>
             <li><strong>Resultado:</strong> o lote pode terminar com sucessos, já emitidos e falhas. Confira a tabela antes de reenviar.</li>
           </ul>
         </section>
