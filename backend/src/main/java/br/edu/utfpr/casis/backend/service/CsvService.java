@@ -6,6 +6,7 @@ import br.edu.utfpr.casis.backend.model.TipoParticipacao;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVParserBuilder;
+import com.opencsv.exceptions.CsvException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -160,7 +161,7 @@ public class CsvService {
         } catch (DadosInvalidosException e) {
             log.warn("CSV recusado: {}", e.getMessage());
             throw e;
-        } catch (Exception e) {
+        } catch (IOException | CsvException e) {
             log.error("Erro na leitura do arquivo CSV.", e);
             throw new DadosInvalidosException("Falha ao ler a planilha. Verifique se o formato é um CSV válido e os dados estão corretos.", e);
         }
