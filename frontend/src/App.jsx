@@ -22,7 +22,7 @@ const validarCsv = (arquivo) => {
   if (!arquivo) {
     return {
       titulo: 'Planilha CSV não anexada',
-      detalhe: 'No modo lote, selecione um arquivo .csv com as colunas Nome, RA e E-mail antes de disparar.'
+      detalhe: 'No modo lote, selecione um arquivo .csv com as colunas Nome, RA e E-mail antes de pré-visualizar.'
     };
   }
 
@@ -142,7 +142,7 @@ const montarMensagemErro = (error, emissaoTipo, isPrevia = false) => {
       return {
         titulo: 'Dados recusados pelo servidor',
         detalhe: detalheServidor || (emissaoTipo === 'lote'
-          ? 'Confira se o CSV tem cabeçalho, colunas na ordem Nome, RA, E-mail e linhas sem células obrigatórias vazias.'
+          ? 'Confira se a primeira linha do CSV é o cabeçalho e tem as colunas Nome e E-mail (RA é opcional; a ordem não importa).'
           : 'Confira nome, RA, e-mail, data e carga horária do participante.')
       };
     }

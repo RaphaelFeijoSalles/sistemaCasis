@@ -433,6 +433,12 @@
   color: var(--text-secondary);
 }
 
+.relatorio-motivo {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--error);
+}
+
 .row-warning .previa-mensagens { color: var(--warning); }
 .row-error .previa-mensagens { color: var(--error); }
 
