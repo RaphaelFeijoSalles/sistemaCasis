@@ -52,7 +52,7 @@ public class EmissaoService {
 
         for (AlunoCertificado aluno : alunos) {
             // Limpa o nome para padronizar o nome do arquivo
-            String nomePdf = "Certificado_" + aluno.getNome().trim().replaceAll("\\s+", "_") + ".pdf";
+            String nomePdf = NomeArquivoCertificado.gerar(aluno.getNome());
 
             // 3. VERIFICAÇÃO DE DUPLICIDADE: Se já existe no Drive, pula o processo inteiro!
             if (arquivosExistentes.contains(nomePdf)) {
@@ -101,7 +101,7 @@ public class EmissaoService {
 
         // 3. Resolve a pasta e checa se já existe (reaproveitando a lógica)
         String folderId = driveService.obterOuCriarPastaEvento(dto.nomeEvento(), dto.dataRealizacao());
-        String nomePdf = "Certificado_" + aluno.getNome().trim().replaceAll("\\s+", "_") + ".pdf";
+        String nomePdf = NomeArquivoCertificado.gerar(aluno.getNome());
 
         java.util.Set<String> arquivosExistentes = driveService.listarArquivosNaPasta(folderId);
         if (arquivosExistentes.contains(nomePdf)) {
