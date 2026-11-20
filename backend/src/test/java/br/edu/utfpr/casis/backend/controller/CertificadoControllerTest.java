@@ -54,7 +54,8 @@ class CertificadoControllerTest {
 
     @Test
     void devePreVisualizarLoteComCamposDoFormData() throws Exception {
-        LinhaValidadaDTO linha = new LinhaValidadaDTO(2, "Ana", "ana@alunos.utfpr.edu.br", null, SituacaoLinha.AVISO, List.of("RA não informado"));
+        LinhaValidadaDTO linha = new LinhaValidadaDTO(2, "Ana", "ana@alunos.utfpr.edu.br", null,
+                1.5, "1 hora e 30 minutos", true, SituacaoLinha.AVISO, List.of("RA não informado"));
         when(emissaoService.preVisualizarLote(any())).thenReturn(new PreVisualizacaoLoteDTO(1, 0, 1, 0, List.of(linha)));
 
         mockMvc.perform(multipart(BASE + "/pre-visualizar-lote").file(csv)
@@ -67,7 +68,10 @@ class CertificadoControllerTest {
                 .andExpect(jsonPath("$.comAviso").value(1))
                 .andExpect(jsonPath("$.linhas[0].linha").value(2))
                 .andExpect(jsonPath("$.linhas[0].situacao").value("AVISO"))
-                .andExpect(jsonPath("$.linhas[0].mensagens[0]").value("RA não informado"));
+                .andExpect(jsonPath("$.linhas[0].mensagens[0]").value("RA não informado"))
+                .andExpect(jsonPath("$.linhas[0].horas").value(1.5))
+                .andExpect(jsonPath("$.linhas[0].horasTexto").value("1 hora e 30 minutos"))
+                .andExpect(jsonPath("$.linhas[0].horasDoFormulario").value(true));
 
         verify(emissaoService).preVisualizarLote(argThat((EmissaoLoteEventoRequestDTO dto) ->
                 dto.nomeEvento().equals("Semana Acadêmica")

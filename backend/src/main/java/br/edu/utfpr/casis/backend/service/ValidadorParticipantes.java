@@ -25,20 +25,27 @@ final class ValidadorParticipantes {
     /**
      * Valida as linhas do CSV na ordem do arquivo.
      * <p>
-     * Erros (a linha não é emitida): nome vazio, e-mail vazio ou fora do padrão, e-mail repetido.
+     * Erros (a linha não é emitida): nome vazio, e-mail vazio ou fora do padrão, e-mail repetido, horas inválidas.
      * Avisos (a linha é emitida): homônimo que gera o mesmo nome de PDF, RA não informado.
      * Repetição e homônimo só são comparados com linhas anteriores que serão emitidas.
+     * <p>
+     * Horas (F2): a coluna {@code Horas} preenchida prevalece; célula vazia ou coluna ausente usa a carga do formulário.
      *
      * @param linhas linhas brutas lidas do CSV.
+     * @param cargaPadrao carga horária do formulário, em horas decimais, usada quando a linha não traz horas.
      * @return uma {@link LinhaValidadaDTO} por linha, na mesma ordem.
      */
-    static List<LinhaValidadaDTO> validarLinhas(List<LinhaCsv> linhas) {
+    static List<LinhaValidadaDTO> validarLinhas(List<LinhaCsv> linhas, Double cargaPadrao) {
         Map<String, Integer> linhaPorEmail = new HashMap<>();
         Map<String, Integer> linhaPorArquivo = new HashMap<>();
         List<LinhaValidadaDTO> resultado = new ArrayList<>();
 
         for (LinhaCsv linha : linhas) {
             List<String> erros = new ArrayList<>();
+            boolean horasDoFormulario = linha.horas() == null || linha.horas().isBlank();
+            Double horas = horasDoFormulario
+                    ? cargaPadrao
+                    : InterpretadorHoras.interpretar(linha.horas()).orElse(null);
 
             if (linha.nome().isBlank()) {
                 erros.add("Nome não informado");
@@ -53,8 +60,12 @@ final class ValidadorParticipantes {
                 erros.add("E-mail repetido (linha " + linhaPorEmail.get(chaveEmail) + ")");
             }
 
+            if (horas == null) {
+                erros.add("Horas inválidas: " + linha.horas());
+            }
+
             if (!erros.isEmpty()) {
-                resultado.add(montar(linha, SituacaoLinha.ERRO, erros));
+                resultado.add(montar(linha, horas, horasDoFormulario, SituacaoLinha.ERRO, erros));
                 continue;
             }
 
@@ -69,7 +80,7 @@ final class ValidadorParticipantes {
 
             linhaPorEmail.put(chaveEmail, linha.linha());
             linhaPorArquivo.putIfAbsent(nomeArquivo, linha.linha());
-            resultado.add(montar(linha, avisos.isEmpty() ? SituacaoLinha.VALIDA : SituacaoLinha.AVISO, avisos));
+            resultado.add(montar(linha, horas, horasDoFormulario, avisos.isEmpty() ? SituacaoLinha.VALIDA : SituacaoLinha.AVISO, avisos));
         }
 
         return resultado;
@@ -116,7 +127,10 @@ final class ValidadorParticipantes {
         }
     }
 
-    private static LinhaValidadaDTO montar(LinhaCsv linha, SituacaoLinha situacao, List<String> mensagens) {
-        return new LinhaValidadaDTO(linha.linha(), linha.nome(), linha.email(), linha.ra(), situacao, List.copyOf(mensagens));
+    private static LinhaValidadaDTO montar(LinhaCsv linha, Double horas, boolean horasDoFormulario,
+                                           SituacaoLinha situacao, List<String> mensagens) {
+        String horasTexto = horas == null ? null : CargaHorariaFormatter.formatarTexto(horas);
+        return new LinhaValidadaDTO(linha.linha(), linha.nome(), linha.email(), linha.ra(),
+                horas, horasTexto, horasDoFormulario, situacao, List.copyOf(mensagens));
     }
 }

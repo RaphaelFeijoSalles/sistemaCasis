@@ -64,7 +64,7 @@ public class EmissaoService {
         if (requestDTO.arquivoCsv() == null || requestDTO.arquivoCsv().isEmpty()) {
             throw new DadosInvalidosException("O arquivo CSV é obrigatório.");
         }
-        return ValidadorParticipantes.validarLinhas(csvService.lerLinhas(requestDTO.arquivoCsv()));
+        return ValidadorParticipantes.validarLinhas(csvService.lerLinhas(requestDTO.arquivoCsv()), requestDTO.cargaHoraria());
     }
 
     private ResultadoEmissaoDTO resultadoErroValidacao(LinhaValidadaDTO linha) {
