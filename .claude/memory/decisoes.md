@@ -15,3 +15,8 @@
 
 ## D-03 — Spec-driven + memória versionada em `.claude/` (2026-11-19)
 - **Decisão:** toda feature passa pelo ciclo spec → plano → passos pequenos → revisão → commit. Memória e specs são commitadas no fork. Configurações pessoais ficam em `.claude/settings.local.json` (ignorado via `.git/info/exclude`).
+
+## D-04 — Confirmação do lote por reenvio do CSV, com revalidação no backend (2026-11-19)
+- **Contexto:** F1 separou validar de executar; era preciso decidir como a confirmação chega ao backend.
+- **Decisão:** `/pre-visualizar-lote` valida sem efeitos; ao confirmar, o frontend reenvia o mesmo CSV para `/emitir-lote`, que valida de novo e pula as linhas com erro.
+- **Motivo:** sem estado no servidor (sem token nem cache) e o backend nunca confia na prévia. Detalhes em `specs/F1-validacao-pre-disparo.md`.
