@@ -1,7 +1,7 @@
 ---
 id: F1
 titulo: Validação e pré-visualização antes do disparo
-status: em andamento        # rascunho | aprovada | em andamento | concluída
+status: concluída        # rascunho | aprovada | em andamento | concluída
 branch: feat/validation-pre-fire
 criada: 2026-11-20
 ---
@@ -19,17 +19,17 @@ Hoje o botão "Disparar" lê o CSV e já gera PDFs, envia e-mails e grava no Dri
 5. O relatório final mostra as linhas inválidas como `ERRO`, com o motivo.
 
 ## 3. Critérios de aceitação
-- [ ] CA1: Dado um CSV válido, quando chamo `/pre-visualizar-lote`, então recebo a prévia e `PdfService`, `EmailService`, `GoogleDriveService` e `GoogleSheetsService` **nunca** são chamados.
-- [ ] CA2: Dada uma linha com nome vazio ou com e-mail vazio ou fora do padrão `^[^\s@]+@[^\s@]+\.[^\s@]+$`, quando valido, então ela fica com situação `ERRO` e uma mensagem que cita o campo.
-- [ ] CA3: Dado um e-mail repetido (sem diferenciar maiúsculas e ignorando espaços nas bordas), quando valido, então a 1ª ocorrência é válida e as seguintes ficam `ERRO`, com "E-mail repetido (linha N)".
-- [ ] CA4: Dados dois nomes que geram o mesmo nome de PDF com e-mails diferentes, quando valido, então a 2ª ocorrência fica `AVISO` ("Mesmo nome da linha N: o Drive terá dois arquivos com o mesmo nome"). Na execução, **os dois** recebem o certificado.
-- [ ] CA5: Dada uma linha com nome e e-mail válidos e RA vazio (ou sem coluna RA), quando valido, então ela fica `AVISO` ("RA não informado") e é emitida normalmente.
-- [ ] CA6: Dado `nomeEvento` vazio, `dataRealizacao` ausente ou `cargaHoraria` nula ou ≤ 0, quando chamo `/pre-visualizar-lote`, `/emitir-lote` ou `/emitir-unitario`, então recebo **400** com uma mensagem em português e nenhum efeito ocorre.
-- [ ] CA7: Dado um CSV vazio ou sem as colunas Nome e E-mail, quando chamo `/pre-visualizar-lote` ou `/emitir-lote`, então recebo **400** com a mensagem atual de cabeçalho inválido (hoje sai como 500).
-- [ ] CA8: Dado um lote com linhas `ERRO`, quando chamo `/emitir-lote`, então essas linhas entram no relatório como `StatusEmissao.ERRO`, com as mensagens em `mensagemErro`, e não geram PDF nem e-mail. As demais seguem o fluxo atual, incluindo a anti-duplicação.
-- [ ] CA9: Dado `/emitir-unitario` com nome vazio ou e-mail inválido, então recebo **400** e nenhum efeito ocorre.
-- [ ] CA10: No frontend, dada uma prévia com 0 linhas emitíveis, o botão de confirmar fica desabilitado. Com N > 0, o rótulo mostra N.
-- [ ] CA11: Dada uma linha em que todas as células estão vazias, quando valido ou emito, então ela é ignorada: não conta em `totalLinhas` e não aparece na prévia nem no relatório.
+- [x] CA1: Dado um CSV válido, quando chamo `/pre-visualizar-lote`, então recebo a prévia e `PdfService`, `EmailService`, `GoogleDriveService` e `GoogleSheetsService` **nunca** são chamados.
+- [x] CA2: Dada uma linha com nome vazio ou com e-mail vazio ou fora do padrão `^[^\s@]+@[^\s@]+\.[^\s@]+$`, quando valido, então ela fica com situação `ERRO` e uma mensagem que cita o campo.
+- [x] CA3: Dado um e-mail repetido (sem diferenciar maiúsculas e ignorando espaços nas bordas), quando valido, então a 1ª ocorrência é válida e as seguintes ficam `ERRO`, com "E-mail repetido (linha N)".
+- [x] CA4: Dados dois nomes que geram o mesmo nome de PDF com e-mails diferentes, quando valido, então a 2ª ocorrência fica `AVISO` ("Mesmo nome da linha N: o Drive terá dois arquivos com o mesmo nome"). Na execução, **os dois** recebem o certificado.
+- [x] CA5: Dada uma linha com nome e e-mail válidos e RA vazio (ou sem coluna RA), quando valido, então ela fica `AVISO` ("RA não informado") e é emitida normalmente.
+- [x] CA6: Dado `nomeEvento` vazio, `dataRealizacao` ausente ou `cargaHoraria` nula ou ≤ 0, quando chamo `/pre-visualizar-lote`, `/emitir-lote` ou `/emitir-unitario`, então recebo **400** com uma mensagem em português e nenhum efeito ocorre.
+- [x] CA7: Dado um CSV vazio ou sem as colunas Nome e E-mail, quando chamo `/pre-visualizar-lote` ou `/emitir-lote`, então recebo **400** com a mensagem atual de cabeçalho inválido (hoje sai como 500).
+- [x] CA8: Dado um lote com linhas `ERRO`, quando chamo `/emitir-lote`, então essas linhas entram no relatório como `StatusEmissao.ERRO`, com as mensagens em `mensagemErro`, e não geram PDF nem e-mail. As demais seguem o fluxo atual, incluindo a anti-duplicação.
+- [x] CA9: Dado `/emitir-unitario` com nome vazio ou e-mail inválido, então recebo **400** e nenhum efeito ocorre.
+- [x] CA10: No frontend, dada uma prévia com 0 linhas emitíveis, o botão de confirmar fica desabilitado. Com N > 0, o rótulo mostra N.
+- [x] CA11: Dada uma linha em que todas as células estão vazias, quando valido ou emito, então ela é ignorada: não conta em `totalLinhas` e não aparece na prévia nem no relatório.
 
 ## 4. Fora do escopo
 - Consultar o Drive na prévia para marcar quem já é `EXISTENTE`. A anti-duplicação continua só na execução.
@@ -89,4 +89,5 @@ Hoje o botão "Disparar" lê o CSV e já gera PDFs, envia e-mails e grava no Dri
 - P6 (2026-11-20): decisão do dono do projeto: a Strategy foi **desligada no lote**. As classes continuam intactas para a F5. O `definirEstrategia` também foi mantido, embora fique sem uso, por causa da regra de não apagar Javadoc existente. A validação roda antes de qualquer acesso ao Drive. Desvio do plano: se **nenhuma** linha for emitível (incluindo CSV só com cabeçalho), o Drive não é acionado (antes, a pasta era criada). O relatório segue a ordem do arquivo e junta as mensagens de erro com `"; "`. No `@AfterEach` do `EmissaoServiceTest`, o `verifyNoInteractions` virou o helper `semEfeitos()`, chamado nos testes sem efeito.
 - P7 (2026-11-20): o corpo do 400 é texto puro com a mensagem (mesmo padrão das respostas atuais, já exibido pelo `montarMensagemErro` do frontend). O `CertificadoControllerTest` usa `@ActiveProfiles("test")` para **não** carregar o perfil `dev`, que importa o `secrets.properties`. No Boot 4, `@WebMvcTest` fica em `org.springframework.boot.webmvc.test.autoconfigure`. A falha inesperada continua 500 ("Erro crítico: ...").
 - P8 (2026-11-20): props `previa`, `isSubmitting`, `onConfirmar`, `onVoltar`. Emitíveis = `validas + comAviso`. As mensagens aparecem na própria linha (não só no tooltip). Quando há erros, um aviso diz que essas linhas não serão emitidas. Os estilos reaproveitam o relatório; as classes novas usam o prefixo `previa-`. Não há teste automatizado de UI no projeto: verificado com lint e build.
-- P9 (2026-11-20): `App.jsx` com `etapa` (`formulario | previa | relatorio`) e o helper `montarPayloadLote`, usado na prévia e na confirmação. O `handleSubmit` foi dividido em `preVisualizarLote`, `confirmarLote` e `emitirUnitario` (o unitário mantém o comportamento). A prévia tem timeout de 60 s e mensagens de erro próprias, que deixam claro que nada foi emitido. Também foram atualizados os textos da dropzone e do toast de upload, uma dica sob o botão e uma linha no `AjudaEmissao` (pedido da skill `frontend-react`). **Pendente:** verificação manual do fluxo no navegador pelo desenvolvedor (CA10), contra um backend com credenciais de teste.
+- P9 (2026-11-20): `App.jsx` com `etapa` (`formulario | previa | relatorio`) e o helper `montarPayloadLote`, usado na prévia e na confirmação. O `handleSubmit` foi dividido em `preVisualizarLote`, `confirmarLote` e `emitirUnitario` (o unitário mantém o comportamento). A prévia tem timeout de 60 s e mensagens de erro próprias, que deixam claro que nada foi emitido. Também foram atualizados os textos da dropzone e do toast de upload, uma dica sob o botão e uma linha no `AjudaEmissao` (pedido da skill `frontend-react`).
+- Verificação manual (2026-11-20): o desenvolvedor rodou o roteiro de 8 passos contra credenciais de teste: prévia sem efeitos, Voltar mantendo os dados, confirmação emitindo só válidas e avisos, reemissão como `EXISTENTE`, lote só com erros (botão desabilitado), cabeçalho inválido (400) e unitário. Tudo bateu. F1 concluída.
