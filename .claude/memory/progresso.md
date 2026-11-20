@@ -5,7 +5,7 @@ Atualize esta tabela sempre que uma spec mudar de status.
 
 | ID | Feature | Depende de | Status | Spec |
 |---|---|---|---|---|
-| F1 | Etapa de validação antes do disparo: pré-visualização do lote e validação de dados em Java (duplicados, e-mails, vazios, horas), com confirmação explícita antes de gerar PDFs e enviar e-mails | — | backlog | — |
+| F1 | Etapa de validação antes do disparo: pré-visualização do lote e validação de dados em Java (duplicados, e-mails, vazios, horas), com confirmação explícita antes de gerar PDFs e enviar e-mails | — | em andamento | [F1-validacao-pre-disparo.md](../specs/F1-validacao-pre-disparo.md) |
 | F2 | Planilha com horas por participante (lote com cargas horárias diferentes) | F1 | backlog | — |
 | F3 | Eventos longos: data de início e fim | — | backlog | — |
 | F4 | Modelo de certificado que permite preencher o nome do curso | — | backlog | — |
