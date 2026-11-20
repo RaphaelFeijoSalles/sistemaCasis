@@ -81,7 +81,10 @@ export default function CertificadoForm({
                 <div className="form-group" style={{ flex: 1 }}>
                     <label>Carga Horária (Horas)</label>
                     <input type="number" name="cargaHoraria" step="0.5" required min="0.5" placeholder="Ex: 1.5 para 1h30m" value={formData.cargaHoraria} onChange={handleInputChange}/>
-                    <small className="form-hint">Use horas em decimal. Ex.: <strong>2</strong> ou <strong>1.5</strong>.</small>
+                    <small className="form-hint">
+                        Use horas em decimal. Ex.: <strong>2</strong> ou <strong>1.5</strong>.
+                        {emissaoTipo === 'lote' && <> No lote, vale para quem não tiver horas na coluna <strong>Horas</strong> do CSV.</>}
+                    </small>
                     {formData.cargaHoraria && formatarTempoTexto(formData.cargaHoraria) && (
                         <small className="field-preview">
                             Sairá como: <strong>{formatarTempoTexto(formData.cargaHoraria)}</strong>
@@ -106,7 +109,7 @@ export default function CertificadoForm({
                         <div className="dropzone-empty">
                             <UploadCloud size={32} />
                             <p>Clique ou arraste a planilha CSV aqui</p>
-                            <small>Colunas lidas pelo cabeçalho: Nome e E-mail (obrigatórias) e RA (opcional), em qualquer ordem.</small>
+                            <small>Colunas lidas pelo cabeçalho: Nome e E-mail (obrigatórias), RA e Horas (opcionais), em qualquer ordem.</small>
                         </div>
                     )}
                 </div>
