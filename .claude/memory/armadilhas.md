@@ -26,6 +26,10 @@
 - O CORS está fixo no controller: `https://sistema-casis.vercel.app/` e `http://localhost:5173`.
 - Backend em `server.port=8081` no perfil dev; o Dockerfile expõe 8080.
 
+## Git e GitHub
+- **PR a partir do fork aponta para o upstream por padrão** (web e `gh pr create`). Para ficar só no fork, troque o *base repository* para `GuilhermeSMathias/EmissorCertificadoDacomp`, ou use `gh pr create --repo GuilhermeSMathias/EmissorCertificadoDacomp --base main`. PR aberto no upstream notifica o dono original.
+- O `gh` (GitHub CLI) **não está instalado** na máquina do desenvolvedor; PRs são abertos manualmente pela web.
+
 ## Código morto ou placeholder
 - `frontend/src/components/DropzoneCsv.jsx`, `templates/certificado_gestao1.html` e `certificado_gestao2.html` estão vazios.
 - Desde a F1 (P6), o lote usa `CsvService.lerLinhas` + `ValidadorParticipantes`. `EmissaoService.definirEstrategia`, `FonteDadosCsvStrategy` e `CsvService.extrairAlunos` ficaram **sem uso**, mantidos como ponto de extensão para a F5.
