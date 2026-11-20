@@ -20,6 +20,7 @@
 
 ## Ambiente e testes
 - `BackendApplicationTests.contextLoads` precisa das propriedades `GOOGLE_*`. Sem `secrets.properties`, o teste falha (o CI só gera Javadoc, não roda testes).
+- Testes de controller: use `@WebMvcTest` (Boot 4: `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`) + `@MockitoBean EmissaoService` + `@ActiveProfiles("test")`. Sem esse perfil, o `dev` importa o `secrets.properties` (veja `CertificadoControllerTest`).
 - `GOOGLE_SHEETS_PLANILHA_ID` deve ser **só o ID**, sem `/edit?gid=...`.
 - `GOOGLE_SHEETS_NOME_ABA` tem padrão `Página1`.
 - O CORS está fixo no controller: `https://sistema-casis.vercel.app/` e `http://localhost:5173`.
