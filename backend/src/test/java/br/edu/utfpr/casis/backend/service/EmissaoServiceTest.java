@@ -1,12 +1,15 @@
 package br.edu.utfpr.casis.backend.service;
 
+import br.edu.utfpr.casis.backend.dto.EmissaoIndividualRequestDTO;
 import br.edu.utfpr.casis.backend.dto.EmissaoLoteEventoRequestDTO;
 import br.edu.utfpr.casis.backend.dto.PreVisualizacaoLoteDTO;
+import br.edu.utfpr.casis.backend.dto.ResultadoEmissaoDTO;
 import br.edu.utfpr.casis.backend.dto.SituacaoLinha;
-import org.junit.jupiter.api.AfterEach;
+import br.edu.utfpr.casis.backend.dto.StatusEmissao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
@@ -14,15 +17,27 @@ import org.springframework.mock.web.MockMultipartFile;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class EmissaoServiceTest {
 
     private static final LocalDate DATA = LocalDate.of(2026, 11, 20);
+    private static final String EVENTO = "Semana Acadêmica";
+    private static final String PASTA = "pasta-teste";
+    private static final byte[] PDF = {1, 2, 3};
 
     @Mock
     private PdfService pdfService;
@@ -40,10 +55,7 @@ class EmissaoServiceTest {
         emissaoService = new EmissaoService(new CsvService(), pdfService, emailService, driveService, sheetsService);
     }
 
-    @AfterEach
-    void nenhumEfeitoReal() {
-        verifyNoInteractions(pdfService, emailService, driveService, sheetsService);
-    }
+    // ---------- Pré-visualização (CA1) ----------
 
     @Test
     void devePreVisualizarLoteComResumoESemEfeitos() {
@@ -64,6 +76,7 @@ class EmissaoServiceTest {
         assertEquals(List.of(2, 3, 5), previa.linhas().stream().map(l -> l.linha()).toList());
         assertEquals(List.of(SituacaoLinha.VALIDA, SituacaoLinha.AVISO, SituacaoLinha.ERRO),
                 previa.linhas().stream().map(l -> l.situacao()).toList());
+        semEfeitos();
     }
 
     @Test
@@ -72,27 +85,181 @@ class EmissaoServiceTest {
                 () -> emissaoService.preVisualizarLote(lote("Nome;E-mail\nAna;ana@x.com\n", 0.0)));
 
         assertEquals("A carga horária deve ser um número maior que zero.", erro.getMessage());
+        semEfeitos();
     }
 
     @Test
     void deveRecusarPreVisualizacaoSemArquivo() {
-        EmissaoLoteEventoRequestDTO dto = new EmissaoLoteEventoRequestDTO("Semana Acadêmica", DATA, 2.0, null);
+        EmissaoLoteEventoRequestDTO dto = new EmissaoLoteEventoRequestDTO(EVENTO, DATA, 2.0, null);
 
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
                 () -> emissaoService.preVisualizarLote(dto));
 
         assertEquals("O arquivo CSV é obrigatório.", erro.getMessage());
+        semEfeitos();
     }
 
     @Test
     void deveRecusarPreVisualizacaoComCabecalhoInvalido() {
         assertThrows(DadosInvalidosException.class,
                 () -> emissaoService.preVisualizarLote(lote("Nome;RA\nAna;1\n", 2.0)));
+        semEfeitos();
+    }
+
+    // ---------- Emissão em lote (CA6, CA7, CA8, CA11, CA4) ----------
+
+    @Test
+    void deveEmitirValidasEAvisosEPularLinhasComErro() {
+        prepararDrive(Set.of());
+        String csv = """
+                Nome;RA;E-mail
+                Ana Silva;1;ana@alunos.utfpr.edu.br
+                Carla Lima;3;carla@utfpr
+                ;;
+                Bruno Souza;;bruno@alunos.utfpr.edu.br
+                """;
+
+        List<ResultadoEmissaoDTO> relatorio = emissaoService.processarEmissao(lote(csv, 2.0));
+
+        assertEquals(List.of(
+                new ResultadoEmissaoDTO("Ana Silva", "ana@alunos.utfpr.edu.br", StatusEmissao.SUCESSO, null),
+                new ResultadoEmissaoDTO("Carla Lima", "carla@utfpr", StatusEmissao.ERRO, "E-mail inválido: carla@utfpr"),
+                new ResultadoEmissaoDTO("Bruno Souza", "bruno@alunos.utfpr.edu.br", StatusEmissao.SUCESSO, null)
+        ), relatorio);
+        verify(driveService, times(1)).obterOuCriarPastaEvento(EVENTO, DATA);
+        verify(driveService, times(1)).listarArquivosNaPasta(PASTA);
+        verify(pdfService, times(2)).gerarCertificado(any(), any());
+        verify(emailService, never()).enviarCertificado(eq("carla@utfpr"), anyString(), anyString(), any());
+        verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
+        verify(driveService).fazerUploadCertificado(PDF, "Certificado_Bruno_Souza.pdf", PASTA);
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", null, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "", null, DATA, EVENTO, 2.0);
+    }
+
+    @Test
+    void deveManterOrdemDosEfeitosPorParticipante() {
+        prepararDrive(Set.of());
+
+        emissaoService.processarEmissao(lote("Nome;RA;E-mail\nAna Silva;1;ana@alunos.utfpr.edu.br\n", 2.0));
+
+        InOrder ordem = inOrder(driveService, pdfService, emailService, sheetsService);
+        ordem.verify(driveService).listarArquivosNaPasta(PASTA);
+        ordem.verify(pdfService).gerarCertificado(any(), any());
+        ordem.verify(emailService).enviarCertificado(eq("ana@alunos.utfpr.edu.br"), eq("Ana Silva"), eq(EVENTO), eq(PDF));
+        ordem.verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
+        ordem.verify(sheetsService).registrarEmissao("Ana Silva", "1", null, DATA, EVENTO, 2.0);
+    }
+
+    @Test
+    void deveManterAntiDuplicacaoPeloNomeDoArquivo() {
+        when(driveService.obterOuCriarPastaEvento(EVENTO, DATA)).thenReturn(PASTA);
+        when(driveService.listarArquivosNaPasta(PASTA)).thenReturn(Set.of("Certificado_Ana_Silva.pdf"));
+
+        List<ResultadoEmissaoDTO> relatorio = emissaoService.processarEmissao(
+                lote("Nome;RA;E-mail\n  Ana   Silva ;1;ana@alunos.utfpr.edu.br\n", 2.0));
+
+        assertEquals(StatusEmissao.EXISTENTE, relatorio.getFirst().status());
+        verifyNoInteractions(pdfService, emailService, sheetsService);
+        verify(driveService, never()).fazerUploadCertificado(any(), anyString(), anyString());
+    }
+
+    @Test
+    void deveEmitirParaOsDoisHomonimos() {
+        prepararDrive(Set.of());
+        String csv = """
+                Nome;RA;E-mail
+                Ana Silva;1;ana1@alunos.utfpr.edu.br
+                Ana Silva;2;ana2@alunos.utfpr.edu.br
+                """;
+
+        List<ResultadoEmissaoDTO> relatorio = emissaoService.processarEmissao(lote(csv, 2.0));
+
+        assertEquals(List.of(StatusEmissao.SUCESSO, StatusEmissao.SUCESSO), relatorio.stream().map(ResultadoEmissaoDTO::status).toList());
+        verify(emailService).enviarCertificado(eq("ana1@alunos.utfpr.edu.br"), anyString(), anyString(), any());
+        verify(emailService).enviarCertificado(eq("ana2@alunos.utfpr.edu.br"), anyString(), anyString(), any());
+        verify(driveService, times(2)).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
+    }
+
+    @Test
+    void deveJuntarMensagensDeErroNoRelatorio() {
+        List<ResultadoEmissaoDTO> relatorio = emissaoService.processarEmissao(lote("Nome;RA;E-mail\n;1;\n", 2.0));
+
+        assertEquals(List.of(new ResultadoEmissaoDTO("", "", StatusEmissao.ERRO, "Nome não informado; E-mail não informado")), relatorio);
+    }
+
+    @Test
+    void naoDeveTocarNoDriveQuandoTodasAsLinhasTemErro() {
+        List<ResultadoEmissaoDTO> relatorio = emissaoService.processarEmissao(
+                lote("Nome;RA;E-mail\nAna;1;ana@utfpr\nBruno;2;\n", 2.0));
+
+        assertEquals(List.of(StatusEmissao.ERRO, StatusEmissao.ERRO), relatorio.stream().map(ResultadoEmissaoDTO::status).toList());
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarLoteComEventoInvalidoAntesDeQualquerEfeito() {
+        assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissao(lote("Nome;E-mail\nAna;ana@x.com\n", null)));
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarLoteComCabecalhoInvalidoAntesDeQualquerEfeito() {
+        assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissao(lote("Nome;RA\nAna;1\n", 2.0)));
+        semEfeitos();
+    }
+
+    // ---------- Emissão unitária (CA6, CA9) ----------
+
+    @Test
+    void deveEmitirUnitarioValido() {
+        prepararDrive(Set.of());
+
+        ResultadoEmissaoDTO resultado = emissaoService.processarEmissaoIndividual(unitario(" Ana Silva ", " ana@alunos.utfpr.edu.br ", 2.0));
+
+        assertEquals(new ResultadoEmissaoDTO("Ana Silva", "ana@alunos.utfpr.edu.br", StatusEmissao.SUCESSO, null), resultado);
+        verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
+    }
+
+    @Test
+    void deveRecusarUnitarioComNomeVazioAntesDeQualquerEfeito() {
+        assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissaoIndividual(unitario("  ", "ana@alunos.utfpr.edu.br", 2.0)));
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarUnitarioComEmailInvalidoAntesDeQualquerEfeito() {
+        assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissaoIndividual(unitario("Ana Silva", "ana@utfpr", 2.0)));
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarUnitarioComEventoInvalidoAntesDeQualquerEfeito() {
+        assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissaoIndividual(unitario("Ana Silva", "ana@alunos.utfpr.edu.br", -1.0)));
+        semEfeitos();
+    }
+
+    private void prepararDrive(Set<String> existentes) {
+        when(driveService.obterOuCriarPastaEvento(EVENTO, DATA)).thenReturn(PASTA);
+        when(driveService.listarArquivosNaPasta(PASTA)).thenReturn(existentes);
+        when(pdfService.gerarCertificado(any(), any())).thenReturn(PDF);
+    }
+
+    private void semEfeitos() {
+        verifyNoInteractions(pdfService, emailService, driveService, sheetsService);
     }
 
     private EmissaoLoteEventoRequestDTO lote(String csv, Double carga) {
         MockMultipartFile arquivo = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
                 csv.getBytes(StandardCharsets.UTF_8));
-        return new EmissaoLoteEventoRequestDTO("Semana Acadêmica", DATA, carga, arquivo);
+        return new EmissaoLoteEventoRequestDTO(EVENTO, DATA, carga, arquivo);
+    }
+
+    private EmissaoIndividualRequestDTO unitario(String nome, String email, Double carga) {
+        return new EmissaoIndividualRequestDTO(EVENTO, DATA, carga, nome, email, "12345");
     }
 }

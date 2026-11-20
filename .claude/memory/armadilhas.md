@@ -27,5 +27,6 @@
 
 ## Código morto ou placeholder
 - `frontend/src/components/DropzoneCsv.jsx`, `templates/certificado_gestao1.html` e `certificado_gestao2.html` estão vazios.
+- Desde a F1 (P6), o lote usa `CsvService.lerLinhas` + `ValidadorParticipantes`. `EmissaoService.definirEstrategia`, `FonteDadosCsvStrategy` e `CsvService.extrairAlunos` ficaram **sem uso**, mantidos como ponto de extensão para a F5.
 - `FonteDadosBancoStrategy` retorna lista vazia. `EmissaoGestaoRequestDTO` e `AlunoCertificadoGestao` ainda não são usados.
 - `certificado_evento.html` tem o bloco CSS `html, body` duplicado.
