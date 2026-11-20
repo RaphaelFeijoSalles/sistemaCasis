@@ -19,7 +19,7 @@ class ValidadorParticipantesTest {
     @Test
     void deveMarcarLinhaCompletaComoValida() {
         List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345")
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", null)
         ));
 
         assertEquals(List.of(new LinhaValidadaDTO(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", SituacaoLinha.VALIDA, List.of())), resultado);
@@ -27,7 +27,7 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveMarcarNomeVazioComoErro() {
-        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "ana@alunos.utfpr.edu.br", "12345"));
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "ana@alunos.utfpr.edu.br", "12345", null));
 
         assertEquals(SituacaoLinha.ERRO, linha.situacao());
         assertEquals(List.of("Nome não informado"), linha.mensagens());
@@ -35,7 +35,7 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveMarcarEmailVazioComoErro() {
-        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "", "12345"));
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "", "12345", null));
 
         assertEquals(SituacaoLinha.ERRO, linha.situacao());
         assertEquals(List.of("E-mail não informado"), linha.mensagens());
@@ -44,7 +44,7 @@ class ValidadorParticipantesTest {
     @Test
     void deveMarcarEmailForaDoPadraoComoErro() {
         for (String email : List.of("ana", "ana@utfpr", "ana silva@utfpr.edu.br", "@utfpr.edu.br")) {
-            LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", email, "12345"));
+            LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", email, "12345", null));
 
             assertEquals(SituacaoLinha.ERRO, linha.situacao(), email);
             assertEquals(List.of("E-mail inválido: " + email), linha.mensagens(), email);
@@ -53,7 +53,7 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveListarTodosOsErrosESemAvisoDeRaNaLinhaComErro() {
-        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "", null));
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "", null, null));
 
         assertEquals(SituacaoLinha.ERRO, linha.situacao());
         assertEquals(List.of("Nome não informado", "E-mail não informado"), linha.mensagens());
@@ -62,9 +62,9 @@ class ValidadorParticipantesTest {
     @Test
     void deveMarcarEmailRepetidoComoErroSemDiferenciarMaiusculas() {
         List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "Ana@Alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(3, "Ana S.", "ana@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(4, "Ana", "ANA@ALUNOS.UTFPR.EDU.BR", "1")
+                new LinhaCsv(2, "Ana Silva", "Ana@Alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "Ana S.", "ana@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(4, "Ana", "ANA@ALUNOS.UTFPR.EDU.BR", "1", null)
         ));
 
         assertEquals(SituacaoLinha.VALIDA, resultado.get(0).situacao());
@@ -76,8 +76,8 @@ class ValidadorParticipantesTest {
     @Test
     void naoDeveContarRepeticaoContraLinhaComErro() {
         List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "", "ana@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(5, "Ana Silva", "ana@alunos.utfpr.edu.br", "1")
+                new LinhaCsv(2, "", "ana@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(5, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", null)
         ));
 
         assertEquals(SituacaoLinha.ERRO, resultado.get(0).situacao());
@@ -87,8 +87,8 @@ class ValidadorParticipantesTest {
     @Test
     void deveAvisarHomonimoQueGeraMesmoNomeDePdf() {
         List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(3, "Ana  Silva", "ana2@alunos.utfpr.edu.br", "2")
+                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "Ana  Silva", "ana2@alunos.utfpr.edu.br", "2", null)
         ));
 
         assertEquals(SituacaoLinha.VALIDA, resultado.get(0).situacao());
@@ -99,8 +99,8 @@ class ValidadorParticipantesTest {
     @Test
     void naoDeveAvisarNomesQueDiferemEmMaiusculas() {
         List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(3, "ANA SILVA", "ana2@alunos.utfpr.edu.br", "2")
+                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "ANA SILVA", "ana2@alunos.utfpr.edu.br", "2", null)
         ));
 
         assertEquals(SituacaoLinha.VALIDA, resultado.get(1).situacao());
@@ -109,8 +109,8 @@ class ValidadorParticipantesTest {
     @Test
     void deveAvisarRaNuloOuVazio() {
         List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", null),
-                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "")
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", null, null),
+                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "", null)
         ));
 
         for (LinhaValidadaDTO linha : resultado) {
@@ -122,8 +122,8 @@ class ValidadorParticipantesTest {
     @Test
     void deveAcumularAvisosDeHomonimoERa() {
         List<LinhaValidadaDTO> resultado = ValidadorParticipantes.validarLinhas(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1"),
-                new LinhaCsv(3, "Ana Silva", "ana2@alunos.utfpr.edu.br", null)
+                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "Ana Silva", "ana2@alunos.utfpr.edu.br", null, null)
         ));
 
         assertEquals(List.of(

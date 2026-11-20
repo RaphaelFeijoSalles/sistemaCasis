@@ -36,6 +36,7 @@ public class CsvService {
         int indexNome = -1;
         int indexEmail = -1;
         int indexRa = -1;
+        int indexHoras = -1;
 
         boolean isValido() {
             // Não obrigatoriedade do RA para proporcionar mais flexibilidade para outros tipos de emissões
@@ -149,10 +150,12 @@ public class CsvService {
                 int numeroLinha = (int) csvReader.getLinesRead() + 1;
                 while ((celulas = csvReader.readNext()) != null) {
                     if (!isLinhaEmBranco(celulas)) {
-                        String ra = map.indexRa != -1 && celulas.length > map.indexRa
-                                ? celulas[map.indexRa].trim()
-                                : null;
-                        linhas.add(new LinhaCsv(numeroLinha, celula(celulas, map.indexNome), celula(celulas, map.indexEmail), ra));
+                        linhas.add(new LinhaCsv(
+                                numeroLinha,
+                                celula(celulas, map.indexNome),
+                                celula(celulas, map.indexEmail),
+                                celulaOpcional(celulas, map.indexRa),
+                                celulaOpcional(celulas, map.indexHoras)));
                     }
                     numeroLinha = (int) csvReader.getLinesRead() + 1;
                 }
@@ -181,6 +184,13 @@ public class CsvService {
 
     private String celula(String[] celulas, int indice) {
         return celulas.length > indice ? celulas[indice].trim() : "";
+    }
+
+    /**
+     * Célula de coluna opcional: {@code null} se a coluna não existe no cabeçalho ou se a linha veio sem essa célula.
+     */
+    private String celulaOpcional(String[] celulas, int indice) {
+        return indice != -1 && celulas.length > indice ? celulas[indice].trim() : null;
     }
 
     private char identificarDelimitador(byte[] conteudoCsv) throws IOException {
@@ -240,10 +250,12 @@ public class CsvService {
                 map.indexEmail = i;
             } else if (map.indexRa == -1 && isRa(colNorm)) {
                 map.indexRa = i;
+            } else if (map.indexHoras == -1 && isHoras(colNorm)) {
+                map.indexHoras = i;
             }
         }
-        
-        log.info("Mapeamento do Header CSV -> Nome: [{}], Email: [{}], RA: [{}]", map.indexNome, map.indexEmail, map.indexRa);
+
+        log.info("Mapeamento do Header CSV -> Nome: [{}], Email: [{}], RA: [{}], Horas: [{}]", map.indexNome, map.indexEmail, map.indexRa, map.indexHoras);
         return map;
     }
 
@@ -269,6 +281,13 @@ public class CsvService {
                col.equals("r.a.") ||
                col.contains("registro academico") ||
                col.contains("matricula");
+    }
+
+    /**
+     * Coluna de horas por participante (F2): só o cabeçalho "Horas", já normalizado.
+     */
+    private boolean isHoras(String col) {
+        return col.equals("horas");
     }
 
     /**
