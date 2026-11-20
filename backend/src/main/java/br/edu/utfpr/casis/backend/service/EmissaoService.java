@@ -126,14 +126,18 @@ public class EmissaoService {
                 continue;
             }
 
+            // Horas da própria linha (F2): coluna Horas do CSV ou, se vazia, a carga do formulário
+            EmissaoLoteEventoRequestDTO dadosDaLinha = new EmissaoLoteEventoRequestDTO(
+                    requestDTO.nomeEvento(), requestDTO.dataRealizacao(), linha.horas(), requestDTO.arquivoCsv());
+
             try {
                 // Gera, Envia e faz Upload apenas se for novo
-                byte[] pdf = pdfService.gerarCertificado(aluno, requestDTO);
+                byte[] pdf = pdfService.gerarCertificado(aluno, dadosDaLinha);
                 emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), requestDTO.nomeEvento(), pdf);
                 driveService.fazerUploadCertificado(pdf, nomePdf, folderId);
-                
+
                 // Registra na planilha de controle
-                sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), null, requestDTO.dataRealizacao(), requestDTO.nomeEvento(), requestDTO.cargaHoraria());
+                sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), null, requestDTO.dataRealizacao(), requestDTO.nomeEvento(), linha.horas());
 
                 relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), StatusEmissao.SUCESSO, null));
 

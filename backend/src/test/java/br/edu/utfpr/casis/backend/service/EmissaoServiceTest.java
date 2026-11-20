@@ -9,6 +9,8 @@ import br.edu.utfpr.casis.backend.dto.StatusEmissao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import br.edu.utfpr.casis.backend.model.AlunoCertificado;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -178,6 +180,57 @@ class EmissaoServiceTest {
         verify(emailService).enviarCertificado(eq("ana1@alunos.utfpr.edu.br"), anyString(), anyString(), any());
         verify(emailService).enviarCertificado(eq("ana2@alunos.utfpr.edu.br"), anyString(), anyString(), any());
         verify(driveService, times(2)).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
+    }
+
+    // ---------- Horas por participante (F2: CA6, CA7) ----------
+
+    @Test
+    void deveGerarPdfERegistrarPlanilhaComAsHorasDeCadaParticipante() {
+        prepararDrive(Set.of());
+        String csv = """
+                Nome;RA;E-mail;Horas
+                Ana Silva;1;ana@alunos.utfpr.edu.br;1,5
+                Bruno Souza;2;bruno@alunos.utfpr.edu.br;
+                Carla Lima;3;carla@alunos.utfpr.edu.br;01:00
+                """;
+
+        emissaoService.processarEmissao(lote(csv, 2.0));
+
+        ArgumentCaptor<AlunoCertificado> alunos = ArgumentCaptor.forClass(AlunoCertificado.class);
+        ArgumentCaptor<EmissaoLoteEventoRequestDTO> dadosPdf = ArgumentCaptor.forClass(EmissaoLoteEventoRequestDTO.class);
+        verify(pdfService, times(3)).gerarCertificado(alunos.capture(), dadosPdf.capture());
+
+        assertEquals(List.of("Ana Silva", "Bruno Souza", "Carla Lima"), alunos.getAllValues().stream().map(AlunoCertificado::getNome).toList());
+        assertEquals(List.of(1.5, 2.0, 1.0), dadosPdf.getAllValues().stream().map(EmissaoLoteEventoRequestDTO::cargaHoraria).toList());
+        for (EmissaoLoteEventoRequestDTO dados : dadosPdf.getAllValues()) {
+            assertEquals(EVENTO, dados.nomeEvento());
+            assertEquals(DATA, dados.dataRealizacao());
+        }
+
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", null, DATA, EVENTO, 1.5);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "2", null, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Carla Lima", "3", null, DATA, EVENTO, 1.0);
+        verify(emailService, times(3)).enviarCertificado(anyString(), anyString(), eq(EVENTO), eq(PDF));
+    }
+
+    @Test
+    void devePularLinhaComHorasInvalidasNaEmissao() {
+        prepararDrive(Set.of());
+        String csv = """
+                Nome;RA;E-mail;Horas
+                Ana Silva;1;ana@alunos.utfpr.edu.br;abc
+                Bruno Souza;2;bruno@alunos.utfpr.edu.br;3
+                """;
+
+        List<ResultadoEmissaoDTO> relatorio = emissaoService.processarEmissao(lote(csv, 2.0));
+
+        assertEquals(List.of(
+                new ResultadoEmissaoDTO("Ana Silva", "ana@alunos.utfpr.edu.br", StatusEmissao.ERRO, "Horas inválidas: abc"),
+                new ResultadoEmissaoDTO("Bruno Souza", "bruno@alunos.utfpr.edu.br", StatusEmissao.SUCESSO, null)
+        ), relatorio);
+        verify(pdfService, times(1)).gerarCertificado(any(), any());
+        verify(emailService, never()).enviarCertificado(eq("ana@alunos.utfpr.edu.br"), anyString(), anyString(), any());
+        verify(sheetsService).registrarEmissao("Bruno Souza", "2", null, DATA, EVENTO, 3.0);
     }
 
     @Test
