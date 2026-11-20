@@ -21,7 +21,7 @@
 - A senha da API fica em `localStorage` (`casis_api_key`) e vai no header `X-API-KEY`.
 
 ## Ambiente e testes
-- `BackendApplicationTests.contextLoads` precisa das propriedades `GOOGLE_*`. Sem `secrets.properties`, o teste falha (o CI só gera Javadoc, não roda testes).
+- `BackendApplicationTests.contextLoads` precisa das propriedades `GOOGLE_*`. Sem `secrets.properties`, o teste falha (o CI só gera Javadoc, não roda testes). Rodar manualmente, só com credenciais de teste: `cd backend && ./mvnw test -Dtest=BackendApplicationTests` (PowerShell: `.\mvnw.cmd test "-Dtest=BackendApplicationTests"`). Passou na F2 (2026-11-20). O Claude não roda esse teste.
 - Testes de controller: use `@WebMvcTest` (Boot 4: `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`) + `@MockitoBean EmissaoService` + `@ActiveProfiles("test")`. Sem esse perfil, o `dev` importa o `secrets.properties` (veja `CertificadoControllerTest`).
 - `GOOGLE_SHEETS_PLANILHA_ID` deve ser **só o ID**, sem `/edit?gid=...`.
 - `GOOGLE_SHEETS_NOME_ABA` tem padrão `Página1`.

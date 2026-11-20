@@ -21,4 +21,4 @@
 3. Próxima feature: `/nova-spec F3` (eventos longos), começando pelos pontos em aberto de `progresso.md`.
 
 ## Pendências / bloqueios
-- `BackendApplicationTests.contextLoads` nunca foi rodado nesta branch (precisa do `secrets.properties` de teste): `cd backend && ./mvnw test -Dtest=BackendApplicationTests`.
+- Nenhuma. `BackendApplicationTests.contextLoads` rodado manualmente pelo desenvolvedor na branch da F2, com o `secrets.properties` de teste (2026-11-20): verde. A seção "Pendência conhecida" da descrição do PR da F2 pode ser removida.
