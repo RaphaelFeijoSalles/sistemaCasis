@@ -3,6 +3,7 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import CertificadoForm from './components/CertificadoForm';
 import RelatorioEmissao from './components/RelatorioEmissao';
+import PreVisualizacaoLote from './components/PreVisualizacaoLote';
 import AjudaEmissao from './components/AjudaEmissao';
 import './App.css';
 
@@ -21,7 +22,7 @@ const validarCsv = (arquivo) => {
   if (!arquivo) {
     return {
       titulo: 'Planilha CSV não anexada',
-      detalhe: 'No modo lote, selecione um arquivo .csv com as colunas Nome, RA e E-mail antes de disparar.'
+      detalhe: 'No modo lote, selecione um arquivo .csv com as colunas Nome, RA e E-mail antes de pré-visualizar.'
     };
   }
 
@@ -115,14 +116,16 @@ const extrairDetalheServidor = (data) => {
   return String(data);
 };
 
-const montarMensagemErro = (error, emissaoTipo) => {
-  const modo = emissaoTipo === 'lote' ? 'o lote' : 'a emissão unitária';
+const montarMensagemErro = (error, emissaoTipo, isPrevia = false) => {
+  const modo = isPrevia ? 'a pré-visualização' : (emissaoTipo === 'lote' ? 'o lote' : 'a emissão unitária');
 
   if (axios.isAxiosError(error)) {
     if (error.code === 'ECONNABORTED') {
       return {
         titulo: 'Tempo de resposta esgotado',
-        detalhe: `O servidor demorou demais para responder ${modo}. Verifique se alguns e-mails chegaram antes de tentar reenviar.`
+        detalhe: isPrevia
+          ? 'O servidor demorou demais para validar a planilha. Nenhum certificado foi emitido nesta etapa; tente novamente.'
+          : `O servidor demorou demais para responder ${modo}. Verifique se alguns e-mails chegaram antes de tentar reenviar.`
       };
     }
 
@@ -139,7 +142,7 @@ const montarMensagemErro = (error, emissaoTipo) => {
       return {
         titulo: 'Dados recusados pelo servidor',
         detalhe: detalheServidor || (emissaoTipo === 'lote'
-          ? 'Confira se o CSV tem cabeçalho, colunas na ordem Nome, RA, E-mail e linhas sem células obrigatórias vazias.'
+          ? 'Confira se a primeira linha do CSV é o cabeçalho e tem as colunas Nome e E-mail (RA é opcional; a ordem não importa).'
           : 'Confira nome, RA, e-mail, data e carga horária do participante.')
       };
     }
@@ -174,8 +177,10 @@ const montarMensagemErro = (error, emissaoTipo) => {
 
     if (error.response.status >= 500) {
       return {
-        titulo: 'Erro interno durante a emissão',
-        detalhe: detalheServidor || 'O servidor encontrou uma falha ao processar certificados, Drive, Sheets ou envio de e-mail. Verifique o relatório antes de reenviar.'
+        titulo: isPrevia ? 'Erro interno durante a pré-visualização' : 'Erro interno durante a emissão',
+        detalhe: detalheServidor || (isPrevia
+          ? 'O servidor falhou ao validar a planilha. Nenhum certificado foi emitido nesta etapa.'
+          : 'O servidor encontrou uma falha ao processar certificados, Drive, Sheets ou envio de e-mail. Verifique o relatório antes de reenviar.')
       };
     }
 
@@ -198,6 +203,16 @@ const ToastMensagem = ({ titulo, detalhe }) => (
   </div>
 );
 
+// Mesmos nomes de campos de EmissaoLoteEventoRequestDTO; usado na prévia e na confirmação
+const montarPayloadLote = (formData, arquivoCsv) => {
+  const payload = new FormData();
+  payload.append('nomeEvento', formData.nomeEvento.trim());
+  payload.append('dataRealizacao', formData.dataRealizacao);
+  payload.append('cargaHoraria', String(formData.cargaHoraria).replace(',', '.'));
+  payload.append('arquivoCsv', arquivoCsv);
+  return payload;
+};
+
 const contarStatus = (resultados) => ({
   sucessos: resultados.filter(r => r.status === 'SUCESSO').length,
   existentes: resultados.filter(r => r.status === 'EXISTENTE').length,
@@ -214,6 +229,9 @@ function App() {
   const [arquivoCsv, setArquivoCsv] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resultados, setResultados] = useState(null);
+  const [previa, setPrevia] = useState(null);
+  // Etapas do lote: formulario -> previa -> relatorio (unitário vai direto para relatorio)
+  const [etapa, setEtapa] = useState('formulario');
   const [apiKey, setApiKey] = useState(localStorage.getItem('casis_api_key') || '');
   const [emissaoTipo, setEmissaoTipo] = useState('lote');
   const [helpButtonTop, setHelpButtonTop] = useState(0);
@@ -238,7 +256,7 @@ function App() {
       resizeObserver.disconnect();
       window.removeEventListener('resize', updateHelpButtonTop);
     };
-  }, [arquivoCsv, emissaoTipo, formData.cargaHoraria, resultados]);
+  }, [arquivoCsv, emissaoTipo, formData.cargaHoraria, resultados, etapa]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -249,57 +267,67 @@ function App() {
       return;
     }
 
+    // Lote: primeiro só valida (sem efeitos). A emissão acontece em confirmarLote.
+    if (emissaoTipo === 'lote') {
+      await preVisualizarLote();
+    } else {
+      await emitirUnitario();
+    }
+  };
+
+  const exibirResultadoEmissao = (relatorio, toastId) => {
+    const { sucessos, existentes, falhas } = contarStatus(relatorio);
+    const titulo = falhas > 0 ? 'Emissão concluída com falhas' : 'Emissão concluída';
+    const detalhe = emissaoTipo === 'lote'
+      ? `Resultado do lote: ${sucessos} sucesso(s), ${existentes} já emitido(s), ${falhas} falha(s). Confira a tabela antes de reenviar.`
+      : (falhas > 0 ? 'O participante ficou com erro. Veja o relatório para entender o motivo.' : 'Certificado unitário processado e registrado.');
+
+    toast(falhas > 0 ? <ToastMensagem titulo={titulo} detalhe={detalhe} /> : detalhe, {
+      id: toastId,
+      duration: falhas > 0 ? 9000 : 5000,
+      icon: falhas > 0 ? '!' : '✓'
+    });
+  };
+
+  const preVisualizarLote = async () => {
     setIsSubmitting(true);
-    const toastId = toast.loading(
-      emissaoTipo === 'lote'
-        ? 'Processando lote: gerando PDFs, enviando e-mails e registrando backup...'
-        : 'Gerando certificado unitário, enviando e-mail e registrando backup...'
-    );
+    const toastId = toast.loading('Validando a planilha. Nenhum certificado ou e-mail é enviado nesta etapa...');
 
     try {
-      let response;
-      if (emissaoTipo === 'lote') {
-        const payload = new FormData();
-        payload.append('nomeEvento', formData.nomeEvento.trim());
-        payload.append('dataRealizacao', formData.dataRealizacao);
-        payload.append('cargaHoraria', String(formData.cargaHoraria).replace(',', '.'));
-        payload.append('arquivoCsv', arquivoCsv);
-
-        response = await axios.post(`${API_BASE_URL}/api/certificados/emitir-lote`, payload, {
-          headers: { 'X-API-KEY': apiKey.trim() },
-          timeout: 120000
-        });
-        setResultados(response.data);
-      } else {
-        const payload = {
-          ...formData,
-          nomeEvento: formData.nomeEvento.trim(),
-          cargaHoraria: String(formData.cargaHoraria).replace(',', '.'),
-          nomeParticipante: formData.nomeParticipante.trim(),
-          emailParticipante: formData.emailParticipante.trim(),
-          raParticipante: formData.raParticipante.trim()
-        };
-
-        response = await axios.post(`${API_BASE_URL}/api/certificados/emitir-unitario`, payload, {
-          headers: { 'X-API-KEY': apiKey.trim() },
-          timeout: 120000
-        });
-        // Transforma o objeto único num Array de 1 item para a tabela RelatorioEmissao conseguir ler
-        setResultados([response.data]);
-      }
-
-      const relatorio = Array.isArray(response.data) ? response.data : [response.data];
-      const { sucessos, existentes, falhas } = contarStatus(relatorio);
-      const titulo = falhas > 0 ? 'Emissão concluída com falhas' : 'Emissão concluída';
-      const detalhe = emissaoTipo === 'lote'
-        ? `Resultado do lote: ${sucessos} sucesso(s), ${existentes} já emitido(s), ${falhas} falha(s). Confira a tabela antes de reenviar.`
-        : (falhas > 0 ? 'O participante ficou com erro. Veja o relatório para entender o motivo.' : 'Certificado unitário processado e registrado.');
-
-      toast(falhas > 0 ? <ToastMensagem titulo={titulo} detalhe={detalhe} /> : detalhe, {
-        id: toastId,
-        duration: falhas > 0 ? 9000 : 5000,
-        icon: falhas > 0 ? '!' : '✓'
+      const response = await axios.post(`${API_BASE_URL}/api/certificados/pre-visualizar-lote`, montarPayloadLote(formData, arquivoCsv), {
+        headers: { 'X-API-KEY': apiKey.trim() },
+        timeout: 60000
       });
+      const { validas, comAviso, comErro } = response.data;
+      setPrevia(response.data);
+      setEtapa('previa');
+      toast(`Pré-visualização pronta: ${validas} válida(s), ${comAviso} com aviso, ${comErro} com erro. Confira antes de confirmar.`, {
+        id: toastId,
+        duration: 6000,
+        icon: comErro > 0 ? '!' : '✓'
+      });
+    } catch (error) {
+      const mensagem = montarMensagemErro(error, emissaoTipo, true);
+      toast.error(<ToastMensagem {...mensagem} />, { id: toastId, duration: 9000 });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const confirmarLote = async () => {
+    setIsSubmitting(true);
+    const toastId = toast.loading('Processando lote: gerando PDFs, enviando e-mails e registrando backup...');
+
+    try {
+      // Reenvia o mesmo CSV e os mesmos campos; o backend revalida antes de emitir
+      const response = await axios.post(`${API_BASE_URL}/api/certificados/emitir-lote`, montarPayloadLote(formData, arquivoCsv), {
+        headers: { 'X-API-KEY': apiKey.trim() },
+        timeout: 120000
+      });
+      setResultados(response.data);
+      setPrevia(null);
+      setEtapa('relatorio');
+      exibirResultadoEmissao(response.data, toastId);
       setArquivoCsv(null);
     } catch (error) {
       const mensagem = montarMensagemErro(error, emissaoTipo);
@@ -309,8 +337,47 @@ function App() {
     }
   };
 
+  const emitirUnitario = async () => {
+    setIsSubmitting(true);
+    const toastId = toast.loading('Gerando certificado unitário, enviando e-mail e registrando backup...');
+
+    try {
+      const payload = {
+        ...formData,
+        nomeEvento: formData.nomeEvento.trim(),
+        cargaHoraria: String(formData.cargaHoraria).replace(',', '.'),
+        nomeParticipante: formData.nomeParticipante.trim(),
+        emailParticipante: formData.emailParticipante.trim(),
+        raParticipante: formData.raParticipante.trim()
+      };
+
+      const response = await axios.post(`${API_BASE_URL}/api/certificados/emitir-unitario`, payload, {
+        headers: { 'X-API-KEY': apiKey.trim() },
+        timeout: 120000
+      });
+      // Transforma o objeto único num Array de 1 item para a tabela RelatorioEmissao conseguir ler
+      setResultados([response.data]);
+      setEtapa('relatorio');
+      exibirResultadoEmissao([response.data], toastId);
+      setArquivoCsv(null);
+    } catch (error) {
+      const mensagem = montarMensagemErro(error, emissaoTipo);
+      toast.error(<ToastMensagem {...mensagem} />, { id: toastId, duration: 9000 });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Volta da prévia ao formulário mantendo os campos e o CSV para edição
+  const voltarParaFormulario = () => {
+    setPrevia(null);
+    setEtapa('formulario');
+  };
+
   const resetForm = () => {
     setResultados(null);
+    setPrevia(null);
+    setEtapa('formulario');
     setArquivoCsv(null);
     setFormData({
       nomeEvento: '', dataRealizacao: '', cargaHoraria: '',
@@ -333,7 +400,7 @@ function App() {
             <p>Sistema Oficial do CASIS - Eventos</p>
           </div>
 
-          {!resultados ? (
+          {etapa === 'formulario' && (
               <CertificadoForm
                   formData={formData} setFormData={setFormData}
                   arquivoCsv={arquivoCsv} setArquivoCsv={setArquivoCsv}
@@ -341,11 +408,18 @@ function App() {
                   isSubmitting={isSubmitting} onSubmit={handleSubmit}
                   emissaoTipo={emissaoTipo} setEmissaoTipo={setEmissaoTipo}
               />
-          ) : (
+          )}
+          {etapa === 'previa' && previa && (
+              <PreVisualizacaoLote
+                  previa={previa} isSubmitting={isSubmitting}
+                  onConfirmar={confirmarLote} onVoltar={voltarParaFormulario}
+              />
+          )}
+          {etapa === 'relatorio' && resultados && (
               <RelatorioEmissao resultados={resultados} onReset={resetForm} />
           )}
           </div>
-          {!resultados && <AjudaEmissao emissaoTipo={emissaoTipo} />}
+          {etapa === 'formulario' && <AjudaEmissao emissaoTipo={emissaoTipo} />}
         </div>
 
         <footer className="casis-footer">

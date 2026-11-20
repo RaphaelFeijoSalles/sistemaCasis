@@ -40,20 +40,16 @@ export default function AjudaEmissao({ emissaoTipo }) {
           <h4>Antes de disparar um lote</h4>
           <ul>
             <li><strong>Arquivo:</strong> envie apenas <code>.csv</code>. Arquivos <code>.xlsx</code> precisam ser baixados como CSV antes.</li>
-            <li><strong>Cabeçalho:</strong> a primeira linha pode conter os nomes das colunas. O sistema lê os participantes a partir das linhas seguintes.</li>
-            <li><strong>Ordem das colunas:</strong>
+            <li><strong>Cabeçalho:</strong> a primeira linha deve conter os nomes das colunas. O sistema lê os participantes a partir das linhas seguintes.</li>
+            <li><strong>Colunas:</strong> identificadas pelo nome do cabeçalho, em qualquer ordem.
               <ol>
-                <li>Nome completo</li>
-                <li>RA</li>
-                <li>E-mail</li>
+                <li>Nome completo (obrigatória)</li>
+                <li>E-mail (obrigatória)</li>
+                <li>RA (opcional; sem ele a linha gera aviso)</li>
               </ol>
             </li>
-            <li><strong>Revise:</strong> exclua linhas em branco, duplicados, campos vazios, e-mails inválidos e espaços extras. Não basta limpar o conteúdo das células: apague a linha inteira para ela não ir vazia no CSV.
-              <ol>
-                <li>Google Sheets: clique no número da linha, use botão direito e escolha <strong>Excluir linha</strong>.</li>
-                <li>Excel: clique no número da linha, use botão direito e escolha <strong>Excluir</strong> ou <strong>Excluir linhas da planilha</strong>.</li>
-              </ol>
-            </li>
+            <li><strong>Revise:</strong> duplicados, campos vazios, e-mails inválidos e espaços extras. Linhas totalmente em branco são ignoradas automaticamente; a pré-visualização aponta o resto.</li>
+            <li><strong>Pré-visualização:</strong> o botão do lote só valida a planilha. Linhas com <strong>erro</strong> (nome vazio, e-mail inválido ou repetido) não serão emitidas; linhas com <strong>aviso</strong> (RA vazio, nomes iguais) serão. Nada é enviado até você confirmar.</li>
             <li><strong>Resultado:</strong> o lote pode terminar com sucessos, já emitidos e falhas. Confira a tabela antes de reenviar.</li>
           </ul>
         </section>

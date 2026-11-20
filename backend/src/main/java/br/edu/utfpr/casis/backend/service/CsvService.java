@@ -6,6 +6,7 @@ import br.edu.utfpr.casis.backend.model.TipoParticipacao;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVParserBuilder;
+import com.opencsv.exceptions.CsvException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -110,6 +111,76 @@ public class CsvService {
         }
 
         return alunos;
+    }
+
+    /**
+     * Lê todas as linhas de participantes do CSV, sem validar nem descartar linhas incompletas.
+     * Linhas totalmente em branco são ignoradas, mas a numeração segue a linha do arquivo
+     * (o cabeçalho é a linha 1).
+     *
+     * @param arquivoCsv O arquivo CSV (MultipartFile) carregado via requisição HTTP.
+     * @return As linhas de participantes na ordem do arquivo.
+     * @throws DadosInvalidosException Se o arquivo estiver vazio, sem as colunas Nome e E-mail ou ilegível.
+     */
+    public List<LinhaCsv> lerLinhas(MultipartFile arquivoCsv) {
+        List<LinhaCsv> linhas = new ArrayList<>();
+        log.info("Iniciando a leitura de linhas brutas do CSV.");
+
+        try {
+            byte[] conteudoCsv = arquivoCsv.getBytes();
+            char delimitador = identificarDelimitador(conteudoCsv);
+
+            try (Reader reader = new InputStreamReader(new ByteArrayInputStream(conteudoCsv), StandardCharsets.UTF_8);
+                 CSVReader csvReader = new CSVReaderBuilder(reader)
+                         .withCSVParser(new CSVParserBuilder().withSeparator(delimitador).build())
+                         .build()) {
+
+                String[] cabecalho = csvReader.readNext();
+                if (cabecalho == null || cabecalho.length == 0) {
+                    throw new DadosInvalidosException("O arquivo CSV está vazio ou sem cabeçalho.");
+                }
+
+                HeaderMap map = mapearCabecalhos(cabecalho);
+                if (!map.isValido()) {
+                    throw new DadosInvalidosException("Cabeçalho inválido. Não foi possível identificar as colunas de 'Nome' e 'E-mail'.");
+                }
+
+                String[] celulas;
+                int numeroLinha = (int) csvReader.getLinesRead() + 1;
+                while ((celulas = csvReader.readNext()) != null) {
+                    if (!isLinhaEmBranco(celulas)) {
+                        String ra = map.indexRa != -1 && celulas.length > map.indexRa
+                                ? celulas[map.indexRa].trim()
+                                : null;
+                        linhas.add(new LinhaCsv(numeroLinha, celula(celulas, map.indexNome), celula(celulas, map.indexEmail), ra));
+                    }
+                    numeroLinha = (int) csvReader.getLinesRead() + 1;
+                }
+            }
+
+        } catch (DadosInvalidosException e) {
+            log.warn("CSV recusado: {}", e.getMessage());
+            throw e;
+        } catch (IOException | CsvException e) {
+            log.error("Erro na leitura do arquivo CSV.", e);
+            throw new DadosInvalidosException("Falha ao ler a planilha. Verifique se o formato é um CSV válido e os dados estão corretos.", e);
+        }
+
+        log.info("Leitura de CSV concluída. {} linhas de participantes encontradas.", linhas.size());
+        return linhas;
+    }
+
+    private boolean isLinhaEmBranco(String[] celulas) {
+        for (String celula : celulas) {
+            if (celula != null && !celula.trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String celula(String[] celulas, int indice) {
+        return celulas.length > indice ? celulas[indice].trim() : "";
     }
 
     private char identificarDelimitador(byte[] conteudoCsv) throws IOException {

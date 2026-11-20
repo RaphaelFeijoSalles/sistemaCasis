@@ -32,6 +32,10 @@ export default function RelatorioEmissao({ resultados, onReset }) {
                                 <td>
                                     <div className="name">{res.nome}</div>
                                     <div className="email">{res.email}</div>
+                                    {/* Motivo visível na linha: o tooltip não funciona no celular */}
+                                    {res.status === 'ERRO' && res.mensagemErro && (
+                                        <div className="relatorio-motivo">{res.mensagemErro}</div>
+                                    )}
                                 </td>
                                 <td className="status-cell">
                                     {res.status === 'SUCESSO' && <MailCheck size={18} className="icon-success" />}
