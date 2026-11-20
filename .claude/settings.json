@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./backend/src/main/resources/secrets.properties)",
+      "Edit(./backend/src/main/resources/secrets.properties)",
+      "Read(./frontend/.env)",
+      "Read(./frontend/.env.*)",
+      "Read(./.env)"
+    ]
+  }
+}
