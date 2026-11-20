@@ -6,7 +6,7 @@ Atualize esta tabela sempre que uma spec mudar de status.
 | ID | Feature | Depende de | Status | Spec |
 |---|---|---|---|---|
 | F1 | Etapa de validação antes do disparo: pré-visualização do lote e validação de dados em Java (duplicados, e-mails, vazios, horas), com confirmação explícita antes de gerar PDFs e enviar e-mails | — | concluída | [F1-validacao-pre-disparo.md](../specs/F1-validacao-pre-disparo.md) |
-| F2 | Planilha com horas por participante (lote com cargas horárias diferentes) | F1 | em andamento | [F2-horas-por-participante.md](../specs/F2-horas-por-participante.md) |
+| F2 | Planilha com horas por participante (lote com cargas horárias diferentes) | F1 | concluída | [F2-horas-por-participante.md](../specs/F2-horas-por-participante.md) |
 | F3 | Eventos longos: data de início e fim | — | backlog | — |
 | F4 | Modelo de certificado que permite preencher o nome do curso | — | backlog | — |
 | F5 | Banco de dados (PostgreSQL + JPA): eventos, participantes, histórico; ativar `FonteDadosBancoStrategy` | F1 | backlog | — |

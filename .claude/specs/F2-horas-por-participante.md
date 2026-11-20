@@ -1,7 +1,7 @@
 ---
 id: F2
 titulo: Horas por participante no lote
-status: em andamento    # rascunho | aprovada | em andamento | concluída
+status: concluída       # rascunho | aprovada | em andamento | concluída
 branch: feature/F2-horas-por-participante
 criada: 2026-11-20
 ---
@@ -19,15 +19,15 @@ Hoje todo o lote usa a mesma carga horária, a do formulário. Em eventos em que
 5. Na emissão, cada certificado (PDF) e cada registro no Sheets usam as horas da própria linha.
 
 ## 3. Critérios de aceitação
-- [ ] CA1: Dado um CSV com a coluna cujo cabeçalho normalizado (sem acento, minúsculo, sem espaços nas bordas) é exatamente `horas`, quando leio as linhas, então cada `LinhaCsv` traz o texto bruto da célula de horas. Outros cabeçalhos ("Carga horária", "CH", "Hora") **não** são reconhecidos.
-- [ ] CA2: Dados os valores `2`, `1.5`, `1,5`, ` 1,5 `, `01:30`, `1:30:00` e `1:30:45`, quando interpreto as horas, então obtenho 2.0, 1.5, 1.5, 1.5, 1.5, 1.5 e 1.5 (os segundos são **ignorados**).
-- [ ] CA3: Dados os valores `abc`, `0`, `0,0`, `-2`, `1:75`, `0:00:45` e `1.5h`, quando valido a linha, então ela fica `ERRO` com a mensagem `Horas inválidas: <valor>`, sem PDF nem e-mail.
-- [ ] CA4: Dada uma linha com a célula de horas vazia, ou um CSV sem a coluna `Horas`, quando valido, então a linha usa a carga do formulário, com `horasDoFormulario = true`, **sem** aviso adicional.
-- [ ] CA5: Dada uma linha válida, quando chamo `/pre-visualizar-lote`, então `LinhaValidadaDTO` traz `horas` (decimal), `horasTexto` (igual a `CargaHorariaFormatter.formatarTexto(horas)`) e `horasDoFormulario`. Numa linha `ERRO` por horas inválidas, `horas` e `horasTexto` são `null`.
-- [ ] CA6: Dado um lote com horas diferentes por linha, quando chamo `/emitir-lote`, então o PDF de cada participante é gerado com as horas da sua linha e `registrarEmissao` recebe essas mesmas horas (verificado com mocks).
-- [ ] CA7: Dado um CSV sem a coluna `Horas`, quando emito, então o resultado é idêntico ao da F1: todas as linhas usam a carga do formulário.
-- [ ] CA8: No frontend, a tabela da prévia tem a coluna **Horas** com `horasTexto`, acrescido de "(formulário)" quando `horasDoFormulario` for verdadeiro, e "—" quando `horasTexto` for `null`.
-- [ ] CA9: Dada uma linha com horas inválidas **e** e-mail inválido, quando valido, então as duas mensagens aparecem, separadas na lista `mensagens`.
+- [x] CA1: Dado um CSV com a coluna cujo cabeçalho normalizado (sem acento, minúsculo, sem espaços nas bordas) é exatamente `horas`, quando leio as linhas, então cada `LinhaCsv` traz o texto bruto da célula de horas. Outros cabeçalhos ("Carga horária", "CH", "Hora") **não** são reconhecidos.
+- [x] CA2: Dados os valores `2`, `1.5`, `1,5`, ` 1,5 `, `01:30`, `1:30:00` e `1:30:45`, quando interpreto as horas, então obtenho 2.0, 1.5, 1.5, 1.5, 1.5, 1.5 e 1.5 (os segundos são **ignorados**).
+- [x] CA3: Dados os valores `abc`, `0`, `0,0`, `-2`, `1:75`, `0:00:45` e `1.5h`, quando valido a linha, então ela fica `ERRO` com a mensagem `Horas inválidas: <valor>`, sem PDF nem e-mail.
+- [x] CA4: Dada uma linha com a célula de horas vazia, ou um CSV sem a coluna `Horas`, quando valido, então a linha usa a carga do formulário, com `horasDoFormulario = true`, **sem** aviso adicional.
+- [x] CA5: Dada uma linha válida, quando chamo `/pre-visualizar-lote`, então `LinhaValidadaDTO` traz `horas` (decimal), `horasTexto` (igual a `CargaHorariaFormatter.formatarTexto(horas)`) e `horasDoFormulario`. Numa linha `ERRO` por horas inválidas, `horas` e `horasTexto` são `null`.
+- [x] CA6: Dado um lote com horas diferentes por linha, quando chamo `/emitir-lote`, então o PDF de cada participante é gerado com as horas da sua linha e `registrarEmissao` recebe essas mesmas horas (verificado com mocks).
+- [x] CA7: Dado um CSV sem a coluna `Horas`, quando emito, então o resultado é idêntico ao da F1: todas as linhas usam a carga do formulário.
+- [x] CA8: No frontend, a tabela da prévia tem a coluna **Horas** com `horasTexto`, acrescido de "(formulário)" quando `horasDoFormulario` for verdadeiro, e "—" quando `horasTexto` for `null`.
+- [x] CA9: Dada uma linha com horas inválidas **e** e-mail inválido, quando valido, então as duas mensagens aparecem, separadas na lista `mensagens`.
 
 ## 4. Fora do escopo
 - Emissão unitária: não muda.
@@ -84,4 +84,5 @@ Hoje todo o lote usa a mesma carga horária, a do formulário. Em eventos em que
 - P3 (2026-11-20): o erro "Horas inválidas: X" é somado depois dos erros de nome e e-mail (CA9). Uma linha com horas inválidas não registra o e-mail, então a repetição não conta contra ela (mesma regra da F1). Uma linha com `ERRO` por outro campo mantém `horas` e `horasTexto` preenchidos, porque só fica `null` quando as próprias horas são inválidas (CA5). `horasTexto` sai do `CargaHorariaFormatter`, a mesma regra do PDF. Nos testes, as chamadas passaram pelo helper `validar(...)` com `CARGA_PADRAO = 10.0`. 6 testes novos no validador e 3 `jsonPath` no `CertificadoControllerTest`. 97 testes verdes.
 - P4 (2026-11-20): para cada linha emitível, o `processarEmissao` monta `dadosDaLinha` (uma cópia do request com `cargaHoraria = linha.horas()`), passa essa cópia ao `PdfService` e usa `linha.horas()` no `registrarEmissao`. O e-mail continua recebendo o `nomeEvento` do request. A anti-duplicação, a ordem dos efeitos e o unitário não mudaram, e os testes da F1 passaram intactos (CA7: CSV sem coluna continua com a carga do formulário). 2 testes novos no `EmissaoServiceTest`: `ArgumentCaptor` com horas 1.5, 2.0 (célula vazia) e 1.0 no PDF e no Sheets, e uma linha com "abc" pulada como `ERRO`. Os dois falharam antes da implementação. 99 testes verdes.
 - P5 (2026-11-20): coluna Horas entre Participante e Situação. Mostra `horasTexto` e, embaixo, "(formulário)" em texto menor quando `horasDoFormulario`; "—" quando `horasTexto` é `null`. CSS novo em `App.css` (`.previa-horas`, `.previa-horas-origem`). Sem teste automatizado de UI no projeto: lint e build verdes.
-- P6 (2026-11-20): dropzone: "RA e Horas (opcionais)". A dica do campo Carga Horária ganha, só no modo lote, "vale para quem não tiver horas na coluna Horas". `AjudaEmissao`: item Horas na lista de colunas (cabeçalho exato), novo tópico "Horas por participante" (formatos, célula vazia usa o formulário, inválido é erro, `1,5` entre aspas em CSV com vírgula), "horas inválidas" entre os erros da prévia e nota de padrão na carga horária (só no lote). Os toasts de `App.jsx` não foram alterados (continuam corretos: só citam as colunas obrigatórias). Lint e build verdes. **Pendente:** verificação manual pelo desenvolvedor com credenciais de teste.
+- P6 (2026-11-20): dropzone: "RA e Horas (opcionais)". A dica do campo Carga Horária ganha, só no modo lote, "vale para quem não tiver horas na coluna Horas". `AjudaEmissao`: item Horas na lista de colunas (cabeçalho exato), novo tópico "Horas por participante" (formatos, célula vazia usa o formulário, inválido é erro, `1,5` entre aspas em CSV com vírgula), "horas inválidas" entre os erros da prévia e nota de padrão na carga horária (só no lote). Os toasts de `App.jsx` não foram alterados (continuam corretos: só citam as colunas obrigatórias). Lint e build verdes. Verificação manual registrada abaixo.
+- Verificação manual (2026-11-20): o desenvolvedor rodou o roteiro com credenciais de teste e 3 CSVs (`;` com `1,5`, `01:30`, célula vazia, `abc`, `1:30:45`, `0` e RA vazio; formato antigo sem a coluna `Horas`; `,` com `"1,5"` entre aspas). Os e-mails foram para variações `+` do Gmail do desenvolvedor. Conferidos: prévia (horas, "(formulário)", "—", erros, botão com 5), PDFs e Sheets com as horas de cada linha, reemissão como `EXISTENTE`, CSV antigo com a carga do formulário, CSV com vírgula e textos da ajuda. Tudo bateu. F2 concluída.
