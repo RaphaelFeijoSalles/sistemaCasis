@@ -2,7 +2,10 @@ package br.edu.utfpr.casis.backend.service;
 
 import br.edu.utfpr.casis.backend.dto.EmissaoIndividualRequestDTO;
 import br.edu.utfpr.casis.backend.dto.EmissaoLoteEventoRequestDTO;
+import br.edu.utfpr.casis.backend.dto.LinhaValidadaDTO;
+import br.edu.utfpr.casis.backend.dto.PreVisualizacaoLoteDTO;
 import br.edu.utfpr.casis.backend.dto.ResultadoEmissaoDTO;
+import br.edu.utfpr.casis.backend.dto.SituacaoLinha;
 import br.edu.utfpr.casis.backend.dto.StatusEmissao;
 import br.edu.utfpr.casis.backend.model.AlunoCertificado;
 import br.edu.utfpr.casis.backend.service.strategy.FonteDadosCertificadoStrategy;
@@ -29,6 +32,35 @@ public class EmissaoService {
     private final EmailService emailService;
     private final GoogleDriveService driveService;
     private final GoogleSheetsService sheetsService;
+
+    /**
+     * Valida o lote e devolve a pré-visualização, sem nenhum efeito colateral:
+     * não gera PDF, não envia e-mail e não acessa Drive nem Sheets.
+     *
+     * @param requestDTO DTO contendo os dados do evento e o arquivo CSV.
+     * @return O resumo e o resultado da validação de cada linha do CSV.
+     * @throws DadosInvalidosException Se os dados do evento ou o CSV forem inválidos.
+     */
+    public PreVisualizacaoLoteDTO preVisualizarLote(EmissaoLoteEventoRequestDTO requestDTO) {
+        ValidadorParticipantes.validarEvento(requestDTO.nomeEvento(), requestDTO.dataRealizacao(), requestDTO.cargaHoraria());
+        if (requestDTO.arquivoCsv() == null || requestDTO.arquivoCsv().isEmpty()) {
+            throw new DadosInvalidosException("O arquivo CSV é obrigatório.");
+        }
+
+        List<LinhaValidadaDTO> linhas = ValidadorParticipantes.validarLinhas(csvService.lerLinhas(requestDTO.arquivoCsv()));
+
+        int validas = contar(linhas, SituacaoLinha.VALIDA);
+        int comAviso = contar(linhas, SituacaoLinha.AVISO);
+        int comErro = contar(linhas, SituacaoLinha.ERRO);
+        log.info("Pré-visualização do evento '{}': {} linhas ({} válidas, {} com aviso, {} com erro).",
+                requestDTO.nomeEvento(), linhas.size(), validas, comAviso, comErro);
+
+        return new PreVisualizacaoLoteDTO(linhas.size(), validas, comAviso, comErro, linhas);
+    }
+
+    private int contar(List<LinhaValidadaDTO> linhas, SituacaoLinha situacao) {
+        return (int) linhas.stream().filter(linha -> linha.situacao() == situacao).count();
+    }
 
     /**
      * Orquestra o fluxo de emissão de certificados em lote para um evento.
