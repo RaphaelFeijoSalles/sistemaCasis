@@ -198,6 +198,9 @@ public class EmissaoService {
      * Factory Method interno: Define qual estratégia de fonte de dados utilizar.
      * Atualmente, se um CSV for fornecido, utiliza a estratégia CSV.
      * Em versões futuras, poderá identificar se os dados vêm do Banco de Dados.
+     * <p>
+     * Sem uso desde a F1: o lote CSV passou a usar {@link CsvService#lerLinhas} e a validação.
+     * Mantido como ponto de extensão para a F5 (banco de dados).
      *
      * @param dto DTO contendo a possível fonte de dados.
      * @return A implementação concreta de {@link FonteDadosCertificadoStrategy}.
