@@ -3,12 +3,18 @@ package br.edu.utfpr.casis.backend.service;
 import br.edu.utfpr.casis.backend.dto.LinhaValidadaDTO;
 import br.edu.utfpr.casis.backend.dto.SituacaoLinha;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ValidadorParticipantesTest {
+
+    private static final LocalDate DATA = LocalDate.of(2026, 11, 20);
 
     @Test
     void deveMarcarLinhaCompletaComoValida() {
@@ -124,6 +130,65 @@ class ValidadorParticipantesTest {
                 "Mesmo nome da linha 2: o Drive terá dois arquivos com o mesmo nome",
                 "RA não informado"
         ), resultado.get(1).mensagens());
+    }
+
+    @Test
+    void deveAceitarEventoValido() {
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1.5));
+    }
+
+    @Test
+    void deveRecusarNomeDoEventoNuloOuVazio() {
+        for (String nome : new String[]{null, "", "   "}) {
+            assertMensagem("O nome do evento é obrigatório.",
+                    () -> ValidadorParticipantes.validarEvento(nome, DATA, 2.0));
+        }
+    }
+
+    @Test
+    void deveRecusarDataDeRealizacaoAusente() {
+        assertMensagem("A data de realização é obrigatória.",
+                () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", null, 2.0));
+    }
+
+    @Test
+    void deveRecusarCargaHorariaNulaZeroNegativaOuNaoNumerica() {
+        for (Double carga : new Double[]{null, 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
+            assertMensagem("A carga horária deve ser um número maior que zero.",
+                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, carga));
+        }
+    }
+
+    @Test
+    void deveAceitarParticipanteValido() {
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarParticipante("Ana Silva", " ana@alunos.utfpr.edu.br "));
+    }
+
+    @Test
+    void deveRecusarNomeDoParticipanteNuloOuVazio() {
+        for (String nome : new String[]{null, "", "  "}) {
+            assertMensagem("O nome do participante é obrigatório.",
+                    () -> ValidadorParticipantes.validarParticipante(nome, "ana@alunos.utfpr.edu.br"));
+        }
+    }
+
+    @Test
+    void deveRecusarEmailDoParticipanteAusente() {
+        for (String email : new String[]{null, "", "  "}) {
+            assertMensagem("O e-mail do participante é obrigatório.",
+                    () -> ValidadorParticipantes.validarParticipante("Ana Silva", email));
+        }
+    }
+
+    @Test
+    void deveRecusarEmailDoParticipanteForaDoPadrao() {
+        assertMensagem("E-mail do participante inválido: ana@utfpr",
+                () -> ValidadorParticipantes.validarParticipante("Ana Silva", "ana@utfpr"));
+    }
+
+    private void assertMensagem(String esperada, Executable acao) {
+        DadosInvalidosException erro = assertThrows(DadosInvalidosException.class, acao);
+        assertEquals(esperada, erro.getMessage());
     }
 
     private LinhaValidadaDTO validarUma(LinhaCsv linha) {

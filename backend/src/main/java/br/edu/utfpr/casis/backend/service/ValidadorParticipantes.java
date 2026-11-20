@@ -3,6 +3,7 @@ package br.edu.utfpr.casis.backend.service;
 import br.edu.utfpr.casis.backend.dto.LinhaValidadaDTO;
 import br.edu.utfpr.casis.backend.dto.SituacaoLinha;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,6 +73,47 @@ final class ValidadorParticipantes {
         }
 
         return resultado;
+    }
+
+    /**
+     * Valida os dados do evento informados no formulário.
+     * Interrompe no primeiro problema encontrado.
+     *
+     * @param nomeEvento nome oficial do evento.
+     * @param dataRealizacao data em que o evento ocorreu.
+     * @param cargaHoraria carga horária em horas decimais.
+     * @throws DadosInvalidosException se algum dado estiver ausente ou inválido.
+     */
+    static void validarEvento(String nomeEvento, LocalDate dataRealizacao, Double cargaHoraria) {
+        if (nomeEvento == null || nomeEvento.isBlank()) {
+            throw new DadosInvalidosException("O nome do evento é obrigatório.");
+        }
+        if (dataRealizacao == null) {
+            throw new DadosInvalidosException("A data de realização é obrigatória.");
+        }
+        if (cargaHoraria == null || !Double.isFinite(cargaHoraria) || cargaHoraria <= 0) {
+            throw new DadosInvalidosException("A carga horária deve ser um número maior que zero.");
+        }
+    }
+
+    /**
+     * Valida o participante da emissão unitária.
+     * Interrompe no primeiro problema encontrado.
+     *
+     * @param nome nome do participante.
+     * @param email e-mail do participante.
+     * @throws DadosInvalidosException se o nome estiver vazio ou o e-mail ausente ou fora do padrão.
+     */
+    static void validarParticipante(String nome, String email) {
+        if (nome == null || nome.isBlank()) {
+            throw new DadosInvalidosException("O nome do participante é obrigatório.");
+        }
+        if (email == null || email.isBlank()) {
+            throw new DadosInvalidosException("O e-mail do participante é obrigatório.");
+        }
+        if (!PADRAO_EMAIL.matcher(email.trim()).matches()) {
+            throw new DadosInvalidosException("E-mail do participante inválido: " + email.trim());
+        }
     }
 
     private static LinhaValidadaDTO montar(LinhaCsv linha, SituacaoLinha situacao, List<String> mensagens) {
