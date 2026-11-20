@@ -235,6 +235,36 @@ class ValidadorParticipantesTest {
     }
 
     @Test
+    void deveRecusarCargaHorariaQueArredondaParaZeroMinutos() {
+        for (Double carga : new Double[]{0.001, 0.008}) {
+            assertMensagem("A carga horária deve ser um número maior que zero.",
+                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, carga));
+        }
+    }
+
+    @Test
+    void deveRecusarCargaHorariaAcimaDeMilHoras() {
+        for (Double carga : new Double[]{1000.01, 99999999999.0}) {
+            assertMensagem("A carga horária deve ser de no máximo 1.000 horas.",
+                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, carga));
+        }
+    }
+
+    @Test
+    void deveAceitarCargaHorariaNosLimites() {
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1.0 / 60));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1000.0));
+    }
+
+    @Test
+    void deveMarcarHorasAcimaDoMaximoComoErroNaLinha() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", "1001"));
+
+        assertEquals(SituacaoLinha.ERRO, linha.situacao());
+        assertEquals(List.of("Horas inválidas: 1001"), linha.mensagens());
+    }
+
+    @Test
     void deveAceitarParticipanteValido() {
         assertDoesNotThrow(() -> ValidadorParticipantes.validarParticipante("Ana Silva", " ana@alunos.utfpr.edu.br "));
     }

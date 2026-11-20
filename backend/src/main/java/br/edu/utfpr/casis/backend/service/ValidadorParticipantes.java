@@ -92,7 +92,7 @@ final class ValidadorParticipantes {
      *
      * @param nomeEvento nome oficial do evento.
      * @param dataRealizacao data em que o evento ocorreu.
-     * @param cargaHoraria carga horária em horas decimais.
+     * @param cargaHoraria carga horária em horas decimais, entre 1 minuto e {@link InterpretadorHoras#MAXIMO_HORAS} horas.
      * @throws DadosInvalidosException se algum dado estiver ausente ou inválido.
      */
     static void validarEvento(String nomeEvento, LocalDate dataRealizacao, Double cargaHoraria) {
@@ -102,7 +102,10 @@ final class ValidadorParticipantes {
         if (dataRealizacao == null) {
             throw new DadosInvalidosException("A data de realização é obrigatória.");
         }
-        if (cargaHoraria == null || !Double.isFinite(cargaHoraria) || cargaHoraria <= 0) {
+        if (cargaHoraria != null && Double.isFinite(cargaHoraria) && cargaHoraria > InterpretadorHoras.MAXIMO_HORAS) {
+            throw new DadosInvalidosException("A carga horária deve ser de no máximo 1.000 horas.");
+        }
+        if (!InterpretadorHoras.dentroDosLimites(cargaHoraria)) {
             throw new DadosInvalidosException("A carga horária deve ser um número maior que zero.");
         }
     }

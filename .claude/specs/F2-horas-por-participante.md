@@ -22,6 +22,7 @@ Hoje todo o lote usa a mesma carga horária, a do formulário. Em eventos em que
 - [x] CA1: Dado um CSV com a coluna cujo cabeçalho normalizado (sem acento, minúsculo, sem espaços nas bordas) é exatamente `horas`, quando leio as linhas, então cada `LinhaCsv` traz o texto bruto da célula de horas. Outros cabeçalhos ("Carga horária", "CH", "Hora") **não** são reconhecidos.
 - [x] CA2: Dados os valores `2`, `1.5`, `1,5`, ` 1,5 `, `01:30`, `1:30:00` e `1:30:45`, quando interpreto as horas, então obtenho 2.0, 1.5, 1.5, 1.5, 1.5, 1.5 e 1.5 (os segundos são **ignorados**).
 - [x] CA3: Dados os valores `abc`, `0`, `0,0`, `-2`, `1:75`, `0:00:45` e `1.5h`, quando valido a linha, então ela fica `ERRO` com a mensagem `Horas inválidas: <valor>`, sem PDF nem e-mail.
+- [x] CA3b (pós-revisão): Dados `0,001`, `0.008` (menos de 1 minuto depois do arredondamento) ou valores acima de 1.000 h (`1000,01`, `1000:01`, `99999999999`), quando valido a linha, então ela fica `ERRO` com `Horas inválidas: <valor>`. No formulário (lote, prévia e unitário), abaixo de 1 minuto dá 400 com a mensagem atual de carga horária e acima de 1.000 h dá 400 com "A carga horária deve ser de no máximo 1.000 horas.". `1:00`, `0:01` e `1000` são aceitos.
 - [x] CA4: Dada uma linha com a célula de horas vazia, ou um CSV sem a coluna `Horas`, quando valido, então a linha usa a carga do formulário, com `horasDoFormulario = true`, **sem** aviso adicional.
 - [x] CA5: Dada uma linha válida, quando chamo `/pre-visualizar-lote`, então `LinhaValidadaDTO` traz `horas` (decimal), `horasTexto` (igual a `CargaHorariaFormatter.formatarTexto(horas)`) e `horasDoFormulario`. Numa linha `ERRO` por horas inválidas, `horas` e `horasTexto` são `null`.
 - [x] CA6: Dado um lote com horas diferentes por linha, quando chamo `/emitir-lote`, então o PDF de cada participante é gerado com as horas da sua linha e `registrarEmissao` recebe essas mesmas horas (verificado com mocks).
@@ -34,13 +35,12 @@ Hoje todo o lote usa a mesma carga horária, a do formulário. Em eventos em que
 - Sinônimos para o nome da coluna (só `Horas`).
 - Reemitir quem já tem certificado no Drive com horas diferentes: a anti-duplicação continua pelo nome do arquivo, então o resultado é `EXISTENTE`.
 - Mudar o texto do template ("carga horária total de ...").
-- Limite máximo de horas.
 
 ## 5. Contrato
 - **Rotas:** nenhuma nova. `/pre-visualizar-lote` e `/emitir-lote` mantêm rota e request. `cargaHoraria` continua obrigatório (> 0) e passa a ser o padrão.
 - **`LinhaCsv`:** ganha `String horas`. É o texto bruto sem espaços nas bordas, e `null` quando não há coluna ou célula.
 - **`LinhaValidadaDTO`:** ganha `Double horas`, `String horasTexto` e `boolean horasDoFormulario`, nesta ordem, depois de `ra`.
-- **Interpretação:** decimal `^\d+([.,]\d+)?$` ou duração `^\d+:[0-5]\d(:[0-5]\d)?$` (segundos ignorados). O resultado precisa ser > 0.
+- **Interpretação:** decimal `^\d+([.,]\d+)?$` ou duração `^\d+:[0-5]\d(:[0-5]\d)?$` (segundos ignorados). O resultado precisa ter pelo menos 1 minuto depois do arredondamento e no máximo 1.000 h (`InterpretadorHoras.dentroDosLimites`, também usado na carga do formulário).
 - **CSV:** coluna nova opcional `Horas`. Com delimitador `,`, um valor como `1,5` precisa vir entre aspas, como o Google Sheets já exporta.
 - **Compatibilidade:** CSV antigo funciona igual (CA7). O frontend em produção ignora os campos novos do DTO.
 
@@ -61,6 +61,7 @@ Hoje todo o lote usa a mesma carga horária, a do formulário. Em eventos em que
 - **Efeitos reais:** a prévia continua sem tocar nos serviços Google (testes da F1 com `verifyNoInteractions` seguem valendo).
 - **Delimitador:** com CSV separado por `,` e sem aspas, `1,5` quebra as colunas da linha. A ajuda precisa mencionar isso.
 - **Arredondamento:** `CargaHorariaFormatter` arredonda ao minuto. Decimais como `1.33` viram "1 hora e 20 minutos", o que já acontece hoje.
+- **Deploy:** publicar o backend (Render) **antes** do frontend (Vercel). Com o frontend novo e o backend antigo, a coluna Horas da prévia mostra "—" em todas as linhas.
 
 ## 8. Perguntas em aberto
 - [x] P1: nome da coluna: só `Horas`.
@@ -86,3 +87,4 @@ Hoje todo o lote usa a mesma carga horária, a do formulário. Em eventos em que
 - P5 (2026-11-20): coluna Horas entre Participante e Situação. Mostra `horasTexto` e, embaixo, "(formulário)" em texto menor quando `horasDoFormulario`; "—" quando `horasTexto` é `null`. CSS novo em `App.css` (`.previa-horas`, `.previa-horas-origem`). Sem teste automatizado de UI no projeto: lint e build verdes.
 - P6 (2026-11-20): dropzone: "RA e Horas (opcionais)". A dica do campo Carga Horária ganha, só no modo lote, "vale para quem não tiver horas na coluna Horas". `AjudaEmissao`: item Horas na lista de colunas (cabeçalho exato), novo tópico "Horas por participante" (formatos, célula vazia usa o formulário, inválido é erro, `1,5` entre aspas em CSV com vírgula), "horas inválidas" entre os erros da prévia e nota de padrão na carga horária (só no lote). Os toasts de `App.jsx` não foram alterados (continuam corretos: só citam as colunas obrigatórias). Lint e build verdes. Verificação manual registrada abaixo.
 - Verificação manual (2026-11-20): o desenvolvedor rodou o roteiro com credenciais de teste e 3 CSVs (`;` com `1,5`, `01:30`, célula vazia, `abc`, `1:30:45`, `0` e RA vazio; formato antigo sem a coluna `Horas`; `,` com `"1,5"` entre aspas). Os e-mails foram para variações `+` do Gmail do desenvolvedor. Conferidos: prévia (horas, "(formulário)", "—", erros, botão com 5), PDFs e Sheets com as horas de cada linha, reemissão como `EXISTENTE`, CSV antigo com a carga do formulário, CSV com vírgula e textos da ajuda. Tudo bateu. F2 concluída.
+- Revisão final (2026-11-20): sem bloqueios. Ajustes pós-revisão, por decisão do desenvolvedor: (1) limites de horas em `InterpretadorHoras.dentroDosLimites` (pelo menos 1 minuto depois do arredondamento, para não sair "0 horas" no certificado; no máximo 1.000 h, para não estourar o `(int)` do `CargaHorariaFormatter`), aplicados na coluna `Horas` e também na carga do formulário (lote e unitário), que tinha o mesmo problema desde antes da F2 (CA3b). O frontend ganhou a mesma regra em `validarCargaHoraria`, `max="1000"` no campo e o texto da ajuda. (2) Ordem de deploy registrada na seção 7. (3) `armadilhas.md`: a coluna `Horas` só é lida por `lerLinhas`. 116 testes verdes, lint e build verdes. `BackendApplicationTests.contextLoads` segue sem rodar (precisa do `secrets.properties` de teste).

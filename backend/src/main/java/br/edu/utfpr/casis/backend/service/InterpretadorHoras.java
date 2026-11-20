@@ -12,9 +12,12 @@ import java.util.regex.Pattern;
  *     <li>decimal, com ponto ou vírgula: {@code 2}, {@code 1.5}, {@code 1,5};</li>
  *     <li>duração {@code HH:MM} ou {@code HH:MM:SS}: {@code 01:30}, {@code 1:30:00}. Os segundos são ignorados.</li>
  * </ul>
- * O resultado precisa ser maior que zero.
+ * O resultado precisa estar dentro dos limites de {@link #dentroDosLimites(Double)}.
  */
 final class InterpretadorHoras {
+
+    /** Maior carga horária aceita, em horas. Também evita estouro no arredondamento do {@link CargaHorariaFormatter}. */
+    static final double MAXIMO_HORAS = 1000;
 
     private static final Pattern PADRAO_DECIMAL = Pattern.compile("^\\d+([.,]\\d+)?$");
     private static final Pattern PADRAO_DURACAO = Pattern.compile("^(\\d+):([0-5]\\d)(:[0-5]\\d)?$");
@@ -28,7 +31,7 @@ final class InterpretadorHoras {
      *
      * @param texto valor da célula, como veio do CSV.
      * @return as horas decimais (ex.: {@code 1.5} para {@code "01:30"}), ou vazio se o texto
-     *         for nulo, em branco, fora dos formatos aceitos ou resultar em zero.
+     *         for nulo, em branco, fora dos formatos aceitos ou fora dos limites.
      *         Quem chama decide o que fazer com a célula em branco.
      */
     static Optional<Double> interpretar(String texto) {
@@ -48,9 +51,20 @@ final class InterpretadorHoras {
             }
         }
 
-        if (horas == null || !Double.isFinite(horas) || horas <= 0) {
-            return Optional.empty();
-        }
-        return Optional.of(horas);
+        return dentroDosLimites(horas) ? Optional.of(horas) : Optional.empty();
+    }
+
+    /**
+     * Indica se a carga horária pode ir para o certificado: pelo menos 1 minuto depois do
+     * arredondamento feito pelo {@link CargaHorariaFormatter} e no máximo {@link #MAXIMO_HORAS}.
+     *
+     * @param horas carga horária em horas decimais.
+     * @return {@code true} se estiver dentro dos limites; {@code false} se for nula, não numérica ou fora deles.
+     */
+    static boolean dentroDosLimites(Double horas) {
+        return horas != null
+                && Double.isFinite(horas)
+                && horas <= MAXIMO_HORAS
+                && Math.round(horas * 60) >= 1;
     }
 }
