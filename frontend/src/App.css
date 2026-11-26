@@ -92,7 +92,8 @@
   color: #ccc;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   width: 100%; /* Força preenchimento, importante para inputs de data em mobile */
   padding: 0.66rem 0.75rem;
   border-radius: 6px;
@@ -115,7 +116,8 @@
 }
 
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   border-color: var(--success);
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2); /* Halo verde no foco */
 }
@@ -439,6 +441,12 @@
   color: var(--error);
 }
 
+/* Coluna de curso por participante (F4) */
+.previa-curso {
+  min-width: 9rem;
+  color: var(--text-secondary);
+}
+
 /* Coluna de horas por participante (F2) */
 .previa-horas {
   min-width: 6.5rem;
@@ -580,7 +588,8 @@
     margin-bottom: 0.8rem;
   }
 
-  .form-group input {
+  .form-group input,
+  .form-group select {
     padding: 0.65rem 0.7rem;
   }
 
