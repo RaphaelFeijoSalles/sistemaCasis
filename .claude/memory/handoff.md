@@ -17,7 +17,7 @@
 2. Depois: `/nova-spec F3` (eventos longos), começando pelos pontos em aberto de `progresso.md`.
 
 ## Pendências / bloqueios
-- Conferência visual depois de `23bd293`: o campo Carga Horária deve aceitar `1.25` e recusar `0` e `1001` com toast; conferir também a ajuda lateral. Pendente (desenvolvedor vai testar em localhost).
+- ~~Conferência visual depois de `23bd293`~~: feita pelo desenvolvedor em localhost (2026-11-26), tudo correto.
 - Deploy da F2 na produção oficial (Render antes da Vercel): não confirmado.
 - **Deploy próprio adiado** (2026-11-26, decisão do desenvolvedor: testes só em localhost por enquanto). Quando retomar: backend no Render (conta própria, Docker, root `backend`, `SPRING_PROFILES_ACTIVE=prod`, `PORT=8080`, variáveis do `application-prod.properties`; a pasta raiz é `DRIVE_PASTA_RAIZ_ID`) e frontend na Vercel (root `frontend`, `VITE_API_URL` sem barra final, redeploy ao mudar).
 - **CORS bloqueia o deploy próprio (só quando ele for retomado):** `CertificadoController` tem `@CrossOrigin` fixo em `https://sistema-casis.vercel.app/` e `http://localhost:5173`. Um frontend em outra URL da Vercel é recusado pelo navegador. Precisa de mudança de código (ex.: origens vindas de propriedade/variável de ambiente), a combinar com o desenvolvedor.
