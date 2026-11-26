@@ -1,5 +1,6 @@
 package br.edu.utfpr.casis.backend.service;
 
+import br.edu.utfpr.casis.backend.config.GestaoProperties;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.gmail.Gmail;
@@ -24,6 +25,8 @@ import java.util.Properties;
 /**
  * Serviço responsável pela geração e envio de e-mails com certificados anexados.
  * Utiliza o Thymeleaf para renderizar o corpo do e-mail e a API oficial do Gmail para o envio via HTTP.
+ * <p>
+ * Desde a F4, o nome e a sigla da gestão (remetente, título, cabeçalho e rodapé) vêm de {@link GestaoProperties}.
  */
 @Slf4j
 @Service
@@ -31,6 +34,7 @@ import java.util.Properties;
 public class EmailService {
 
     private final TemplateEngine templateEngine;
+    private final GestaoProperties gestao;
 
     @Value("${GOOGLE_CLIENT_ID}")
     private String clientId;
@@ -76,7 +80,28 @@ public class EmailService {
         context.setVariable("nome_aluno", nomeAluno);
         context.setVariable("nome_evento", nomeEvento);
         context.setVariable("email_contato", remetenteOficial);
+        context.setVariable("nome_gestao", gestao.nome());
+        context.setVariable("sigla_gestao", gestao.sigla());
         return templateEngine.process("certificado-email", context);
+    }
+
+    /**
+     * Monta o assunto do e-mail. O mascote 🐍 foi mantido na troca para o DACOMP (F4).
+     *
+     * @param nomeEvento O nome do evento.
+     * @return O assunto do e-mail.
+     */
+    public String montarAssunto(String nomeEvento) {
+        return "Seu Certificado chegou! 🐍 - " + nomeEvento;
+    }
+
+    /**
+     * Monta o nome de exibição do remetente a partir da gestão configurada.
+     *
+     * @return O nome do remetente (ex.: "Diretório Acadêmico de Computação - DACOMP").
+     */
+    public String montarNomeRemetente() {
+        return gestao.nome() + " - " + gestao.sigla();
     }
 
     /**
@@ -97,9 +122,9 @@ public class EmailService {
             // True pois o email deve ser enviado com multipart (permite anexos)
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            helper.setFrom(remetenteOficial, "Centro Acadêmico de SI - CASIS");
+            helper.setFrom(remetenteOficial, montarNomeRemetente());
             helper.setTo(destinatario);
-            helper.setSubject("Seu Certificado chegou! 🐍 - " + nomeEvento);
+            helper.setSubject(montarAssunto(nomeEvento));
 
             String corpoEmail = this.montarCorpoEmail(nomeAluno, nomeEvento);
             helper.setText(corpoEmail, true);
