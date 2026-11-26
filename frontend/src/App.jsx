@@ -402,7 +402,7 @@ function App() {
 
           <div className="header">
             <h1>Emissão de Certificados</h1>
-            <p>Sistema Oficial do CASIS - Eventos</p>
+            <p>Sistema Oficial do DACOMP - Eventos</p>
           </div>
 
           {etapa === 'formulario' && (
@@ -428,7 +428,7 @@ function App() {
         </div>
 
         <footer className="casis-footer">
-          &copy; {new Date().getFullYear()} Centro Acadêmico de Sistemas de Informação UTFPR-Londrina<br/>
+          &copy; {new Date().getFullYear()} Diretório Acadêmico de Computação (DACOMP) UTFPR-Londrina<br/>
           Desenvolvido por <a href="https://linktr.ee/raphaelfeijosalles" target="_blank" rel="noopener noreferrer">Raphael Salles</a>
         </footer>
       </>
