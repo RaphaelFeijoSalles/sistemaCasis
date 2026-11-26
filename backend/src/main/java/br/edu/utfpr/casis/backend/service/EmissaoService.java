@@ -34,6 +34,7 @@ public class EmissaoService {
     private final EmailService emailService;
     private final GoogleDriveService driveService;
     private final GoogleSheetsService sheetsService;
+    private final InterpretadorCurso interpretadorCurso;
 
     /**
      * Valida o lote e devolve a pré-visualização, sem nenhum efeito colateral:
@@ -64,7 +65,9 @@ public class EmissaoService {
         if (requestDTO.arquivoCsv() == null || requestDTO.arquivoCsv().isEmpty()) {
             throw new DadosInvalidosException("O arquivo CSV é obrigatório.");
         }
-        return ValidadorParticipantes.validarLinhas(csvService.lerLinhas(requestDTO.arquivoCsv()), requestDTO.cargaHoraria());
+        String cursoPadrao = ValidadorParticipantes.resolverCurso(requestDTO.cursoPadrao(), interpretadorCurso);
+        return ValidadorParticipantes.validarLinhas(csvService.lerLinhas(requestDTO.arquivoCsv()),
+                requestDTO.cargaHoraria(), cursoPadrao, interpretadorCurso);
     }
 
     private ResultadoEmissaoDTO resultadoErroValidacao(LinhaValidadaDTO linha) {
@@ -128,7 +131,7 @@ public class EmissaoService {
 
             // Horas da própria linha (F2): coluna Horas do CSV ou, se vazia, a carga do formulário
             EmissaoLoteEventoRequestDTO dadosDaLinha = new EmissaoLoteEventoRequestDTO(
-                    requestDTO.nomeEvento(), requestDTO.dataRealizacao(), linha.horas(), requestDTO.arquivoCsv());
+                    requestDTO.nomeEvento(), requestDTO.dataRealizacao(), linha.horas(), linha.curso(), requestDTO.arquivoCsv());
 
             try {
                 // Gera, Envia e faz Upload apenas se for novo
@@ -160,6 +163,7 @@ public class EmissaoService {
         // 0. Valida antes de qualquer efeito (F1). Lança DadosInvalidosException se algo estiver inválido.
         ValidadorParticipantes.validarEvento(dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria());
         ValidadorParticipantes.validarParticipante(dto.nomeParticipante(), dto.emailParticipante());
+        String curso = ValidadorParticipantes.resolverCurso(dto.cursoParticipante(), interpretadorCurso);
 
         // 1. Cria o aluno manualmente
         AlunoCertificado aluno = br.edu.utfpr.casis.backend.model.AlunoCertificadoEvento.builder()
@@ -170,7 +174,7 @@ public class EmissaoService {
 
         // 2. Cria um DTO de lote "falso" (sem arquivo) só para o PdfService aceitar os dados do evento
         EmissaoLoteEventoRequestDTO loteDto = new EmissaoLoteEventoRequestDTO(
-                dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria(), null
+                dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria(), curso, null
         );
 
         // 3. Resolve a pasta e checa se já existe (reaproveitando a lógica)

@@ -20,6 +20,9 @@ final class ValidadorParticipantes {
     private static final Pattern PADRAO_EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final int TAMANHO_MAXIMO_VALOR_NA_MENSAGEM = 30;
 
+    /** Curso usado quando a requisição não informa curso (frontend anterior à F4), como era antes. */
+    static final String CURSO_LEGADO = "SI";
+
     private ValidadorParticipantes() {
     }
 
@@ -46,18 +49,6 @@ final class ValidadorParticipantes {
         return validar(linhas, cargaPadrao, cursoPadrao, interpretadorCurso);
     }
 
-    /**
-     * Versão sem curso, mantida só até o P5 da F4 ligar o curso padrão na {@link EmissaoService}.
-     * A coluna {@code Curso} é ignorada e os campos de curso saem nulos.
-     *
-     * @param linhas linhas brutas lidas do CSV.
-     * @param cargaPadrao carga horária do formulário, em horas decimais.
-     * @return uma {@link LinhaValidadaDTO} por linha, na mesma ordem.
-     */
-    static List<LinhaValidadaDTO> validarLinhas(List<LinhaCsv> linhas, Double cargaPadrao) {
-        return validar(linhas, cargaPadrao, null, null);
-    }
-
     private static List<LinhaValidadaDTO> validar(List<LinhaCsv> linhas, Double cargaPadrao,
                                                   String cursoPadrao, InterpretadorCurso interpretadorCurso) {
         Map<String, Integer> linhaPorEmail = new HashMap<>();
@@ -71,10 +62,9 @@ final class ValidadorParticipantes {
                     ? cargaPadrao
                     : InterpretadorHoras.interpretar(linha.horas()).orElse(null);
 
-            boolean validaCurso = interpretadorCurso != null;
-            boolean cursoDoFormulario = validaCurso && (linha.curso() == null || linha.curso().isBlank());
-            String curso = !validaCurso ? null
-                    : cursoDoFormulario ? cursoPadrao
+            boolean cursoDoFormulario = linha.curso() == null || linha.curso().isBlank();
+            String curso = cursoDoFormulario
+                    ? cursoPadrao
                     : interpretadorCurso.interpretar(linha.curso()).orElse(null);
             String cursoTexto = curso == null ? null
                     : interpretadorCurso.curso(curso).map(c -> c.nomeCompleto()).orElse(null);
@@ -96,7 +86,7 @@ final class ValidadorParticipantes {
                 erros.add("Horas inválidas: " + resumir(linha.horas()));
             }
 
-            if (validaCurso && curso == null) {
+            if (curso == null) {
                 erros.add("Curso inválido: " + resumir(linha.curso()));
             }
 
@@ -146,6 +136,23 @@ final class ValidadorParticipantes {
         if (!InterpretadorHoras.dentroDosLimites(cargaHoraria)) {
             throw new DadosInvalidosException("A carga horária deve ser um número maior que zero.");
         }
+    }
+
+    /**
+     * Resolve o curso padrão do formulário (lote) ou o curso do participante (unitário).
+     * Ausente ou em branco vale {@link #CURSO_LEGADO}, para o frontend anterior à F4.
+     *
+     * @param valor código ou apelido informado na requisição, ou {@code null}.
+     * @param interpretadorCurso cursos configurados da gestão.
+     * @return o código do curso (ex.: "SI").
+     * @throws DadosInvalidosException se o valor não for um curso configurado.
+     */
+    static String resolverCurso(String valor, InterpretadorCurso interpretadorCurso) {
+        if (valor == null || valor.isBlank()) {
+            return CURSO_LEGADO;
+        }
+        return interpretadorCurso.interpretar(valor)
+                .orElseThrow(() -> new DadosInvalidosException("Curso inválido: " + resumir(valor.trim())));
     }
 
     /**

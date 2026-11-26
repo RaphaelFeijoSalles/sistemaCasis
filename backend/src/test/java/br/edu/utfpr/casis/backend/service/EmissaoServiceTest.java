@@ -18,11 +18,13 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -54,7 +56,8 @@ class EmissaoServiceTest {
 
     @BeforeEach
     void setUp() {
-        emissaoService = new EmissaoService(new CsvService(), pdfService, emailService, driveService, sheetsService);
+        emissaoService = new EmissaoService(new CsvService(), pdfService, emailService, driveService, sheetsService,
+                GestaoDeTeste.interpretador());
     }
 
     // ---------- Pré-visualização (CA1) ----------
@@ -92,12 +95,77 @@ class EmissaoServiceTest {
 
     @Test
     void deveRecusarPreVisualizacaoSemArquivo() {
-        EmissaoLoteEventoRequestDTO dto = new EmissaoLoteEventoRequestDTO(EVENTO, DATA, 2.0, null);
+        EmissaoLoteEventoRequestDTO dto = new EmissaoLoteEventoRequestDTO(EVENTO, DATA, 2.0, null, null);
 
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
                 () -> emissaoService.preVisualizarLote(dto));
 
         assertEquals("O arquivo CSV é obrigatório.", erro.getMessage());
+        semEfeitos();
+    }
+
+    // ---------- Curso padrão (F4: CA8, CA9) ----------
+
+    @Test
+    void devePreVisualizarComCursoDaLinhaECursoPadraoDoFormulario() {
+        String csv = """
+                Nome;E-mail;Curso
+                Ana Silva;ana@alunos.utfpr.edu.br;si
+                Bruno Souza;bruno@alunos.utfpr.edu.br;
+                Carla Lima;carla@alunos.utfpr.edu.br;ADS
+                """;
+
+        PreVisualizacaoLoteDTO previa = emissaoService.preVisualizarLote(lote(csv, 2.0, "CDIA"));
+
+        assertEquals(Arrays.asList("SI", "CDIA", null), previa.linhas().stream().map(l -> l.curso()).toList());
+        assertEquals(Arrays.asList(GestaoDeTeste.NOME_SI, GestaoDeTeste.NOME_CDIA, null),
+                previa.linhas().stream().map(l -> l.cursoTexto()).toList());
+        assertEquals(List.of(false, true, false), previa.linhas().stream().map(l -> l.cursoDoFormulario()).toList());
+        assertEquals(List.of("Curso inválido: ADS"), previa.linhas().get(2).mensagens());
+        semEfeitos();
+    }
+
+    @Test
+    void deveUsarSiQuandoCursoPadraoAusente() {
+        for (String ausente : new String[]{null, "", "  "}) {
+            PreVisualizacaoLoteDTO previa = emissaoService.preVisualizarLote(
+                    lote("Nome;E-mail\nAna;ana@alunos.utfpr.edu.br\n", 2.0, ausente));
+
+            assertEquals("SI", previa.linhas().getFirst().curso());
+            assertTrue(previa.linhas().getFirst().cursoDoFormulario());
+        }
+        semEfeitos();
+    }
+
+    @Test
+    void deveAceitarApelidoNoCursoPadrao() {
+        PreVisualizacaoLoteDTO previa = emissaoService.preVisualizarLote(
+                lote("Nome;E-mail\nAna;ana@alunos.utfpr.edu.br\n", 2.0, "ciencia de dados e inteligencia artificial"));
+
+        assertEquals("CDIA", previa.linhas().getFirst().curso());
+    }
+
+    @Test
+    void deveRecusarCursoPadraoInvalidoNaPreVisualizacaoENoLoteAntesDeQualquerEfeito() {
+        DadosInvalidosException erroPrevia = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.preVisualizarLote(lote("Nome;E-mail\nAna;ana@x.com\n", 2.0, "ADS")));
+        DadosInvalidosException erroLote = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissao(lote("Nome;E-mail\nAna;ana@x.com\n", 2.0, "ADS")));
+
+        assertEquals("Curso inválido: ADS", erroPrevia.getMessage());
+        assertEquals("Curso inválido: ADS", erroLote.getMessage());
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarCursoDoUnitarioInvalidoAntesDeQualquerEfeito() {
+        EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, 2.0,
+                "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", "ADS");
+
+        DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissaoIndividual(dto));
+
+        assertEquals("Curso inválido: ADS", erro.getMessage());
         semEfeitos();
     }
 
@@ -325,12 +393,16 @@ class EmissaoServiceTest {
     }
 
     private EmissaoLoteEventoRequestDTO lote(String csv, Double carga) {
+        return lote(csv, carga, null);
+    }
+
+    private EmissaoLoteEventoRequestDTO lote(String csv, Double carga, String cursoPadrao) {
         MockMultipartFile arquivo = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
                 csv.getBytes(StandardCharsets.UTF_8));
-        return new EmissaoLoteEventoRequestDTO(EVENTO, DATA, carga, arquivo);
+        return new EmissaoLoteEventoRequestDTO(EVENTO, DATA, carga, cursoPadrao, arquivo);
     }
 
     private EmissaoIndividualRequestDTO unitario(String nome, String email, Double carga) {
-        return new EmissaoIndividualRequestDTO(EVENTO, DATA, carga, nome, email, "12345");
+        return new EmissaoIndividualRequestDTO(EVENTO, DATA, carga, nome, email, "12345", null);
     }
 }

@@ -1,5 +1,6 @@
 package br.edu.utfpr.casis.backend.controller;
 
+import br.edu.utfpr.casis.backend.dto.EmissaoIndividualRequestDTO;
 import br.edu.utfpr.casis.backend.dto.EmissaoLoteEventoRequestDTO;
 import br.edu.utfpr.casis.backend.dto.LinhaValidadaDTO;
 import br.edu.utfpr.casis.backend.dto.PreVisualizacaoLoteDTO;
@@ -78,7 +79,32 @@ class CertificadoControllerTest {
                 dto.nomeEvento().equals("Semana Acadêmica")
                         && dto.dataRealizacao().equals(LocalDate.of(2026, 11, 20))
                         && dto.cargaHoraria().equals(1.5)
+                        && dto.cursoPadrao() == null
                         && dto.arquivoCsv() != null));
+    }
+
+    @Test
+    void deveRepassarCursoPadraoDoFormData() throws Exception {
+        when(emissaoService.preVisualizarLote(any())).thenReturn(new PreVisualizacaoLoteDTO(0, 0, 0, 0, List.of()));
+
+        mockMvc.perform(multipart(BASE + "/pre-visualizar-lote").file(csv)
+                        .param("nomeEvento", "Semana Acadêmica")
+                        .param("dataRealizacao", "2026-11-20")
+                        .param("cargaHoraria", "1.5")
+                        .param("cursoPadrao", "CDIA")
+                        .header("X-API-KEY", CHAVE))
+                .andExpect(status().isOk());
+
+        verify(emissaoService).preVisualizarLote(argThat((EmissaoLoteEventoRequestDTO dto) -> "CDIA".equals(dto.cursoPadrao())));
+    }
+
+    @Test
+    void deveDevolver400QuandoCursoPadraoInvalido() throws Exception {
+        when(emissaoService.processarEmissao(any())).thenThrow(new DadosInvalidosException("Curso inválido: ADS"));
+
+        mockMvc.perform(multipart(BASE + "/emitir-lote").file(csv).param("cursoPadrao", "ADS").header("X-API-KEY", CHAVE))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Curso inválido: ADS"));
     }
 
     @Test
@@ -165,6 +191,25 @@ class CertificadoControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("E-mail do participante inválido: ana@utfpr"));
+    }
+
+    @Test
+    void deveRepassarCursoDoParticipanteNoUnitario() throws Exception {
+        when(emissaoService.processarEmissaoIndividual(any()))
+                .thenReturn(new ResultadoEmissaoDTO("Ana", "ana@alunos.utfpr.edu.br", StatusEmissao.SUCESSO, null));
+
+        mockMvc.perform(post(BASE + "/emitir-unitario")
+                        .header("X-API-KEY", CHAVE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nomeEvento":"Semana","dataRealizacao":"2026-11-20","cargaHoraria":"2",
+                                 "nomeParticipante":"Ana","emailParticipante":"ana@alunos.utfpr.edu.br",
+                                 "raParticipante":"1","cursoParticipante":"CDIA"}
+                                """))
+                .andExpect(status().isOk());
+
+        verify(emissaoService).processarEmissaoIndividual(argThat((EmissaoIndividualRequestDTO dto) ->
+                "CDIA".equals(dto.cursoParticipante())));
     }
 
     @Test
