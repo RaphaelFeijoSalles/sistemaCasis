@@ -102,7 +102,7 @@ O CASIS virou **DACOMP (Diretório Acadêmico de Computação)**, mudaram presid
 - [x] P2 (2026-11-26: SI pré-selecionado): Campo "Curso padrão" sem valor pré-selecionado (obriga escolher) ou já com **SI** selecionado? Recomendação: SI selecionado, para não travar o uso atual.
 
 ## 9. Plano de implementação
-- [ ] P1 — `GestaoProperties` (`@ConfigurationProperties("certificado")`, record com `Curso`) + `@EnableConfigurationProperties` + padrões DACOMP no `application.properties` com `\uXXXX` · arquivos: `config/GestaoProperties.java`, `BackendApplication.java`, `application.properties` · teste: `GestaoPropertiesTest` (Binder sobre o `application.properties` real, sem contexto Spring; acentos corretos) — CA1 · commit: `feat(config): dados da gestão e cursos configuráveis` · agente: `dev-backend`
+- [x] P1 — `GestaoProperties` (`@ConfigurationProperties("certificado")`, record com `Curso`) + `@EnableConfigurationProperties` + padrões DACOMP no `application.properties` com `\uXXXX` · arquivos: `config/GestaoProperties.java`, `BackendApplication.java`, `application.properties` · teste: `GestaoPropertiesTest` (Binder sobre o `application.properties` real, sem contexto Spring; acentos corretos) — CA1 · commit: `feat(config): dados da gestão e cursos configuráveis` · agente: `dev-backend`
 - [ ] P2 — `InterpretadorCurso` (classe pura construída com o mapa de cursos): apelido → código, normalizando caixa, acento e espaços; `nomeCompleto`/`nomeCurto` por código · arquivos: `service/InterpretadorCurso.java` · teste: `InterpretadorCursoTest` — CA5 e inválidos do CA6 · commit: `feat(curso): interpreta o curso por código ou nome` · agente: `dev-backend`
 - [ ] P3 — Ler a coluna `Curso` no CSV · arquivos: `service/LinhaCsv.java`, `service/CsvService.java` · teste: `CsvServiceTest` — CA4 (e CSV sem a coluna = `null`) · commit: `feat(csv): lê a coluna opcional Curso` · agente: `dev-backend`
 - [ ] P4 — Validar o curso por linha com padrão do formulário; `LinhaValidadaDTO` + `curso`, `cursoTexto`, `cursoDoFormulario` · arquivos: `service/ValidadorParticipantes.java`, `dto/LinhaValidadaDTO.java` · teste: `ValidadorParticipantesTest` — CA6, CA7, CA9 · commit: `feat(validacao): valida o curso de cada linha` · agente: `dev-backend`
@@ -117,3 +117,4 @@ O CASIS virou **DACOMP (Diretório Acadêmico de Computação)**, mudaram presid
 Deploy: backend (Render) antes do frontend (Vercel).
 
 ## 10. Registro de execução
+- P1: códigos de curso normalizados para maiúsculas no construtor do record (variáveis de ambiente chegam em minúsculas). Teste de binding usa `Binder` sobre o `application.properties` real, sem contexto Spring. 126 testes verdes.
