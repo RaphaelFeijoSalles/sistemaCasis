@@ -74,6 +74,13 @@ public class EmissaoService {
         return new ResultadoEmissaoDTO(linha.nome(), linha.email(), StatusEmissao.ERRO, String.join("; ", linha.mensagens()));
     }
 
+    /**
+     * Nome curto do curso gravado no Sheets (ex.: "Sistemas de Informação"), a partir do código já validado.
+     */
+    private String nomeCurtoDoCurso(String codigo) {
+        return interpretadorCurso.curso(codigo).map(curso -> curso.nomeCurto()).orElse(null);
+    }
+
     private int contar(List<LinhaValidadaDTO> linhas, SituacaoLinha situacao) {
         return (int) linhas.stream().filter(linha -> linha.situacao() == situacao).count();
     }
@@ -129,7 +136,8 @@ public class EmissaoService {
                 continue;
             }
 
-            // Horas da própria linha (F2): coluna Horas do CSV ou, se vazia, a carga do formulário
+            // Horas e curso da própria linha (F2, F4): coluna do CSV ou, se vazia, o padrão do formulário.
+            // O código do curso da linha segue em cursoPadrao, que o PdfService usa no certificado.
             EmissaoLoteEventoRequestDTO dadosDaLinha = new EmissaoLoteEventoRequestDTO(
                     requestDTO.nomeEvento(), requestDTO.dataRealizacao(), linha.horas(), linha.curso(), requestDTO.arquivoCsv());
 
@@ -139,8 +147,9 @@ public class EmissaoService {
                 emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), requestDTO.nomeEvento(), pdf);
                 driveService.fazerUploadCertificado(pdf, nomePdf, folderId);
 
-                // Registra na planilha de controle
-                sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), null, requestDTO.dataRealizacao(), requestDTO.nomeEvento(), linha.horas());
+                // Registra na planilha de controle, com o nome curto do curso (F4)
+                sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), nomeCurtoDoCurso(linha.curso()),
+                        requestDTO.dataRealizacao(), requestDTO.nomeEvento(), linha.horas());
 
                 relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), StatusEmissao.SUCESSO, null));
 
@@ -192,8 +201,9 @@ public class EmissaoService {
             emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), dto.nomeEvento(), pdf);
             driveService.fazerUploadCertificado(pdf, nomePdf, folderId);
             
-            // Registra na planilha de controle
-            sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), null, dto.dataRealizacao(), dto.nomeEvento(), dto.cargaHoraria());
+            // Registra na planilha de controle, com o nome curto do curso (F4)
+            sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), nomeCurtoDoCurso(curso),
+                    dto.dataRealizacao(), dto.nomeEvento(), dto.cargaHoraria());
 
             return new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), br.edu.utfpr.casis.backend.dto.StatusEmissao.SUCESSO, null);
         } catch (Exception e) {

@@ -42,6 +42,8 @@ class EmissaoServiceTest {
     private static final String EVENTO = "Semana Acadêmica";
     private static final String PASTA = "pasta-teste";
     private static final byte[] PDF = {1, 2, 3};
+    private static final String SI_CURTO = "Sistemas de Informação";
+    private static final String CDIA_CURTO = "Ciência de Dados e Inteligência Artificial";
 
     @Mock
     private PdfService pdfService;
@@ -202,8 +204,8 @@ class EmissaoServiceTest {
         verify(emailService, never()).enviarCertificado(eq("carla@utfpr"), anyString(), anyString(), any());
         verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
         verify(driveService).fazerUploadCertificado(PDF, "Certificado_Bruno_Souza.pdf", PASTA);
-        verify(sheetsService).registrarEmissao("Ana Silva", "1", null, DATA, EVENTO, 2.0);
-        verify(sheetsService).registrarEmissao("Bruno Souza", "", null, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", SI_CURTO, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "", SI_CURTO, DATA, EVENTO, 2.0);
     }
 
     @Test
@@ -217,7 +219,7 @@ class EmissaoServiceTest {
         ordem.verify(pdfService).gerarCertificado(any(), any());
         ordem.verify(emailService).enviarCertificado(eq("ana@alunos.utfpr.edu.br"), eq("Ana Silva"), eq(EVENTO), eq(PDF));
         ordem.verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
-        ordem.verify(sheetsService).registrarEmissao("Ana Silva", "1", null, DATA, EVENTO, 2.0);
+        ordem.verify(sheetsService).registrarEmissao("Ana Silva", "1", SI_CURTO, DATA, EVENTO, 2.0);
     }
 
     @Test
@@ -275,10 +277,72 @@ class EmissaoServiceTest {
             assertEquals(DATA, dados.dataRealizacao());
         }
 
-        verify(sheetsService).registrarEmissao("Ana Silva", "1", null, DATA, EVENTO, 1.5);
-        verify(sheetsService).registrarEmissao("Bruno Souza", "2", null, DATA, EVENTO, 2.0);
-        verify(sheetsService).registrarEmissao("Carla Lima", "3", null, DATA, EVENTO, 1.0);
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", SI_CURTO, DATA, EVENTO, 1.5);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "2", SI_CURTO, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Carla Lima", "3", SI_CURTO, DATA, EVENTO, 1.0);
         verify(emailService, times(3)).enviarCertificado(anyString(), anyString(), eq(EVENTO), eq(PDF));
+    }
+
+    // ---------- Curso por participante (F4: CA10, CA11, CA14) ----------
+
+    @Test
+    void deveGerarPdfERegistrarPlanilhaComOCursoDeCadaParticipante() {
+        prepararDrive(Set.of());
+        String csv = """
+                Nome;RA;E-mail;Curso
+                Ana Silva;1;ana@alunos.utfpr.edu.br;CDIA
+                Bruno Souza;2;bruno@alunos.utfpr.edu.br;
+                Carla Lima;3;carla@alunos.utfpr.edu.br;sistemas de informacao
+                Davi Rocha;4;davi@alunos.utfpr.edu.br;ADS
+                """;
+
+        List<ResultadoEmissaoDTO> relatorio = emissaoService.processarEmissao(lote(csv, 2.0, "CDIA"));
+
+        ArgumentCaptor<EmissaoLoteEventoRequestDTO> dadosPdf = ArgumentCaptor.forClass(EmissaoLoteEventoRequestDTO.class);
+        verify(pdfService, times(3)).gerarCertificado(any(), dadosPdf.capture());
+        assertEquals(List.of("CDIA", "CDIA", "SI"), dadosPdf.getAllValues().stream().map(EmissaoLoteEventoRequestDTO::cursoPadrao).toList());
+
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", CDIA_CURTO, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "2", CDIA_CURTO, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Carla Lima", "3", SI_CURTO, DATA, EVENTO, 2.0);
+        assertEquals(new ResultadoEmissaoDTO("Davi Rocha", "davi@alunos.utfpr.edu.br", StatusEmissao.ERRO, "Curso inválido: ADS"),
+                relatorio.get(3));
+        verify(emailService, never()).enviarCertificado(eq("davi@alunos.utfpr.edu.br"), anyString(), anyString(), any());
+    }
+
+    @Test
+    void loteSemColunaCursoESemCursoPadraoEmiteComoSi() {
+        prepararDrive(Set.of());
+
+        emissaoService.processarEmissao(lote("Nome;RA;E-mail\nAna Silva;1;ana@alunos.utfpr.edu.br\n", 2.0));
+
+        ArgumentCaptor<EmissaoLoteEventoRequestDTO> dadosPdf = ArgumentCaptor.forClass(EmissaoLoteEventoRequestDTO.class);
+        verify(pdfService).gerarCertificado(any(), dadosPdf.capture());
+        assertEquals("SI", dadosPdf.getValue().cursoPadrao());
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", SI_CURTO, DATA, EVENTO, 2.0);
+    }
+
+    @Test
+    void unitarioUsaOCursoDoParticipante() {
+        prepararDrive(Set.of());
+        EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, 2.0,
+                "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", "cdia");
+
+        emissaoService.processarEmissaoIndividual(dto);
+
+        ArgumentCaptor<EmissaoLoteEventoRequestDTO> dadosPdf = ArgumentCaptor.forClass(EmissaoLoteEventoRequestDTO.class);
+        verify(pdfService).gerarCertificado(any(), dadosPdf.capture());
+        assertEquals("CDIA", dadosPdf.getValue().cursoPadrao());
+        verify(sheetsService).registrarEmissao("Ana Silva", "12345", CDIA_CURTO, DATA, EVENTO, 2.0);
+    }
+
+    @Test
+    void unitarioSemCursoEmiteComoSi() {
+        prepararDrive(Set.of());
+
+        emissaoService.processarEmissaoIndividual(unitario("Ana Silva", "ana@alunos.utfpr.edu.br", 2.0));
+
+        verify(sheetsService).registrarEmissao("Ana Silva", "12345", SI_CURTO, DATA, EVENTO, 2.0);
     }
 
     @Test
@@ -298,7 +362,7 @@ class EmissaoServiceTest {
         ), relatorio);
         verify(pdfService, times(1)).gerarCertificado(any(), any());
         verify(emailService, never()).enviarCertificado(eq("ana@alunos.utfpr.edu.br"), anyString(), anyString(), any());
-        verify(sheetsService).registrarEmissao("Bruno Souza", "2", null, DATA, EVENTO, 3.0);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "2", SI_CURTO, DATA, EVENTO, 3.0);
     }
 
     @Test
