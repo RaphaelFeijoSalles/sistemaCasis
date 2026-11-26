@@ -8,7 +8,7 @@ Atualize esta tabela sempre que uma spec mudar de status.
 | F1 | Etapa de validação antes do disparo: pré-visualização do lote e validação de dados em Java (duplicados, e-mails, vazios, horas), com confirmação explícita antes de gerar PDFs e enviar e-mails | — | concluída | [F1-validacao-pre-disparo.md](../specs/F1-validacao-pre-disparo.md) |
 | F2 | Planilha com horas por participante (lote com cargas horárias diferentes) | F1 | concluída | [F2-horas-por-participante.md](../specs/F2-horas-por-participante.md) |
 | F3 | Eventos longos: data de início e fim | — | backlog | — |
-| F4 | Gestão configurável (nome, sigla, cidade, fundo, cursos) e curso por participante na planilha | F2 | aprovada | [F4-gestao-configuravel-e-curso.md](../specs/F4-gestao-configuravel-e-curso.md) |
+| F4 | Gestão configurável (nome, sigla, cidade, fundo, cursos) e curso por participante na planilha | F2 | em andamento | [F4-gestao-configuravel-e-curso.md](../specs/F4-gestao-configuravel-e-curso.md) |
 | F5 | Banco de dados (PostgreSQL + JPA): eventos, participantes, histórico; ativar `FonteDadosBancoStrategy` | F1 | backlog | — |
 | F6 | Check-in via QR Code com painel de aprovação e emissão em massa | F5 | backlog | — |
 | F7 | Qualidade e segurança: testes com mocks, validação de DTOs, tratamento de erros, autenticação | contínuo | backlog | — |

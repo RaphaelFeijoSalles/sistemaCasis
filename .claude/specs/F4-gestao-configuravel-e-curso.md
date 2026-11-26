@@ -1,7 +1,7 @@
 ---
 id: F4
 titulo: Gestão configurável e curso por participante
-status: aprovada        # rascunho | aprovada | em andamento | concluída
+status: em andamento        # rascunho | aprovada | em andamento | concluída
 branch: feature/F4-gestao-configuravel-e-curso
 criada: 2026-11-26
 ---
@@ -102,6 +102,18 @@ O CASIS virou **DACOMP (Diretório Acadêmico de Computação)**, mudaram presid
 - [x] P2 (2026-11-26: SI pré-selecionado): Campo "Curso padrão" sem valor pré-selecionado (obriga escolher) ou já com **SI** selecionado? Recomendação: SI selecionado, para não travar o uso atual.
 
 ## 9. Plano de implementação
-(preenchido por `/planejar`)
+- [ ] P1 — `GestaoProperties` (`@ConfigurationProperties("certificado")`, record com `Curso`) + `@EnableConfigurationProperties` + padrões DACOMP no `application.properties` com `\uXXXX` · arquivos: `config/GestaoProperties.java`, `BackendApplication.java`, `application.properties` · teste: `GestaoPropertiesTest` (Binder sobre o `application.properties` real, sem contexto Spring; acentos corretos) — CA1 · commit: `feat(config): dados da gestão e cursos configuráveis` · agente: `dev-backend`
+- [ ] P2 — `InterpretadorCurso` (classe pura construída com o mapa de cursos): apelido → código, normalizando caixa, acento e espaços; `nomeCompleto`/`nomeCurto` por código · arquivos: `service/InterpretadorCurso.java` · teste: `InterpretadorCursoTest` — CA5 e inválidos do CA6 · commit: `feat(curso): interpreta o curso por código ou nome` · agente: `dev-backend`
+- [ ] P3 — Ler a coluna `Curso` no CSV · arquivos: `service/LinhaCsv.java`, `service/CsvService.java` · teste: `CsvServiceTest` — CA4 (e CSV sem a coluna = `null`) · commit: `feat(csv): lê a coluna opcional Curso` · agente: `dev-backend`
+- [ ] P4 — Validar o curso por linha com padrão do formulário; `LinhaValidadaDTO` + `curso`, `cursoTexto`, `cursoDoFormulario` · arquivos: `service/ValidadorParticipantes.java`, `dto/LinhaValidadaDTO.java` · teste: `ValidadorParticipantesTest` — CA6, CA7, CA9 · commit: `feat(validacao): valida o curso de cada linha` · agente: `dev-backend`
+- [ ] P5 — Contrato: `cursoPadrao` no DTO do lote e `cursoParticipante` no unitário (ausente = `SI`, inválido = 400); `EmissaoService.validarLote` passa o curso ao validador · arquivos: `dto/EmissaoLoteEventoRequestDTO.java`, `dto/EmissaoIndividualRequestDTO.java`, `service/EmissaoService.java` (só validação) · teste: `CertificadoControllerTest` (prévia com/sem `cursoPadrao`, inválido → 400) + `EmissaoServiceTest` — CA8, CA9 · commit: `feat(api): recebe o curso padrão no lote e no unitário` · agente: `dev-backend`
+- [ ] P6 ⚠️ — Certificado: `PdfService` recebe curso e gestão; template com `nomeGestao`, `siglaGestao`, `cursoNome`, cidade configurável, RA condicional (`th:if`), imagem por `imagemFundo`, sem CSS duplicado; commita o PNG do DACOMP · arquivos: `service/PdfService.java`, `templates/certificado_evento.html`, `static/images/bg_certificado_evento.png` · teste: `PdfServiceTest` (HTML processado via engine sem Spring; PDF não vazio) — CA2, CA3 · commit: `feat(pdf): certificado com gestão e curso configuráveis` · agente: `dev-backend`
+- [ ] P7 ⚠️ — Emissão: lote e unitário passam o curso da linha ao PDF e o **nome curto** ao Sheets; anti-duplicação e Drive intocados · arquivos: `service/EmissaoService.java` · teste: `EmissaoServiceTest` com mocks — CA10, CA11, CA14 · commit: `feat(emissao): usa o curso de cada participante no PDF e no Sheets` · agente: `dev-backend`
+- [ ] P8 ⚠️ — E-mail com nome e sigla da gestão (título, cabeçalho, rodapé); assunto com 🐍 inalterado · arquivos: `service/EmailService.java`, `templates/certificado-email.html` · teste: `EmailServiceTest` sobre `montarCorpoEmail` (sem Gmail) — CA12 · commit: `feat(email): textos da gestão configuráveis` · agente: `dev-backend`
+- [ ] P9 — Frontend: selects "Curso padrão" (lote, SI pré-selecionado) e "Curso" (unitário), envio de `cursoPadrao`/`cursoParticipante`, coluna Curso na prévia · arquivos: `App.jsx`, `components/CertificadoForm.jsx`, `components/PreVisualizacaoLote.jsx` · teste: `npm run lint` + `npm run build` + conferência no localhost — CA13 (parte) · commit: `feat(front): curso padrão e coluna Curso na prévia` · agente: `dev-frontend`
+- [ ] P10 — Frontend: textos DACOMP (cabeçalho, rodapé, título da aba) e ajuda sobre a coluna `Curso` · arquivos: `App.jsx`, `components/AjudaEmissao.jsx`, `index.html` · teste: lint + build + conferência visual — CA13 (resto) · commit: `feat(front): identidade DACOMP e ajuda da coluna Curso` · agente: `dev-frontend`
+- [ ] P11 — Fechamento: `armadilhas.md` (acentos em `.properties`, cursos duplicados front/back, Strategy ignora `Curso`), verificação manual em localhost com credenciais de teste, spec → concluída · arquivos: `.claude/memory/*`, spec · teste: suíte completa `./mvnw test` + verificação manual · commit: `docs(spec): conclui F4`
+
+Deploy: backend (Render) antes do frontend (Vercel).
 
 ## 10. Registro de execução
