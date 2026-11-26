@@ -37,6 +37,7 @@ public class CsvService {
         int indexEmail = -1;
         int indexRa = -1;
         int indexHoras = -1;
+        int indexCurso = -1;
 
         boolean isValido() {
             // Não obrigatoriedade do RA para proporcionar mais flexibilidade para outros tipos de emissões
@@ -155,7 +156,8 @@ public class CsvService {
                                 celula(celulas, map.indexNome),
                                 celula(celulas, map.indexEmail),
                                 celulaOpcional(celulas, map.indexRa),
-                                celulaOpcional(celulas, map.indexHoras)));
+                                celulaOpcional(celulas, map.indexHoras),
+                                celulaOpcional(celulas, map.indexCurso)));
                     }
                     numeroLinha = (int) csvReader.getLinesRead() + 1;
                 }
@@ -252,10 +254,13 @@ public class CsvService {
                 map.indexRa = i;
             } else if (map.indexHoras == -1 && isHoras(colNorm)) {
                 map.indexHoras = i;
+            } else if (map.indexCurso == -1 && isCurso(colNorm)) {
+                map.indexCurso = i;
             }
         }
 
-        log.info("Mapeamento do Header CSV -> Nome: [{}], Email: [{}], RA: [{}], Horas: [{}]", map.indexNome, map.indexEmail, map.indexRa, map.indexHoras);
+        log.info("Mapeamento do Header CSV -> Nome: [{}], Email: [{}], RA: [{}], Horas: [{}], Curso: [{}]",
+                map.indexNome, map.indexEmail, map.indexRa, map.indexHoras, map.indexCurso);
         return map;
     }
 
@@ -288,6 +293,13 @@ public class CsvService {
      */
     private boolean isHoras(String col) {
         return col.equals("horas");
+    }
+
+    /**
+     * Coluna de curso por participante (F4): só o cabeçalho "Curso", já normalizado.
+     */
+    private boolean isCurso(String col) {
+        return col.equals("curso");
     }
 
     /**

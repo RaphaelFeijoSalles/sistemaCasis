@@ -175,6 +175,72 @@ class CsvServiceTest {
     }
 
     @Test
+    void deveLerColunaCursoComTextoBruto() {
+        String csv = """
+                Nome;E-mail;RA;Horas;Curso
+                Ana Silva;ana@alunos.utfpr.edu.br;12345;1,5; si\s
+                Bruno Souza;bruno@alunos.utfpr.edu.br;67890;;Ciência de Dados e Inteligência Artificial
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertEquals(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", "1,5", "si"),
+                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "67890", "", "Ciência de Dados e Inteligência Artificial")
+        ), linhas);
+    }
+
+    @Test
+    void deveReconhecerCabecalhoCursoSemDiferenciarMaiusculasEEspacos() {
+        String csv = """
+                Nome,E-mail,  CURSO\s
+                Ana Silva,ana@alunos.utfpr.edu.br,CDIA
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertEquals("CDIA", linhas.getFirst().curso());
+    }
+
+    @Test
+    void deveRetornarCursoNuloQuandoNaoHaColunaCurso() {
+        String csv = """
+                Nome;E-mail;Horas
+                Ana Silva;ana@alunos.utfpr.edu.br;2
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertNull(linhas.getFirst().curso());
+    }
+
+    @Test
+    void deveRetornarCursoVazioOuNuloConformeCelula() {
+        String csv = """
+                Nome;E-mail;Curso
+                Ana Silva;ana@alunos.utfpr.edu.br;
+                Bruno Souza;bruno@alunos.utfpr.edu.br
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertEquals("", linhas.get(0).curso());
+        assertNull(linhas.get(1).curso());
+    }
+
+    @Test
+    void naoDeveReconhecerOutrosNomesDeColunaDeCurso() {
+        String csv = """
+                Nome;E-mail;Cursos;Graduação
+                Ana Silva;ana@alunos.utfpr.edu.br;SI;SI
+                """;
+
+        List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
+
+        assertNull(linhas.getFirst().curso());
+    }
+
+    @Test
     void deveLancarDadosInvalidosQuandoCsvVazio() {
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
                 () -> csvService.lerLinhas(criarArquivoCsv("")));
