@@ -55,7 +55,8 @@ class CertificadoControllerTest {
     @Test
     void devePreVisualizarLoteComCamposDoFormData() throws Exception {
         LinhaValidadaDTO linha = new LinhaValidadaDTO(2, "Ana", "ana@alunos.utfpr.edu.br", null,
-                1.5, "1 hora e 30 minutos", true, SituacaoLinha.AVISO, List.of("RA não informado"));
+                1.5, "1 hora e 30 minutos", true, "SI", "Bacharelado em Sistemas de Informação", true,
+                SituacaoLinha.AVISO, List.of("RA não informado"));
         when(emissaoService.preVisualizarLote(any())).thenReturn(new PreVisualizacaoLoteDTO(1, 0, 1, 0, List.of(linha)));
 
         mockMvc.perform(multipart(BASE + "/pre-visualizar-lote").file(csv)

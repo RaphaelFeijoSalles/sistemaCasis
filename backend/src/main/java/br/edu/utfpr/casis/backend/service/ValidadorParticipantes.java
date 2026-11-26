@@ -31,12 +31,35 @@ final class ValidadorParticipantes {
      * Repetição e homônimo só são comparados com linhas anteriores que serão emitidas.
      * <p>
      * Horas (F2): a coluna {@code Horas} preenchida prevalece; célula vazia ou coluna ausente usa a carga do formulário.
+     * <p>
+     * Curso (F4): a coluna {@code Curso} preenchida prevalece e precisa ser um apelido configurado
+     * (senão a linha é erro); célula vazia ou coluna ausente usa o curso padrão do formulário.
      *
      * @param linhas linhas brutas lidas do CSV.
      * @param cargaPadrao carga horária do formulário, em horas decimais, usada quando a linha não traz horas.
+     * @param cursoPadrao código do curso padrão do formulário (ex.: "SI"), já validado, usado quando a linha não traz curso.
+     * @param interpretadorCurso cursos configurados da gestão.
+     * @return uma {@link LinhaValidadaDTO} por linha, na mesma ordem.
+     */
+    static List<LinhaValidadaDTO> validarLinhas(List<LinhaCsv> linhas, Double cargaPadrao,
+                                                String cursoPadrao, InterpretadorCurso interpretadorCurso) {
+        return validar(linhas, cargaPadrao, cursoPadrao, interpretadorCurso);
+    }
+
+    /**
+     * Versão sem curso, mantida só até o P5 da F4 ligar o curso padrão na {@link EmissaoService}.
+     * A coluna {@code Curso} é ignorada e os campos de curso saem nulos.
+     *
+     * @param linhas linhas brutas lidas do CSV.
+     * @param cargaPadrao carga horária do formulário, em horas decimais.
      * @return uma {@link LinhaValidadaDTO} por linha, na mesma ordem.
      */
     static List<LinhaValidadaDTO> validarLinhas(List<LinhaCsv> linhas, Double cargaPadrao) {
+        return validar(linhas, cargaPadrao, null, null);
+    }
+
+    private static List<LinhaValidadaDTO> validar(List<LinhaCsv> linhas, Double cargaPadrao,
+                                                  String cursoPadrao, InterpretadorCurso interpretadorCurso) {
         Map<String, Integer> linhaPorEmail = new HashMap<>();
         Map<String, Integer> linhaPorArquivo = new HashMap<>();
         List<LinhaValidadaDTO> resultado = new ArrayList<>();
@@ -47,6 +70,14 @@ final class ValidadorParticipantes {
             Double horas = horasDoFormulario
                     ? cargaPadrao
                     : InterpretadorHoras.interpretar(linha.horas()).orElse(null);
+
+            boolean validaCurso = interpretadorCurso != null;
+            boolean cursoDoFormulario = validaCurso && (linha.curso() == null || linha.curso().isBlank());
+            String curso = !validaCurso ? null
+                    : cursoDoFormulario ? cursoPadrao
+                    : interpretadorCurso.interpretar(linha.curso()).orElse(null);
+            String cursoTexto = curso == null ? null
+                    : interpretadorCurso.curso(curso).map(c -> c.nomeCompleto()).orElse(null);
 
             if (linha.nome().isBlank()) {
                 erros.add("Nome não informado");
@@ -65,8 +96,14 @@ final class ValidadorParticipantes {
                 erros.add("Horas inválidas: " + resumir(linha.horas()));
             }
 
+            if (validaCurso && curso == null) {
+                erros.add("Curso inválido: " + resumir(linha.curso()));
+            }
+
+            Curso dadosCurso = new Curso(curso, cursoTexto, cursoDoFormulario);
+
             if (!erros.isEmpty()) {
-                resultado.add(montar(linha, horas, horasDoFormulario, SituacaoLinha.ERRO, erros));
+                resultado.add(montar(linha, horas, horasDoFormulario, dadosCurso, SituacaoLinha.ERRO, erros));
                 continue;
             }
 
@@ -81,7 +118,7 @@ final class ValidadorParticipantes {
 
             linhaPorEmail.put(chaveEmail, linha.linha());
             linhaPorArquivo.putIfAbsent(nomeArquivo, linha.linha());
-            resultado.add(montar(linha, horas, horasDoFormulario, avisos.isEmpty() ? SituacaoLinha.VALIDA : SituacaoLinha.AVISO, avisos));
+            resultado.add(montar(linha, horas, horasDoFormulario, dadosCurso, avisos.isEmpty() ? SituacaoLinha.VALIDA : SituacaoLinha.AVISO, avisos));
         }
 
         return resultado;
@@ -140,10 +177,15 @@ final class ValidadorParticipantes {
                 : valor;
     }
 
-    private static LinhaValidadaDTO montar(LinhaCsv linha, Double horas, boolean horasDoFormulario,
+    /** Curso resolvido de uma linha: código, nome completo e se veio do formulário. */
+    private record Curso(String codigo, String texto, boolean doFormulario) {
+    }
+
+    private static LinhaValidadaDTO montar(LinhaCsv linha, Double horas, boolean horasDoFormulario, Curso curso,
                                            SituacaoLinha situacao, List<String> mensagens) {
         String horasTexto = horas == null ? null : CargaHorariaFormatter.formatarTexto(horas);
         return new LinhaValidadaDTO(linha.linha(), linha.nome(), linha.email(), linha.ra(),
-                horas, horasTexto, horasDoFormulario, situacao, List.copyOf(mensagens));
+                horas, horasTexto, horasDoFormulario, curso.codigo(), curso.texto(), curso.doFormulario(),
+                situacao, List.copyOf(mensagens));
     }
 }
