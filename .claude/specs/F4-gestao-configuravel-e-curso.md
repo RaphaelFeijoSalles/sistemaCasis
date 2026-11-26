@@ -1,7 +1,7 @@
 ---
 id: F4
 titulo: Gestão configurável e curso por participante
-status: em andamento        # rascunho | aprovada | em andamento | concluída
+status: concluída        # rascunho | aprovada | em andamento | concluída
 branch: feature/F4-gestao-configuravel-e-curso
 criada: 2026-11-26
 ---
@@ -22,20 +22,20 @@ O CASIS virou **DACOMP (Diretório Acadêmico de Computação)**, mudaram presid
 8. O frontend troca CASIS por DACOMP nos textos visíveis (fixo no código).
 
 ## 3. Critérios de aceitação
-- [ ] CA1: Dado o `application.properties` padrão, quando a aplicação lê `certificado.*`, então obtém nome `Diretório Acadêmico de Computação`, sigla `DACOMP`, cidade `Londrina`, imagem `static/images/bg_certificado_evento.png` e os cursos `SI` e `CDIA`, **com acentos corretos** (teste de binding).
-- [ ] CA2: Dada a gestão configurada, quando gero o PDF, então o HTML processado contém "promovida pelo Diretório Acadêmico de Computação (DACOMP)", "aluno(a) do curso de Bacharelado em Sistemas de Informação" (ou CDIA) e "Londrina, <data>". Nenhum "CASIS" ou "Centro Acadêmico de Sistemas de Informação" no HTML processado.
-- [ ] CA3: Dado um participante sem RA (nulo ou em branco), quando gero o PDF, então o HTML processado **não** contém "portador(a) do RA" nem "N/A" e começa o parágrafo por "aluno(a) do curso de ...". Com RA, o trecho aparece como hoje.
-- [ ] CA4: Dado um CSV com cabeçalho normalizado exatamente `curso`, quando leio as linhas, então `LinhaCsv.curso` traz o texto bruto da célula. Outros cabeçalhos ("Cursos", "Graduação") não são reconhecidos.
-- [ ] CA5: Dados `SI`, `si`, ` Sistemas de Informação `, `sistemas de informacao`, `CDIA`, `Ciência de Dados e Inteligência Artificial`, `ciencia de dados e inteligencia artificial`, quando interpreto o curso, então obtenho `SI`, `SI`, `SI`, `SI`, `CDIA`, `CDIA`, `CDIA`.
-- [ ] CA6: Dados `ADS`, `Sistemas`, `CD`, quando valido a linha, então ela fica `ERRO` com a mensagem `Curso inválido: <valor>`, sem PDF nem e-mail. Junto com outro erro (ex.: e-mail), as duas mensagens aparecem.
-- [ ] CA7: Dada célula vazia ou CSV sem a coluna `Curso`, quando valido, então a linha usa o `cursoPadrao` do formulário com `cursoDoFormulario = true`, sem aviso.
-- [ ] CA8: Dado `cursoPadrao` fora da lista, quando chamo `/pre-visualizar-lote`, `/emitir-lote` ou `/emitir-unitario`, então recebo 400 com "Curso inválido: <valor>". Dado `cursoPadrao` ausente (frontend antigo), então vale `SI` (comportamento atual).
-- [ ] CA9: Dada uma linha válida, quando chamo `/pre-visualizar-lote`, então `LinhaValidadaDTO` traz `curso` (código), `cursoTexto` (nome completo) e `cursoDoFormulario`. Em linha `ERRO` por curso inválido, `curso` e `cursoTexto` são `null`.
-- [ ] CA10: Dado um lote com cursos diferentes, quando emito, então cada PDF usa o curso da sua linha e `registrarEmissao` recebe o **nome curto** do curso (`Sistemas de Informação` / `Ciência de Dados e Inteligência Artificial`) (mocks).
-- [ ] CA11: Dada a emissão unitária com `cursoParticipante = CDIA`, quando emito, então o PDF e o Sheets usam CDIA.
-- [ ] CA12: O e-mail processado contém o nome e a sigla da gestão configurados e não contém "CASIS"; o assunto continua "Seu Certificado chegou! 🐍 - <evento>".
-- [ ] CA13: No frontend: campo "Curso padrão" (lote) e "Curso" (unitário) como `<select>` SI/CDIA, enviados como `cursoPadrao` / `cursoParticipante`; coluna **Curso** na prévia ("—" quando `null`); ajuda explica a coluna `Curso`; títulos e rodapé dizem DACOMP / Diretório Acadêmico de Computação.
-- [ ] CA14: Dado um CSV sem a coluna `Curso` e `cursoPadrao = SI`, quando emito, então o resultado só difere do atual pelos textos da gestão e pelo fundo novo.
+- [x] CA1: Dado o `application.properties` padrão, quando a aplicação lê `certificado.*`, então obtém nome `Diretório Acadêmico de Computação`, sigla `DACOMP`, cidade `Londrina`, imagem `static/images/bg_certificado_evento.png` e os cursos `SI` e `CDIA`, **com acentos corretos** (teste de binding).
+- [x] CA2: Dada a gestão configurada, quando gero o PDF, então o HTML processado contém "promovida pelo Diretório Acadêmico de Computação (DACOMP)", "aluno(a) do curso de Bacharelado em Sistemas de Informação" (ou CDIA) e "Londrina, <data>". Nenhum "CASIS" ou "Centro Acadêmico de Sistemas de Informação" no HTML processado.
+- [x] CA3: Dado um participante sem RA (nulo ou em branco), quando gero o PDF, então o HTML processado **não** contém "portador(a) do RA" nem "N/A" e começa o parágrafo por "aluno(a) do curso de ...". Com RA, o trecho aparece como hoje.
+- [x] CA4: Dado um CSV com cabeçalho normalizado exatamente `curso`, quando leio as linhas, então `LinhaCsv.curso` traz o texto bruto da célula. Outros cabeçalhos ("Cursos", "Graduação") não são reconhecidos.
+- [x] CA5: Dados `SI`, `si`, ` Sistemas de Informação `, `sistemas de informacao`, `CDIA`, `Ciência de Dados e Inteligência Artificial`, `ciencia de dados e inteligencia artificial`, quando interpreto o curso, então obtenho `SI`, `SI`, `SI`, `SI`, `CDIA`, `CDIA`, `CDIA`.
+- [x] CA6: Dados `ADS`, `Sistemas`, `CD`, quando valido a linha, então ela fica `ERRO` com a mensagem `Curso inválido: <valor>`, sem PDF nem e-mail. Junto com outro erro (ex.: e-mail), as duas mensagens aparecem.
+- [x] CA7: Dada célula vazia ou CSV sem a coluna `Curso`, quando valido, então a linha usa o `cursoPadrao` do formulário com `cursoDoFormulario = true`, sem aviso.
+- [x] CA8: Dado `cursoPadrao` fora da lista, quando chamo `/pre-visualizar-lote`, `/emitir-lote` ou `/emitir-unitario`, então recebo 400 com "Curso inválido: <valor>". Dado `cursoPadrao` ausente (frontend antigo), então vale `SI` (comportamento atual).
+- [x] CA9: Dada uma linha válida, quando chamo `/pre-visualizar-lote`, então `LinhaValidadaDTO` traz `curso` (código), `cursoTexto` (nome completo) e `cursoDoFormulario`. Em linha `ERRO` por curso inválido, `curso` e `cursoTexto` são `null`.
+- [x] CA10: Dado um lote com cursos diferentes, quando emito, então cada PDF usa o curso da sua linha e `registrarEmissao` recebe o **nome curto** do curso (`Sistemas de Informação` / `Ciência de Dados e Inteligência Artificial`) (mocks).
+- [x] CA11: Dada a emissão unitária com `cursoParticipante = CDIA`, quando emito, então o PDF e o Sheets usam CDIA.
+- [x] CA12: O e-mail processado contém o nome e a sigla da gestão configurados e não contém "CASIS"; o assunto continua "Seu Certificado chegou! 🐍 - <evento>".
+- [x] CA13: No frontend: campo "Curso padrão" (lote) e "Curso" (unitário) como `<select>` SI/CDIA, enviados como `cursoPadrao` / `cursoParticipante`; coluna **Curso** na prévia ("—" quando `null`); ajuda explica a coluna `Curso`; títulos e rodapé dizem DACOMP / Diretório Acadêmico de Computação.
+- [x] CA14: Dado um CSV sem a coluna `Curso` e `cursoPadrao = SI`, quando emito, então o resultado só difere do atual pelos textos da gestão e pelo fundo novo.
 
 ## 4. Fora do escopo
 - Datas de início e fim (F3); o texto "realizado no período de {data}" não muda.
@@ -112,7 +112,7 @@ O CASIS virou **DACOMP (Diretório Acadêmico de Computação)**, mudaram presid
 - [x] P8 ⚠️ — E-mail com nome e sigla da gestão (título, cabeçalho, rodapé); assunto com 🐍 inalterado · arquivos: `service/EmailService.java`, `templates/certificado-email.html` · teste: `EmailServiceTest` sobre `montarCorpoEmail` (sem Gmail) — CA12 · commit: `feat(email): textos da gestão configuráveis` · agente: `dev-backend`
 - [x] P9 — Frontend: selects "Curso padrão" (lote, SI pré-selecionado) e "Curso" (unitário), envio de `cursoPadrao`/`cursoParticipante`, coluna Curso na prévia · arquivos: `App.jsx`, `components/CertificadoForm.jsx`, `components/PreVisualizacaoLote.jsx` · teste: `npm run lint` + `npm run build` + conferência no localhost — CA13 (parte) · commit: `feat(front): curso padrão e coluna Curso na prévia` · agente: `dev-frontend`
 - [x] P10 — Frontend: textos DACOMP (cabeçalho, rodapé, título da aba) e ajuda sobre a coluna `Curso` · arquivos: `App.jsx`, `components/AjudaEmissao.jsx`, `index.html` · teste: lint + build + conferência visual — CA13 (resto) · commit: `feat(front): identidade DACOMP e ajuda da coluna Curso` · agente: `dev-frontend`
-- [ ] P11 — Fechamento: `armadilhas.md` (acentos em `.properties`, cursos duplicados front/back, Strategy ignora `Curso`), verificação manual em localhost com credenciais de teste, spec → concluída · arquivos: `.claude/memory/*`, spec · teste: suíte completa `./mvnw test` + verificação manual · commit: `docs(spec): conclui F4`
+- [x] P11 — Fechamento: `armadilhas.md` (acentos em `.properties`, cursos duplicados front/back, Strategy ignora `Curso`), verificação manual em localhost com credenciais de teste, spec → concluída · arquivos: `.claude/memory/*`, spec · teste: suíte completa `./mvnw test` + verificação manual · commit: `docs(spec): conclui F4`
 
 Deploy: backend (Render) antes do frontend (Vercel).
 
@@ -127,3 +127,4 @@ Deploy: backend (Render) antes do frontend (Vercel).
 - P8: além de título, cabeçalho e rodapé, o **nome de exibição do remetente** ("Centro Acadêmico de SI - CASIS") passou a ser "<nome> - <sigla>" — não estava listado na spec, mas é visível ao participante (CA12). Assunto e remetente extraídos em `montarAssunto`/`montarNomeRemetente` para teste sem Gmail. Ficaram: "© 2026" fixo no rodapé e `setApplicationName("CASIS Certificados")` (interno). 176 testes verdes.
 - P9: lista de cursos do frontend em `src/cursos.js` (duplica `certificado.cursos.*`; registrar em armadilhas). `select` usa os estilos do `input`. Prévia ganhou a coluna Curso ("(formulário)" quando veio do padrão). Conferido pelo desenvolvedor em localhost com os CSVs de teste: e-mails, PDFs e Sheets corretos.
 - P10: cabeçalho, rodapé e título da aba dizem DACOMP; ajuda explica a coluna `Curso` (lote) e o campo Curso (unitário). Mantidos de propósito: classes `casis-*`, comentários do `index.css` e a chave `casis_api_key` do localStorage (trocar apagaria a senha salva). Conferido pelo desenvolvedor.
+- P11: `armadilhas.md` atualizado (acentos em `.properties`, cursos duplicados front/back, Strategy ignora `Curso`, fundo sempre PNG, restos de CASIS mantidos de propósito; CSS duplicado marcado como resolvido). Suíte completa sem `contextLoads`: 176 testes verdes. Verificação manual em localhost feita pelo desenvolvedor com credenciais de teste (P9/P10). F4 concluída em 2026-11-26.
