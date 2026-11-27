@@ -1,7 +1,7 @@
 ---
 id: F8
 titulo: RA obrigatório, com marcador de participante externo
-status: aprovada        # rascunho | aprovada | em andamento | concluída
+status: em andamento        # rascunho | aprovada | em andamento | concluída
 branch: feature/F8-ra-obrigatorio
 criada: 2026-11-27
 ---
@@ -53,6 +53,7 @@ Hoje o RA vazio é só um AVISO no lote (regra da F1), e no unitário só o fron
 | `service/CsvService.java` | `lerLinhas` exige a coluna RA; mensagem do cabeçalho |
 | `service/ValidadorParticipantes.java` | RA vazio = ERRO; externo = AVISO; externo com curso = ERRO, sem resolver curso; `validarParticipante` exige RA |
 | `service/EmissaoService.java` | unitário e lote: externo sem curso; Sheets com `EXTERNO` e curso vazio |
+| `service/GoogleSheetsService.java` | curso vazio fica vazio para externo (hoje vira "Sistemas de Informação"); achado no `/planejar` |
 | `service/PdfService.java` + `certificado_evento.html` | variável `externo` que omite o trecho RA/curso |
 | `frontend/src/App.jsx`, `CertificadoForm.jsx` | checkbox externo; validação; não envia o curso |
 | `AjudaEmissao.jsx`, dicas e mensagens | textos do RA obrigatório e do `EXTERNO` |
@@ -68,5 +69,15 @@ Hoje o RA vazio é só um AVISO no lote (regra da F1), e no unitário só o fron
 - [x] P2 (aprovada em 2026-11-27): Textos propostos: cabeçalho "Cabeçalho inválido. Não foi possível identificar as colunas 'Nome', 'E-mail' e 'RA'."; unitário "O RA do participante é obrigatório. Para participante externo, use EXTERNO."; erros/avisos como nos CA2–CA4. Pode ser assim?
 
 ## 9. Plano de implementação
+- [ ] P1 — `RegistroAcademico` (novo, puro): `EXTERNO`, `ehExterno(String)` (trim, sem caixa) e `normalizar(String)` (trim; externo vira `EXTERNO`) · arquivos: `service/RegistroAcademico.java` · teste: `RegistroAcademicoTest` · commit: `feat(ra): utilitário de RA e marcador EXTERNO` · agente: dev-backend
+- [ ] P2 — `CsvService.lerLinhas` exige a coluna RA, com a mensagem da P2 (`extrairAlunos`, sem uso, fica igual); migrar para `Nome;RA;E-mail` os fixtures sem RA (`CsvServiceTest`, `EmissaoServiceTest`, `CertificadoControllerTest`) · teste: `CsvServiceTest` (cabeçalho sem RA → `DadosInvalidosException`) · CA1 · commit: `feat(csv): coluna RA obrigatória no lote` · agente: dev-backend
+- [ ] P3 — `ValidadorParticipantes.validarLinhas`: RA vazio = ERRO; externo = AVISO "Participante externo"; externo com Curso = ERRO "Participante externo não tem curso"; externo sem curso resolvido (`curso`/`cursoTexto` nulos) · teste: `ValidadorParticipantesTest` · CA2–CA4 · commit: `feat(validacao): RA vazio vira erro e externo vira aviso` · agente: dev-backend
+- [ ] P4 — Unitário: `validarParticipante` exige RA (mensagem da P2); externo com `cursoParticipante` → 400; externo não passa por `resolverCurso` · arquivos: `ValidadorParticipantes`, `EmissaoService` (só a validação do unitário) · teste: `ValidadorParticipantesTest`, `EmissaoServiceTest` (nenhum mock Google chamado no 400) · CA8, P1 · commit: `feat(unitario): RA obrigatório no backend` · agente: dev-backend
+- [ ] P5 — ⚠️ Certificado: `PdfService` define `externo` (via `RegistroAcademico`), não resolve curso para externo; o template omite "portador(a) do RA … aluno(a) do curso de …," quando `externo` · arquivos: `PdfService`, `certificado_evento.html` · teste: `PdfServiceTest` (CA5 e CA6) · commit: `feat(pdf): certificado de participante externo sem RA e curso` · agente: dev-backend
+- [ ] P6 — ⚠️ Sheets: curso vazio para externo; o fallback "Sistemas de Informação" e o "N/A" ficam para os demais casos · arquivos: `GoogleSheetsService` (extrair a montagem da linha para um método testável) · teste: `GoogleSheetsServiceTest` · CA7 · commit: `feat(sheets): externo sem curso na planilha` · agente: dev-backend
+- [ ] P7 — ⚠️ `EmissaoService` lote e unitário: aluno com RA normalizado (`EXTERNO`), curso nulo para externo no PDF e no Sheets; nome do PDF e pasta intactos · teste: `EmissaoServiceTest` (externo no lote e no unitário: args de `pdfService` e `registrarEmissao`; `nomePdf` igual) · CA7, CA9 · commit: `feat(emissao): emissão de participante externo` · agente: dev-backend
+- [ ] P8 — Frontend unitário: checkbox **Participante externo** desabilita e limpa RA e Curso; `validarRegistro` aceita externo; payload com `raParticipante: "EXTERNO"` e sem `cursoParticipante` · arquivos: `App.jsx`, `CertificadoForm.jsx` (+ CSS se precisar) · teste: `npm run lint && npm run build` + verificação manual pelo desenvolvedor · CA10 · commit: `feat(frontend): checkbox de participante externo no unitário` · agente: dev-frontend
+- [ ] P9 — Frontend textos: guia lateral (RA obrigatório, `EXTERNO`, erros/avisos da prévia), dica da dropzone, mensagens de cabeçalho/CSV ausente no `App.jsx` · arquivos: `AjudaEmissao.jsx`, `CertificadoForm.jsx`, `App.jsx` · teste: lint + build · CA10 · commit: `docs(frontend): guia e dicas do RA obrigatório` · agente: dev-frontend
+- [ ] P10 — Memória: `armadilhas.md` (convenção `EXTERNO`; CSV sem RA recusado; `extrairAlunos`/Strategy sem a regra para a F5; deploy Render antes da Vercel e aviso à diretoria) · teste: suíte completa sem `contextLoads` · commit: `docs(memoria): armadilhas da F8`
 
 ## 10. Registro de execução
