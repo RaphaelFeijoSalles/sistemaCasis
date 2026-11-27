@@ -8,6 +8,7 @@
 - **O anexo do e-mail usa outra fórmula** (`EmailService`: sem `trim()`). Hoje não afeta a anti-duplicação, mas não confie que as duas sejam iguais.
 - **Pastas do Drive:** `Raiz/AAAA-S/NomeEvento`, buscadas por nome exato. Semestre 1 = meses 1 a 6. Renomear a pasta no Drive ou mudar a regra cria pastas duplicadas.
 - **Evento longo (F3):** a pasta segue a **data de início** (`dataRealizacao`), nunca a `dataFim`. Um evento de 28/06 a 03/07 fica em `AAAA-1`. Testes em `EmissaoServiceTest` protegem a regra.
+- **Período errado não se corrige reemitindo (F3):** a anti-duplicação só olha o nome do arquivo. Reemitir com a `dataFim` corrigida devolve EXISTENTE para todos e os PDFs já enviados ficam com o período errado. Com a **data de início** errada é pior: o evento cai em outra pasta (se o semestre mudar) e a reemissão envia e-mail de novo para todos. Correção manual: apagar os PDFs da pasta do evento no Drive (e as linhas no Sheets) antes de reemitir. O guia lateral avisa a diretoria.
 - **Falhas silenciosas:** `fazerUploadCertificado` e `registrarEmissao` engolem exceções. O participante pode receber o e-mail sem backup no Drive. Nesse caso, a próxima emissão envia o e-mail de novo.
 - **`listarArquivosNaPasta` retorna um conjunto vazio em caso de erro** e não pagina (a API do Drive devolve até 100 por página por padrão). Em pastas grandes ou com erro, a anti-duplicação falha.
 
