@@ -192,14 +192,41 @@ final class ValidadorParticipantes {
     }
 
     /**
+     * Resolve o curso do participante da emissão unitária, levando em conta o participante externo (F8).
+     * <p>
+     * Externo ({@link RegistroAcademico#ehExterno}): não tem curso e não recebe o {@link #CURSO_LEGADO};
+     * com curso informado, válido ou não, a requisição é recusada. Demais participantes: delega a
+     * {@link #resolverCurso}.
+     *
+     * @param ra RA do participante, como veio na requisição.
+     * @param cursoParticipante código ou apelido do curso informado na requisição, ou {@code null}.
+     * @param interpretadorCurso cursos configurados da gestão.
+     * @return {@code null} para o participante externo; caso contrário, o código do curso (ex.: "SI").
+     * @throws DadosInvalidosException se o externo vier com curso ou se o curso não for um curso configurado.
+     */
+    static String resolverCursoDoParticipante(String ra, String cursoParticipante, InterpretadorCurso interpretadorCurso) {
+        if (!RegistroAcademico.ehExterno(ra)) {
+            return resolverCurso(cursoParticipante, interpretadorCurso);
+        }
+        if (cursoParticipante != null && !cursoParticipante.isBlank()) {
+            throw new DadosInvalidosException("Participante externo não tem curso.");
+        }
+        return null;
+    }
+
+    /**
      * Valida o participante da emissão unitária.
-     * Interrompe no primeiro problema encontrado.
+     * Interrompe no primeiro problema encontrado, nesta ordem: nome, e-mail, RA.
+     * <p>
+     * RA (F8): obrigatório, sem validação de formato. Participante externo usa {@link RegistroAcademico#EXTERNO}.
      *
      * @param nome nome do participante.
      * @param email e-mail do participante.
-     * @throws DadosInvalidosException se o nome estiver vazio ou o e-mail ausente ou fora do padrão.
+     * @param ra RA do participante, ou {@link RegistroAcademico#EXTERNO} para participante externo.
+     * @throws DadosInvalidosException se o nome estiver vazio, o e-mail ausente ou fora do padrão,
+     *                                 ou o RA nulo ou em branco.
      */
-    static void validarParticipante(String nome, String email) {
+    static void validarParticipante(String nome, String email, String ra) {
         if (nome == null || nome.isBlank()) {
             throw new DadosInvalidosException("O nome do participante é obrigatório.");
         }
@@ -208,6 +235,9 @@ final class ValidadorParticipantes {
         }
         if (!PADRAO_EMAIL.matcher(email.trim()).matches()) {
             throw new DadosInvalidosException("E-mail do participante inválido: " + email.trim());
+        }
+        if (ra == null || ra.isBlank()) {
+            throw new DadosInvalidosException("O RA do participante é obrigatório. Para participante externo, use EXTERNO.");
         }
     }
 

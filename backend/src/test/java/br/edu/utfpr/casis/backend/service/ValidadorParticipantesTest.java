@@ -460,14 +460,15 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveAceitarParticipanteValido() {
-        assertDoesNotThrow(() -> ValidadorParticipantes.validarParticipante("Ana Silva", " ana@alunos.utfpr.edu.br "));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarParticipante("Ana Silva", " ana@alunos.utfpr.edu.br ", "12345"));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarParticipante("Ana Silva", "ana@alunos.utfpr.edu.br", " externo "));
     }
 
     @Test
     void deveRecusarNomeDoParticipanteNuloOuVazio() {
         for (String nome : new String[]{null, "", "  "}) {
             assertMensagem("O nome do participante é obrigatório.",
-                    () -> ValidadorParticipantes.validarParticipante(nome, "ana@alunos.utfpr.edu.br"));
+                    () -> ValidadorParticipantes.validarParticipante(nome, "ana@alunos.utfpr.edu.br", "12345"));
         }
     }
 
@@ -475,14 +476,67 @@ class ValidadorParticipantesTest {
     void deveRecusarEmailDoParticipanteAusente() {
         for (String email : new String[]{null, "", "  "}) {
             assertMensagem("O e-mail do participante é obrigatório.",
-                    () -> ValidadorParticipantes.validarParticipante("Ana Silva", email));
+                    () -> ValidadorParticipantes.validarParticipante("Ana Silva", email, "12345"));
         }
     }
 
     @Test
     void deveRecusarEmailDoParticipanteForaDoPadrao() {
         assertMensagem("E-mail do participante inválido: ana@utfpr",
-                () -> ValidadorParticipantes.validarParticipante("Ana Silva", "ana@utfpr"));
+                () -> ValidadorParticipantes.validarParticipante("Ana Silva", "ana@utfpr", "12345"));
+    }
+
+    // ---------- RA obrigatório no unitário (F8: CA8) ----------
+
+    @Test
+    void deveRecusarRaDoParticipanteNuloOuEmBranco() {
+        for (String ra : new String[]{null, "", "   "}) {
+            assertMensagem("O RA do participante é obrigatório. Para participante externo, use EXTERNO.",
+                    () -> ValidadorParticipantes.validarParticipante("Ana Silva", "ana@alunos.utfpr.edu.br", ra));
+        }
+    }
+
+    @Test
+    void nomeEEmailDoParticipanteTemPrioridadeSobreORa() {
+        assertMensagem("O nome do participante é obrigatório.",
+                () -> ValidadorParticipantes.validarParticipante("", "ana@alunos.utfpr.edu.br", null));
+        assertMensagem("E-mail do participante inválido: ana@utfpr",
+                () -> ValidadorParticipantes.validarParticipante("Ana Silva", "ana@utfpr", ""));
+    }
+
+    // ---------- Curso do participante no unitário (F8: P1 da spec) ----------
+
+    @Test
+    void deveRecusarCursoDoParticipanteExternoMesmoQuandoValidoOuInvalido() {
+        for (String curso : new String[]{"SI", "ADS", " cdia "}) {
+            assertMensagem("Participante externo não tem curso.",
+                    () -> ValidadorParticipantes.resolverCursoDoParticipante("EXTERNO", curso, INTERPRETADOR_CURSO));
+        }
+    }
+
+    @Test
+    void externoSemCursoFicaSemCursoNoUnitario() {
+        for (String curso : new String[]{null, "", "   "}) {
+            assertNull(ValidadorParticipantes.resolverCursoDoParticipante(" externo ", curso, INTERPRETADOR_CURSO));
+        }
+    }
+
+    @Test
+    void naoExternoSemCursoNoUnitarioContinuaComoSi() {
+        assertEquals("SI", ValidadorParticipantes.resolverCursoDoParticipante("12345", null, INTERPRETADOR_CURSO));
+        assertEquals("SI", ValidadorParticipantes.resolverCursoDoParticipante("12345", " ", INTERPRETADOR_CURSO));
+    }
+
+    @Test
+    void naoExternoComApelidoNoUnitarioResolveOCodigo() {
+        assertEquals("CDIA", ValidadorParticipantes.resolverCursoDoParticipante("12345",
+                "Ciência de Dados e Inteligência Artificial", INTERPRETADOR_CURSO));
+    }
+
+    @Test
+    void naoExternoComCursoInvalidoNoUnitarioContinuaRecusado() {
+        assertMensagem("Curso inválido: ADS",
+                () -> ValidadorParticipantes.resolverCursoDoParticipante("12345", "ADS", INTERPRETADOR_CURSO));
     }
 
     private void assertMensagem(String esperada, Executable acao) {

@@ -418,6 +418,34 @@ class EmissaoServiceTest {
     }
 
     @Test
+    void deveRecusarUnitarioComRaEmBrancoAntesDeQualquerEfeito() { // F8: CA8
+        for (String ra : new String[]{null, "", "   "}) {
+            EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, null, 2.0,
+                    "Ana Silva", "ana@alunos.utfpr.edu.br", ra, null);
+
+            DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                    () -> emissaoService.processarEmissaoIndividual(dto));
+
+            assertEquals("O RA do participante é obrigatório. Para participante externo, use EXTERNO.", erro.getMessage());
+        }
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarUnitarioDeExternoComCursoAntesDeQualquerEfeito() { // F8: P1 da spec
+        for (String curso : new String[]{"SI", "ADS"}) {
+            EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, null, 2.0,
+                    "Ana Silva", "ana@alunos.utfpr.edu.br", "EXTERNO", curso);
+
+            DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                    () -> emissaoService.processarEmissaoIndividual(dto));
+
+            assertEquals("Participante externo não tem curso.", erro.getMessage());
+        }
+        semEfeitos();
+    }
+
+    @Test
     void deveRecusarUnitarioComEmailInvalidoAntesDeQualquerEfeito() {
         assertThrows(DadosInvalidosException.class,
                 () -> emissaoService.processarEmissaoIndividual(unitario("Ana Silva", "ana@utfpr", 2.0)));
