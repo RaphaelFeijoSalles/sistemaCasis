@@ -29,3 +29,6 @@ Vindos do `/revisar` da F4 (2026-11-26), nenhum bloqueante:
 - [ ] `GestaoProperties`: `@Validated` + `@NotBlank` em nome, sigla, cidade e imagem, para o backend não subir com configuração incompleta (hoje sairia "promovida pelo null (null)").
 - [ ] `InterpretadorCurso`: recusar na inicialização um apelido repetido em dois cursos (hoje o último vence sem aviso).
 - [ ] `LinhaCsv`: o construtor de 5 argumentos só existe para testes antigos; migrar os testes e removê-lo.
+
+Vindo da F3 (P4, 2026-11-27):
+- [ ] `certificado_evento.html`: concordância em "participou da <evento>, promovida pelo …, **realizado** em …" ("promovida" no feminino, "realizado" no masculino). Texto final a decidir com o desenvolvedor.
