@@ -69,7 +69,7 @@ class EmissaoServiceTest {
         String csv = """
                 Nome;RA;E-mail
                 Ana Silva;1;ana@alunos.utfpr.edu.br
-                Bruno Souza;;bruno@alunos.utfpr.edu.br
+                Bruno Souza;EXTERNO;bruno@alunos.utfpr.edu.br
                 ;;
                 Carla Lima;3;carla@utfpr
                 """;
@@ -188,7 +188,8 @@ class EmissaoServiceTest {
                 Ana Silva;1;ana@alunos.utfpr.edu.br
                 Carla Lima;3;carla@utfpr
                 ;;
-                Bruno Souza;;bruno@alunos.utfpr.edu.br
+                Bruno Souza;2;bruno@alunos.utfpr.edu.br
+                Davi Rocha;;davi@alunos.utfpr.edu.br
                 """;
 
         List<ResultadoEmissaoDTO> relatorio = emissaoService.processarEmissao(lote(csv, 2.0));
@@ -196,16 +197,18 @@ class EmissaoServiceTest {
         assertEquals(List.of(
                 new ResultadoEmissaoDTO("Ana Silva", "ana@alunos.utfpr.edu.br", StatusEmissao.SUCESSO, null),
                 new ResultadoEmissaoDTO("Carla Lima", "carla@utfpr", StatusEmissao.ERRO, "E-mail inválido: carla@utfpr"),
-                new ResultadoEmissaoDTO("Bruno Souza", "bruno@alunos.utfpr.edu.br", StatusEmissao.SUCESSO, null)
+                new ResultadoEmissaoDTO("Bruno Souza", "bruno@alunos.utfpr.edu.br", StatusEmissao.SUCESSO, null),
+                new ResultadoEmissaoDTO("Davi Rocha", "davi@alunos.utfpr.edu.br", StatusEmissao.ERRO, "RA não informado")
         ), relatorio);
         verify(driveService, times(1)).obterOuCriarPastaEvento(EVENTO, DATA);
         verify(driveService, times(1)).listarArquivosNaPasta(PASTA);
         verify(pdfService, times(2)).gerarCertificado(any(), any());
         verify(emailService, never()).enviarCertificado(eq("carla@utfpr"), anyString(), anyString(), any());
+        verify(emailService, never()).enviarCertificado(eq("davi@alunos.utfpr.edu.br"), anyString(), anyString(), any());
         verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
         verify(driveService).fazerUploadCertificado(PDF, "Certificado_Bruno_Souza.pdf", PASTA);
         verify(sheetsService).registrarEmissao("Ana Silva", "1", SI_CURTO, DATA, EVENTO, 2.0, null);
-        verify(sheetsService).registrarEmissao("Bruno Souza", "", SI_CURTO, DATA, EVENTO, 2.0, null);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "2", SI_CURTO, DATA, EVENTO, 2.0, null);
     }
 
     @Test

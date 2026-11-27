@@ -29,14 +29,23 @@ final class ValidadorParticipantes {
     /**
      * Valida as linhas do CSV na ordem do arquivo.
      * <p>
-     * Erros (a linha não é emitida): nome vazio, e-mail vazio ou fora do padrão, e-mail repetido, horas inválidas.
-     * Avisos (a linha é emitida): homônimo que gera o mesmo nome de PDF, RA não informado.
+     * Erros (a linha não é emitida), nesta ordem: nome vazio, e-mail vazio ou fora do padrão, e-mail repetido,
+     * RA não informado (F8), horas inválidas, curso inválido, participante externo com curso (F8).
+     * Avisos (a linha é emitida), nesta ordem: homônimo que gera o mesmo nome de PDF, participante externo (F8).
      * Repetição e homônimo só são comparados com linhas anteriores que serão emitidas.
+     * <p>
+     * RA (F8): obrigatório. O valor {@link RegistroAcademico#EXTERNO} (sem diferenciar maiúsculas e minúsculas,
+     * sem espaços nas bordas) marca um participante externo: a linha recebe o aviso "Participante externo" e é
+     * emitida se a coluna {@code Curso} estiver vazia ou ausente; com a coluna preenchida, válida ou não, vira o
+     * erro "Participante externo não tem curso". O curso do externo não é resolvido nem herda o curso padrão do
+     * formulário: {@code curso} e {@code cursoTexto} vão nulos e {@code cursoDoFormulario} vai {@code false}.
+     * O {@code ra} da linha validada é o texto como veio do CSV, sem normalização.
      * <p>
      * Horas (F2): a coluna {@code Horas} preenchida prevalece; célula vazia ou coluna ausente usa a carga do formulário.
      * <p>
      * Curso (F4): a coluna {@code Curso} preenchida prevalece e precisa ser um apelido configurado
      * (senão a linha é erro); célula vazia ou coluna ausente usa o curso padrão do formulário.
+     * Não vale para o participante externo (veja acima).
      *
      * @param linhas linhas brutas lidas do CSV.
      * @param cargaPadrao carga horária do formulário, em horas decimais, usada quando a linha não traz horas.
@@ -62,10 +71,18 @@ final class ValidadorParticipantes {
                     ? cargaPadrao
                     : InterpretadorHoras.interpretar(linha.horas()).orElse(null);
 
-            boolean cursoDoFormulario = linha.curso() == null || linha.curso().isBlank();
-            String curso = cursoDoFormulario
-                    ? cursoPadrao
-                    : interpretadorCurso.interpretar(linha.curso()).orElse(null);
+            boolean externo = RegistroAcademico.ehExterno(linha.ra());
+            boolean cursoVazio = linha.curso() == null || linha.curso().isBlank();
+            // Externo (F8): sem curso, nem o padrão do formulário.
+            boolean cursoDoFormulario = !externo && cursoVazio;
+            String curso;
+            if (externo) {
+                curso = null;
+            } else if (cursoDoFormulario) {
+                curso = cursoPadrao;
+            } else {
+                curso = interpretadorCurso.interpretar(linha.curso()).orElse(null);
+            }
             String cursoTexto = curso == null ? null
                     : interpretadorCurso.curso(curso).map(c -> c.nomeCompleto()).orElse(null);
 
@@ -82,11 +99,19 @@ final class ValidadorParticipantes {
                 erros.add("E-mail repetido (linha " + linhaPorEmail.get(chaveEmail) + ")");
             }
 
+            if (linha.ra() == null || linha.ra().isBlank()) {
+                erros.add("RA não informado");
+            }
+
             if (horas == null) {
                 erros.add("Horas inválidas: " + resumir(linha.horas()));
             }
 
-            if (curso == null) {
+            if (externo) {
+                if (!cursoVazio) {
+                    erros.add("Participante externo não tem curso");
+                }
+            } else if (curso == null) {
                 erros.add("Curso inválido: " + resumir(linha.curso()));
             }
 
@@ -102,8 +127,8 @@ final class ValidadorParticipantes {
             if (linhaPorArquivo.containsKey(nomeArquivo)) {
                 avisos.add("Mesmo nome da linha " + linhaPorArquivo.get(nomeArquivo) + ": o Drive terá dois arquivos com o mesmo nome");
             }
-            if (linha.ra() == null || linha.ra().isBlank()) {
-                avisos.add("RA não informado");
+            if (externo) {
+                avisos.add("Participante externo");
             }
 
             linhaPorEmail.put(chaveEmail, linha.linha());

@@ -205,11 +205,11 @@ class ValidadorParticipantesTest {
     }
 
     @Test
-    void deveListarTodosOsErrosESemAvisoDeRaNaLinhaComErro() {
+    void deveListarTodosOsErrosDaLinhaInclusiveRa() {
         LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "", "", null, null));
 
         assertEquals(SituacaoLinha.ERRO, linha.situacao());
-        assertEquals(List.of("Nome não informado", "E-mail não informado"), linha.mensagens());
+        assertEquals(List.of("Nome não informado", "E-mail não informado", "RA não informado"), linha.mensagens());
     }
 
     @Test
@@ -259,29 +259,99 @@ class ValidadorParticipantesTest {
         assertEquals(SituacaoLinha.VALIDA, resultado.get(1).situacao());
     }
 
+    // ---------- RA obrigatório e participante externo (F8) ----------
+
     @Test
-    void deveAvisarRaNuloOuVazio() {
+    void deveMarcarRaNuloVazioOuEmBrancoComoErro() {
         List<LinhaValidadaDTO> resultado = validar(List.of(
                 new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", null, null),
-                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "", null)
+                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "", null),
+                new LinhaCsv(4, "Carla Lima", "carla@alunos.utfpr.edu.br", "   ", null)
         ));
 
         for (LinhaValidadaDTO linha : resultado) {
-            assertEquals(SituacaoLinha.AVISO, linha.situacao());
+            assertEquals(SituacaoLinha.ERRO, linha.situacao());
             assertEquals(List.of("RA não informado"), linha.mensagens());
         }
     }
 
     @Test
-    void deveAcumularAvisosDeHomonimoERa() {
+    void deveAcumularRaVazioComEmailInvalido() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@utfpr", "", "abc"));
+
+        assertEquals(SituacaoLinha.ERRO, linha.situacao());
+        assertEquals(List.of("E-mail inválido: ana@utfpr", "RA não informado", "Horas inválidas: abc"), linha.mensagens());
+    }
+
+    @Test
+    void naoDeveContarRepeticaoDeEmailContraLinhaSemRa() {
         List<LinhaValidadaDTO> resultado = validar(List.of(
-                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1", null),
-                new LinhaCsv(3, "Ana Silva", "ana2@alunos.utfpr.edu.br", null, null)
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "", null),
+                new LinhaCsv(3, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", null)
         ));
 
+        assertEquals(SituacaoLinha.ERRO, resultado.get(0).situacao());
+        assertEquals(SituacaoLinha.VALIDA, resultado.get(1).situacao());
+    }
+
+    @Test
+    void deveAvisarParticipanteExternoSemCursoEEmitirSemCurso() {
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "externo", null, null),
+                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", " EXTERNO ", null, ""),
+                new LinhaCsv(4, "Carla Lima", "carla@alunos.utfpr.edu.br", "Externo", null, "   ")
+        ));
+
+        for (LinhaValidadaDTO linha : resultado) {
+            assertEquals(SituacaoLinha.AVISO, linha.situacao(), linha.ra());
+            assertEquals(List.of("Participante externo"), linha.mensagens(), linha.ra());
+            assertNull(linha.curso(), linha.ra());
+            assertNull(linha.cursoTexto(), linha.ra());
+            assertFalse(linha.cursoDoFormulario(), linha.ra());
+        }
+    }
+
+    @Test
+    void deveManterRaDoExternoComoVeioDoCsv() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", " EXTERNO ", null));
+
+        assertEquals(" EXTERNO ", linha.ra());
+    }
+
+    @Test
+    void naoDeveAplicarCursoPadraoAoExterno() {
+        LinhaValidadaDTO linha = ValidadorParticipantes.validarLinhas(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "EXTERNO", null, null)),
+                CARGA_PADRAO, "CDIA", INTERPRETADOR_CURSO).getFirst();
+
+        assertEquals(SituacaoLinha.AVISO, linha.situacao());
+        assertNull(linha.curso());
+        assertNull(linha.cursoTexto());
+    }
+
+    @Test
+    void deveMarcarExternoComCursoValidoOuInvalidoComoErro() {
+        for (String curso : new String[]{"SI", "ADS"}) {
+            LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "EXTERNO", null, curso));
+
+            assertEquals(SituacaoLinha.ERRO, linha.situacao(), curso);
+            assertEquals(List.of("Participante externo não tem curso"), linha.mensagens(), curso);
+            assertNull(linha.curso(), curso);
+            assertNull(linha.cursoTexto(), curso);
+        }
+    }
+
+    @Test
+    void deveAcumularAvisosDeHomonimoEExterno() {
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana1@alunos.utfpr.edu.br", "1", null),
+                new LinhaCsv(3, "Ana Silva", "ana2@alunos.utfpr.edu.br", "externo", null)
+        ));
+
+        assertEquals(SituacaoLinha.AVISO, resultado.get(1).situacao());
         assertEquals(List.of(
                 "Mesmo nome da linha 2: o Drive terá dois arquivos com o mesmo nome",
-                "RA não informado"
+                "Participante externo"
         ), resultado.get(1).mensagens());
     }
 
