@@ -32,3 +32,8 @@ Vindos do `/revisar` da F4 (2026-11-26), nenhum bloqueante:
 
 Vindo da F3 (P4, 2026-11-27):
 - [ ] `certificado_evento.html`: concordância em "participou da <evento>, promovida pelo …, **realizado** em …" ("promovida" no feminino, "realizado" no masculino). Texto final a decidir com o desenvolvedor.
+
+Vindos do `/revisar` da F3 (2026-11-27), nenhum bloqueante:
+- [ ] Mensagem de data ausente: o backend diz "A data de realização é obrigatória." (`ValidadorParticipantes.validarEvento`) e o frontend diz "Data de início obrigatória". Alinhar o backend (e o teste) para "data de início".
+- [ ] `PreVisualizacaoLote.jsx`: mostrar os dados do evento (nome, período como sairá no certificado, carga) antes da confirmação do lote.
+- [ ] `EmissaoService`: logar o período do evento (início/fim) no começo do lote e do unitário, para diagnóstico no Render.
