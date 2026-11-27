@@ -11,6 +11,7 @@
 - **Período errado não se corrige reemitindo (F3):** a anti-duplicação só olha o nome do arquivo. Reemitir com a `dataFim` corrigida devolve EXISTENTE para todos e os PDFs já enviados ficam com o período errado. Com a **data de início** errada é pior: o evento cai em outra pasta (se o semestre mudar) e a reemissão envia e-mail de novo para todos. Correção manual: apagar os PDFs da pasta do evento no Drive (e as linhas no Sheets) antes de reemitir. O guia lateral avisa a diretoria.
 - **Falhas silenciosas:** `fazerUploadCertificado` e `registrarEmissao` engolem exceções. O participante pode receber o e-mail sem backup no Drive. Nesse caso, a próxima emissão envia o e-mail de novo.
 - **`listarArquivosNaPasta` retorna um conjunto vazio em caso de erro** e não pagina (a API do Drive devolve até 100 por página por padrão). Em pastas grandes ou com erro, a anti-duplicação falha.
+- **Participante externo (F8):** RA = `EXTERNO` (sem diferenciar maiúsculas, sem espaços nas bordas) é o marcador de quem não tem RA. Não há campo próprio: a regra está em `RegistroAcademico` e é lida pelo `ValidadorParticipantes` (lote e unitário), `PdfService` (sem RA e sem curso no certificado), `GoogleSheetsService.montarLinha` (`EXTERNO` e curso vazio) e `EmissaoService` (RA normalizado). Um aluno cujo RA fosse literalmente "externo" seria tratado como externo. O frontend repete o marcador em `RA_EXTERNO` (`App.jsx`); mude os dois juntos.
 
 ## Contrato frontend ↔ backend
 - O lote usa `@ModelAttribute` com um record: os nomes dos campos do `FormData` (`nomeEvento`, `dataRealizacao`, `dataFim`, `cargaHoraria`, `cursoPadrao`, `arquivoCsv`) têm de ser iguais aos componentes de `EmissaoLoteEventoRequestDTO`.
@@ -22,6 +23,8 @@
 - **Período do evento (F3):** `dataRealizacao` continua sendo o nome do campo e passou a significar a data de **início**; `dataFim` é opcional e só vai no FormData/JSON quando preenchido. O limite (fim ≥ início, até 366 dias) está em `ValidadorParticipantes.validarEvento` **e** em `validarPeriodo` (`App.jsx`); mude os dois juntos. O campo de fim não tem `min` nativo de propósito (mesma razão da carga horária).
 - **Deploy da F3:** backend (Render) antes do frontend (Vercel). Frontend novo com backend antigo: o `dataFim` é ignorado sem erro e o certificado sai só com a data de início.
 - **Sheets com `data_fim` (F3):** a linha agora tem 7 colunas (`... | carga_horaria | data_fim`). O cabeçalho `data_fim` **não** é criado pelo sistema: acrescente-o à mão na planilha oficial antes do deploy (na de teste já foi feito).
+- **RA obrigatório (F8):** o lote recusa CSV sem a coluna RA (400) e marca RA vazio como ERRO; o unitário recusa `raParticipante` em branco. Externo com curso é erro no lote e 400 no unitário; por isso o frontend **não envia** `cursoParticipante` para externo (o padrão `SI` da F4 não vale para ele). O "N/A" do Sheets e o `th:if="${ra}"` do template ficaram como defesa.
+- **Deploy da F8:** backend (Render) antes do frontend (Vercel). CSVs antigos **sem a coluna RA** passam a ser recusados: avise a diretoria antes. Frontend antigo com backend novo funciona (já exigia RA no unitário), mas o guia ainda diz "RA opcional" e não há checkbox de externo.
 - O endpoint unitário retorna **um objeto**; o frontend o embrulha em array para reaproveitar `RelatorioEmissao`.
 - O frontend diz "ordem esperada: Nome, RA, E-mail", mas o backend mapeia **por nome de cabeçalho**, não por posição.
 - A senha da API fica em `localStorage` (`casis_api_key`) e vai no header `X-API-KEY`.
@@ -46,6 +49,7 @@
 - `frontend/src/components/DropzoneCsv.jsx`, `templates/certificado_gestao1.html` e `certificado_gestao2.html` estão vazios.
 - Desde a F1 (P6), o lote usa `CsvService.lerLinhas` + `ValidadorParticipantes`. `EmissaoService.definirEstrategia`, `FonteDadosCsvStrategy` e `CsvService.extrairAlunos` ficaram **sem uso**, mantidos como ponto de extensão para a F5.
 - **A coluna `Horas` (F2) só é lida por `CsvService.lerLinhas`.** `extrairAlunos` e `FonteDadosCsvStrategy` a ignoram, e `AlunoCertificado` não tem campo de horas. Reativar a Strategy na F5 sem levar as horas faz todo o lote voltar para a carga do formulário, sem erro. O mesmo vale para a coluna `Curso` (F4): sem ela, todos voltam ao curso padrão.
+- **A regra do RA (F8) só vale em `CsvService.lerLinhas` + `ValidadorParticipantes`.** `extrairAlunos` (`HeaderMap.isValido`) ainda aceita CSV sem RA e não conhece `EXTERNO`. Reativar a Strategy na F5 sem portar a regra volta a emitir sem RA.
 - `FonteDadosBancoStrategy` retorna lista vazia. `EmissaoGestaoRequestDTO` e `AlunoCertificadoGestao` ainda não são usados.
 - ~~`certificado_evento.html` tem o bloco CSS `html, body` duplicado.~~ Removido na F4 (P6).
 - Restos de CASIS mantidos de propósito na F4: classes `casis-*`, chave `casis_api_key`, pacote `br.edu.utfpr.casis`, `setApplicationName("CASIS Certificados")` e o "© 2026" fixo no rodapé do e-mail.
