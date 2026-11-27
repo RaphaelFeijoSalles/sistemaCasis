@@ -12,7 +12,7 @@ Atualize esta tabela sempre que uma spec mudar de status.
 | F5 | Banco de dados (PostgreSQL + JPA): eventos, participantes, histórico; ativar `FonteDadosBancoStrategy` | F1 | backlog | — |
 | F6 | Check-in via QR Code com painel de aprovação e emissão em massa | F5 | backlog | — |
 | F7 | Qualidade e segurança: testes com mocks, validação de DTOs, tratamento de erros, autenticação | contínuo | backlog | — |
-| F8 | RA obrigatório: RA vazio vira ERRO no lote (hoje é AVISO, regra da F1) e o backend passa a exigir RA no unitário (hoje só o frontend exige) | F4 | backlog | — |
+| F8 | RA obrigatório: RA vazio vira ERRO no lote (hoje é AVISO, regra da F1) e o backend passa a exigir RA no unitário (hoje só o frontend exige); externos por RA = `EXTERNO` | F4 | aprovada | [F8-ra-obrigatorio.md](../specs/F8-ra-obrigatorio.md) |
 
 ## Ordem sugerida
 F1 → F2 → F4 → F3 → F7 (em paralelo, em pequenas fatias) → F5 → F6
@@ -20,7 +20,7 @@ F1 → F2 → F4 → F3 → F7 (em paralelo, em pequenas fatias) → F5 → F6
 ## Pontos em aberto (resolver na spec, perguntando ao dono do projeto)
 - ~~**F4:** "modelo de certificado"~~: resolvido em 2026-11-26 (gestão configurável + curso por linha; veja a spec).
 - ~~**F3:** período no certificado, carga total, semestre do Drive~~: resolvido em 2026-11-27 (veja a spec).
-- **F8** (pedido em 2026-11-26, depois da F4): RA vazio deve bloquear a linha. Decidir: o Sheets ainda grava "N/A"? O trecho condicional do RA no certificado (F4) continua necessário? Participantes externos sem RA deixam de poder receber certificado?
+- ~~**F8:** N/A no Sheets, trecho condicional do RA, externos~~: resolvido em 2026-11-27 (veja a spec).
 - **F5:** onde hospedar o PostgreSQL? Precisa de ferramenta de migração (Flyway)?
 
 ## Backlog da F7 (fatias pequenas)
