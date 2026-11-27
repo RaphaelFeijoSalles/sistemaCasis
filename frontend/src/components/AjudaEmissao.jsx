@@ -76,7 +76,7 @@ export default function AjudaEmissao({ emissaoTipo }) {
         <h4>Campos do evento</h4>
         <ul>
           <li><strong>Nome do evento:</strong> aparece no certificado, no assunto do e-mail, no Drive e no registro de backup.</li>
-          <li><strong>Data:</strong> é formatada automaticamente por extenso no certificado.</li>
+          <li><strong>Datas:</strong> para evento de um dia, preencha só a data de início (sai como <i>em 15 de março de 2026</i>). Em eventos de vários dias, informe também a data de fim (sai como <i>no período de 01 a 05 de abril de 2026</i>). A pasta do Drive segue o semestre da data de início.</li>
           <li><strong>Carga horária:</strong> use horas em decimal. <code>2</code> vira <i>2 horas</i>; <code>1.5</code> vira <i>1 hora e 30 minutos</i>.{emissaoTipo === 'lote' && <> No lote, é o padrão para quem não tiver horas na coluna <code>Horas</code>.</>}</li>
           <li><strong>Senha:</strong> se estiver incorreta, a API bloqueia a emissão antes de gerar certificados.</li>
         </ul>
