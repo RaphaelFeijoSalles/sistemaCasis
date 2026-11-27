@@ -1,7 +1,7 @@
 ---
 id: F3
 titulo: Eventos longos (data de início e fim)
-status: aprovada        # rascunho | aprovada | em andamento | concluída
+status: em andamento    # rascunho | aprovada | em andamento | concluída
 branch: feature/F3-eventos-longos
 criada: 2026-11-27
 ---
@@ -71,6 +71,14 @@ Hoje o evento tem uma única data (`dataRealizacao`). Semanas acadêmicas e curs
 - [x] P6 Limite → até 366 dias.
 
 ## 9. Plano de implementação
-Preenchido por `/planejar`.
+- [ ] P1 — `PeriodoFormatter.formatar(inicio, fim)`: "em ..." / "no período de ..." nas 4 formas compactas, com `fim` nulo ou igual ao início valendo um dia · arquivos: `service/PeriodoFormatter.java` (novo) · teste: `PeriodoFormatterTest` (CA1–CA5, sem Spring) · commit: `feat(periodo): formata o período do evento por extenso` · agente: `dev-backend`
+- [ ] P2 — Componente `LocalDate dataFim` nos dois DTOs (logo depois de `dataRealizacao`) + Javadoc; atualizar as chamadas dos construtores em `EmissaoService` e nos testes, repassando o `dataFim` recebido · arquivos: `EmissaoLoteEventoRequestDTO`, `EmissaoIndividualRequestDTO`, `EmissaoService`, `EmissaoServiceTest`, `PdfServiceTest` · teste: `CertificadoControllerTest` — multipart e JSON **sem** `dataFim` continuam 200 (CA9) e `dataFim=2026-04-05` chega ao serviço · commit: `feat(dto): campo opcional dataFim no lote e no unitário` · agente: `dev-backend`
+- [ ] P3 — `validarEvento` recebe `dataFim`: fim < início e fim > início + 366 dias → `DadosInvalidosException` com as mensagens da spec; chamado na prévia, no lote e no unitário · arquivos: `ValidadorParticipantes`, `EmissaoService` · teste: `ValidadorParticipantesTest` (limites: igual, +366 aceito, +367 e −1 recusados) e `EmissaoServiceTest` (CA6/CA7: nenhum mock de Drive/Gmail/Sheets acionado) · commit: `feat(validacao): valida a data de fim do evento` · agente: `dev-backend`
+- [ ] P4 — `PdfService` define `periodoRealizacao` via `PeriodoFormatter`; template troca "realizado no período de `${dataRealizacao}`" por "realizado `${periodoRealizacao}`" · arquivos: `PdfService`, `templates/certificado_evento.html` · teste: `PdfServiceTest.montarHtml` (um dia e mesmo mês) · commit: `feat(pdf): período de início e fim no certificado` · agente: `dev-backend`
+- [ ] P5 — Sheets: parâmetro `dataFim` em `registrarEmissao`, 7ª coluna `data_fim` (dd/MM/yyyy ou vazio); `EmissaoService` repassa no lote e no unitário · arquivos: `GoogleSheetsService`, `EmissaoService`, `EmissaoServiceTest` · teste: `EmissaoServiceTest` com `verify(sheetsService).registrarEmissao(..., dataFim)` com e sem fim (CA10) · commit: `feat(sheets): registra a data de fim do evento` · agente: `dev-backend`
+- [ ] P6 ⚠️ — Proteção da regra de pastas: testes garantindo que `obterOuCriarPastaEvento` recebe a **data de início** mesmo com fim em outro semestre, no lote e no unitário (CA8). Sem mudança de código de produção · arquivos: `EmissaoServiceTest` · commit: `test(drive): pasta do evento longo segue a data de início` · agente: `testador`
+- [ ] P7 — Frontend: rótulo "Data de início", campo "Data de fim (opcional)" com `min` = início, validação em `App.jsx` (CA11, mesmas mensagens do backend), `dataFim` no FormData e no JSON do unitário (omitido quando vazio), limpeza do estado · arquivos: `App.jsx`, `components/CertificadoForm.jsx` · teste: `npm run lint` + `npm run build` + conferência manual em localhost pelo desenvolvedor · commit: `feat(front): data de início e de fim do evento` · agente: `dev-frontend`
+- [ ] P8 — Guia lateral: explicar início/fim, fim opcional e que a pasta segue o início · arquivos: `components/AjudaEmissao.jsx` · teste: `npm run lint` · commit: `docs(front): ajuda sobre o período do evento` · agente: `dev-frontend`
+- [ ] P9 — Fechamento: `armadilhas.md` (coluna `data_fim` sem cabeçalho na planilha oficial; deploy Render antes da Vercel; pasta pela data de início), `./mvnw test` completo, spec `concluída` · arquivos: `.claude/memory/*`, spec · commit: `docs(spec): conclui F3`
 
 ## 10. Registro de execução
