@@ -151,7 +151,7 @@ public class EmissaoService {
 
                 // Registra na planilha de controle, com o nome curto do curso (F4)
                 sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), nomeCurtoDoCurso(linha.curso()),
-                        requestDTO.dataRealizacao(), requestDTO.nomeEvento(), linha.horas());
+                        requestDTO.dataRealizacao(), requestDTO.nomeEvento(), linha.horas(), requestDTO.dataFim());
 
                 relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), StatusEmissao.SUCESSO, null));
 
@@ -205,7 +205,7 @@ public class EmissaoService {
             
             // Registra na planilha de controle, com o nome curto do curso (F4)
             sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), nomeCurtoDoCurso(curso),
-                    dto.dataRealizacao(), dto.nomeEvento(), dto.cargaHoraria());
+                    dto.dataRealizacao(), dto.nomeEvento(), dto.cargaHoraria(), dto.dataFim());
 
             return new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), br.edu.utfpr.casis.backend.dto.StatusEmissao.SUCESSO, null);
         } catch (Exception e) {

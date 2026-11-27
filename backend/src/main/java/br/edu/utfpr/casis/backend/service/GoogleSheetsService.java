@@ -70,18 +70,22 @@ public class GoogleSheetsService {
      * @param nome Nome do participante.
      * @param ra Registro Acadêmico do participante.
      * @param curso Curso do participante (ex: Sistemas de Informação).
-     * @param dataEvento Data de realização do evento.
+     * @param dataEvento Data de início do evento.
      * @param evento Nome do evento.
      * @param cargaHoraria Carga horária do evento.
+     * @param dataFim Data de fim do evento (F3); {@code null} deixa a coluna {@code data_fim} vazia.
      */
-    public void registrarEmissao(String nome, String ra, String curso, LocalDate dataEvento, String evento, Double cargaHoraria) {
+    public void registrarEmissao(String nome, String ra, String curso, LocalDate dataEvento, String evento, Double cargaHoraria,
+                                 LocalDate dataFim) {
         log.debug("Iniciando registro na planilha para o aluno: {}", nome);
         
         try {
             Sheets sheetsService = obterServico();
             
             // Formatar a data para o padrão brasileiro
-            String dataFormatada = dataEvento != null ? dataEvento.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+            DateTimeFormatter diaMesAno = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String dataFormatada = dataEvento != null ? dataEvento.format(diaMesAno) : "";
+            String dataFimFormatada = dataFim != null ? dataFim.format(diaMesAno) : "";
             
             // Tratar valores nulos (Fallback para curso padrão caso venha nulo)
             String raFinal = (ra != null && !ra.isEmpty()) ? ra : "N/A";
@@ -89,14 +93,15 @@ public class GoogleSheetsService {
 
             String cargaHorariaFormatada = CargaHorariaFormatter.formatarDuracaoPlanilha(cargaHoraria);
 
-            // Mapeia as colunas nesta exata ordem: nome | ra | curso | data_evento | evento | carga_horaria
+            // Mapeia as colunas nesta exata ordem: nome | ra | curso | data_evento | evento | carga_horaria | data_fim (F3)
             List<Object> rowData = Arrays.asList(
                     nome,
                     raFinal,
                     cursoFinal,
                     dataFormatada,
                     evento,
-                    cargaHorariaFormatada
+                    cargaHorariaFormatada,
+                    dataFimFormatada
             );
 
             ValueRange body = new ValueRange().setValues(Collections.singletonList(rowData));
