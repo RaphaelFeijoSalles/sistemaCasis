@@ -82,6 +82,54 @@ public class GoogleSheetsService {
     }
 
     /**
+     * Monta a linha da planilha na ordem {@code nome | ra | curso | data | evento | carga_horaria | data_fim}.
+     * <p>
+     * Participante externo (F8, {@link RegistroAcademico#ehExterno(String)}): a coluna {@code ra} recebe
+     * {@link RegistroAcademico#EXTERNO} e a coluna {@code curso} fica vazia, qualquer que seja o curso recebido.
+     * Para os demais, RA vazio vira {@code "N/A"} e curso vazio vira "Sistemas de Informação" (defesa mantida).
+     *
+     * @param nome Nome do participante.
+     * @param ra Registro Acadêmico do participante, ou o marcador de externo.
+     * @param curso Curso do participante; ignorado para externo.
+     * @param dataEvento Data de início do evento.
+     * @param evento Nome do evento.
+     * @param cargaHoraria Carga horária em horas decimais.
+     * @param dataFim Data de fim do evento, ou {@code null}.
+     * @return a linha com as 7 colunas da planilha.
+     */
+    static List<Object> montarLinha(String nome, String ra, String curso, LocalDate dataEvento, String evento,
+                                    Double cargaHoraria, LocalDate dataFim) {
+        // Formatar a data para o padrão brasileiro
+        String dataFormatada = dataEvento != null ? dataEvento.format(DIA_MES_ANO) : "";
+        String dataFimFormatada = formatarDataFim(dataEvento, dataFim);
+
+        String raFinal;
+        String cursoFinal;
+        if (RegistroAcademico.ehExterno(ra)) {
+            // Externo (F8): marcador normalizado e sem curso
+            raFinal = RegistroAcademico.EXTERNO;
+            cursoFinal = "";
+        } else {
+            // Tratar valores nulos (Fallback para curso padrão caso venha nulo)
+            raFinal = (ra != null && !ra.isEmpty()) ? ra : "N/A";
+            cursoFinal = (curso != null && !curso.isEmpty()) ? curso : "Sistemas de Informação";
+        }
+
+        String cargaHorariaFormatada = CargaHorariaFormatter.formatarDuracaoPlanilha(cargaHoraria);
+
+        // Mapeia as colunas nesta exata ordem: nome | ra | curso | data_evento | evento | carga_horaria | data_fim (F3)
+        return Arrays.asList(
+                nome,
+                raFinal,
+                cursoFinal,
+                dataFormatada,
+                evento,
+                cargaHorariaFormatada,
+                dataFimFormatada
+        );
+    }
+
+    /**
      * Adiciona uma nova linha à planilha do Google Sheets com os dados do certificado emitido.
      *
      * @param nome Nome do participante.
@@ -91,6 +139,7 @@ public class GoogleSheetsService {
      * @param evento Nome do evento.
      * @param cargaHoraria Carga horária do evento.
      * @param dataFim Data de fim do evento (F3); {@code null} ou igual ao início deixa a coluna {@code data_fim} vazia.
+     * A linha é montada por {@link #montarLinha}: participante externo (F8) fica com {@code ra = EXTERNO} e curso vazio.
      */
     public void registrarEmissao(String nome, String ra, String curso, LocalDate dataEvento, String evento, Double cargaHoraria,
                                  LocalDate dataFim) {
@@ -98,27 +147,8 @@ public class GoogleSheetsService {
         
         try {
             Sheets sheetsService = obterServico();
-            
-            // Formatar a data para o padrão brasileiro
-            String dataFormatada = dataEvento != null ? dataEvento.format(DIA_MES_ANO) : "";
-            String dataFimFormatada = formatarDataFim(dataEvento, dataFim);
-            
-            // Tratar valores nulos (Fallback para curso padrão caso venha nulo)
-            String raFinal = (ra != null && !ra.isEmpty()) ? ra : "N/A";
-            String cursoFinal = (curso != null && !curso.isEmpty()) ? curso : "Sistemas de Informação"; 
 
-            String cargaHorariaFormatada = CargaHorariaFormatter.formatarDuracaoPlanilha(cargaHoraria);
-
-            // Mapeia as colunas nesta exata ordem: nome | ra | curso | data_evento | evento | carga_horaria | data_fim (F3)
-            List<Object> rowData = Arrays.asList(
-                    nome,
-                    raFinal,
-                    cursoFinal,
-                    dataFormatada,
-                    evento,
-                    cargaHorariaFormatada,
-                    dataFimFormatada
-            );
+            List<Object> rowData = montarLinha(nome, ra, curso, dataEvento, evento, cargaHoraria, dataFim);
 
             ValueRange body = new ValueRange().setValues(Collections.singletonList(rowData));
 
