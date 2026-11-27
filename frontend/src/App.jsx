@@ -41,7 +41,7 @@ const validarPeriodo = (dataInicio, dataFim) => {
   if (diasEntre(dataInicio, dataFim) > MAXIMO_DIAS_EVENTO) {
     return {
       titulo: 'Evento longo demais',
-      detalhe: `O evento deve durar no máximo ${MAXIMO_DIAS_EVENTO} dias. Confira o ano digitado na data de fim.`
+      detalhe: `A data de fim deve ser de no máximo ${MAXIMO_DIAS_EVENTO} dias depois da data de início. Confira o ano digitado na data de fim.`
     };
   }
 

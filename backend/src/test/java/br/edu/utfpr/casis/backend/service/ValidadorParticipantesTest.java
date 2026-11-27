@@ -322,7 +322,7 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveRecusarEventoComMaisDe366Dias() {
-        assertMensagem("O evento deve durar no máximo 366 dias.",
+        assertMensagem("A data de fim deve ser de no máximo 366 dias depois da data de início.",
                 () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, DATA.plusDays(367), 2.0));
     }
 

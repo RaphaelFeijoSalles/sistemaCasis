@@ -139,7 +139,7 @@ final class ValidadorParticipantes {
             throw new DadosInvalidosException("A data de fim não pode ser anterior à data de início.");
         }
         if (dataFim != null && dataFim.isAfter(dataRealizacao.plusDays(MAXIMO_DIAS_EVENTO))) {
-            throw new DadosInvalidosException("O evento deve durar no máximo " + MAXIMO_DIAS_EVENTO + " dias.");
+            throw new DadosInvalidosException("A data de fim deve ser de no máximo " + MAXIMO_DIAS_EVENTO + " dias depois da data de início.");
         }
         if (cargaHoraria != null && Double.isFinite(cargaHoraria) && cargaHoraria > InterpretadorHoras.MAXIMO_HORAS) {
             throw new DadosInvalidosException("A carga horária deve ser de no máximo 1.000 horas.");

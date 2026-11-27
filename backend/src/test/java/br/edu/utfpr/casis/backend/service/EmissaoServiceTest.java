@@ -462,7 +462,7 @@ class EmissaoServiceTest {
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
                 () -> emissaoService.processarEmissao(loteComFim(DATA.plusDays(367))));
 
-        assertEquals("O evento deve durar no máximo 366 dias.", erro.getMessage());
+        assertEquals("A data de fim deve ser de no máximo 366 dias depois da data de início.", erro.getMessage());
         semEfeitos();
     }
 
