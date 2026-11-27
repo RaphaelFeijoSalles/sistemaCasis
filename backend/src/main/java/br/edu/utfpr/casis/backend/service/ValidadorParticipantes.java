@@ -39,7 +39,7 @@ final class ValidadorParticipantes {
      * emitida se a coluna {@code Curso} estiver vazia ou ausente; com a coluna preenchida, válida ou não, vira o
      * erro "Participante externo não tem curso". O curso do externo não é resolvido nem herda o curso padrão do
      * formulário: {@code curso} e {@code cursoTexto} vão nulos e {@code cursoDoFormulario} vai {@code false}.
-     * O {@code ra} da linha validada é o texto como veio do CSV, sem normalização.
+     * O {@code ra} da linha validada vem normalizado por {@link RegistroAcademico#normalizar} (externo sai {@code EXTERNO}).
      * <p>
      * Horas (F2): a coluna {@code Horas} preenchida prevalece; célula vazia ou coluna ausente usa a carga do formulário.
      * <p>
@@ -257,7 +257,7 @@ final class ValidadorParticipantes {
     private static LinhaValidadaDTO montar(LinhaCsv linha, Double horas, boolean horasDoFormulario, Curso curso,
                                            SituacaoLinha situacao, List<String> mensagens) {
         String horasTexto = horas == null ? null : CargaHorariaFormatter.formatarTexto(horas);
-        return new LinhaValidadaDTO(linha.linha(), linha.nome(), linha.email(), linha.ra(),
+        return new LinhaValidadaDTO(linha.linha(), linha.nome(), linha.email(), RegistroAcademico.normalizar(linha.ra()),
                 horas, horasTexto, horasDoFormulario, curso.codigo(), curso.texto(), curso.doFormulario(),
                 situacao, List.copyOf(mensagens));
     }

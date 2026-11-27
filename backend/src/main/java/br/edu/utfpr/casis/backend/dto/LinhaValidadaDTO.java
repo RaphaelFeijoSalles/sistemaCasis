@@ -8,7 +8,7 @@ import java.util.List;
  * @param linha Número da linha no arquivo (o cabeçalho é a linha 1).
  * @param nome Nome do participante como veio no CSV.
  * @param email E-mail do participante como veio no CSV.
- * @param ra Registro Acadêmico como veio no CSV, ou nulo se ausente.
+ * @param ra Registro Acadêmico sem espaços nas bordas (participante externo sai {@code EXTERNO}, F8), ou nulo se ausente.
  * @param horas Horas decimais que irão no certificado, ou nulo se o valor da coluna Horas for inválido.
  * @param horasTexto Horas como aparecem no certificado (ex.: "1 hora e 30 minutos"), ou nulo se inválidas.
  * @param horasDoFormulario Verdadeiro quando as horas vieram da carga horária do formulário (coluna ausente ou célula vazia).

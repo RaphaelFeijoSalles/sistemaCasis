@@ -312,10 +312,12 @@ class ValidadorParticipantesTest {
     }
 
     @Test
-    void deveManterRaDoExternoComoVeioDoCsv() {
+    void deveNormalizarRaDoExternoNaPrevia() {
         LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", " EXTERNO ", null));
 
-        assertEquals(" EXTERNO ", linha.ra());
+        assertEquals("EXTERNO", linha.ra());
+        assertEquals("EXTERNO", validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "externo", null)).ra());
+        assertEquals("12345", validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", null)).ra());
     }
 
     @Test
