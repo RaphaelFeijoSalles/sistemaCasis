@@ -12,6 +12,8 @@ import java.time.LocalDate;
  * @param nomeParticipante Nome completo do participante.
  * @param emailParticipante E-mail do participante para o qual o certificado será enviado.
  * @param raParticipante Registro Acadêmico (RA) do participante, se aplicável.
+ * @param cursoParticipante Curso do participante (F4), por código ou apelido (ex.: "SI", "CDIA").
+ *                          Ausente = "SI", para o frontend anterior à F4.
  */
 public record EmissaoIndividualRequestDTO(
         String nomeEvento,
@@ -19,5 +21,6 @@ public record EmissaoIndividualRequestDTO(
         Double cargaHoraria,
         String nomeParticipante,
         String emailParticipante,
-        String raParticipante
+        String raParticipante,
+        String cursoParticipante
 ) {}

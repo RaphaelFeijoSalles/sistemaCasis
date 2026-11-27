@@ -1,5 +1,6 @@
 package br.edu.utfpr.casis.backend.service;
 
+import br.edu.utfpr.casis.backend.config.GestaoProperties;
 import br.edu.utfpr.casis.backend.dto.LinhaValidadaDTO;
 import br.edu.utfpr.casis.backend.dto.SituacaoLinha;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.function.Executable;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,6 +21,14 @@ class ValidadorParticipantesTest {
 
     private static final LocalDate DATA = LocalDate.of(2026, 11, 20);
     private static final Double CARGA_PADRAO = 10.0;
+    private static final String CURSO_PADRAO = "SI";
+    private static final String NOME_SI = "Bacharelado em Sistemas de Informação";
+    private static final String NOME_CDIA = "Bacharelado em Ciência de Dados e Inteligência Artificial";
+    private static final InterpretadorCurso INTERPRETADOR_CURSO = new InterpretadorCurso(new GestaoProperties(
+            "Diretório Acadêmico de Computação", "DACOMP", "Londrina", "x.png", Map.of(
+            "SI", new GestaoProperties.Curso(NOME_SI, "Sistemas de Informação", List.of("SI", "Sistemas de Informação")),
+            "CDIA", new GestaoProperties.Curso(NOME_CDIA, "Ciência de Dados e Inteligência Artificial",
+                    List.of("CDIA", "Ciência de Dados e Inteligência Artificial")))));
 
     @Test
     void deveMarcarLinhaCompletaComoValida() {
@@ -27,7 +37,75 @@ class ValidadorParticipantesTest {
         ));
 
         assertEquals(List.of(new LinhaValidadaDTO(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345",
-                10.0, "10 horas", true, SituacaoLinha.VALIDA, List.of())), resultado);
+                10.0, "10 horas", true, "SI", NOME_SI, true, SituacaoLinha.VALIDA, List.of())), resultado);
+    }
+
+    // ---------- Curso por participante (F4) ----------
+
+    @Test
+    void deveUsarCursoDaLinhaQuandoInformado() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", null, "cdia"));
+
+        assertEquals(SituacaoLinha.VALIDA, linha.situacao());
+        assertEquals("CDIA", linha.curso());
+        assertEquals(NOME_CDIA, linha.cursoTexto());
+        assertFalse(linha.cursoDoFormulario());
+    }
+
+    @Test
+    void deveUsarCursoDoFormularioQuandoCelulaVaziaOuSemColuna() {
+        List<LinhaValidadaDTO> resultado = validar(List.of(
+                new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", null, null),
+                new LinhaCsv(3, "Bruno Souza", "bruno@alunos.utfpr.edu.br", "2", null, ""),
+                new LinhaCsv(4, "Carla Lima", "carla@alunos.utfpr.edu.br", "3", null, "   ")
+        ));
+
+        for (LinhaValidadaDTO linha : resultado) {
+            assertEquals(SituacaoLinha.VALIDA, linha.situacao());
+            assertEquals("SI", linha.curso());
+            assertEquals(NOME_SI, linha.cursoTexto());
+            assertTrue(linha.cursoDoFormulario());
+            assertTrue(linha.mensagens().isEmpty());
+        }
+    }
+
+    @Test
+    void deveUsarCursoPadraoInformadoNoFormulario() {
+        LinhaValidadaDTO linha = ValidadorParticipantes.validarLinhas(
+                List.of(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", null, null)),
+                CARGA_PADRAO, "CDIA", INTERPRETADOR_CURSO).getFirst();
+
+        assertEquals("CDIA", linha.curso());
+        assertEquals(NOME_CDIA, linha.cursoTexto());
+        assertTrue(linha.cursoDoFormulario());
+    }
+
+    @Test
+    void deveMarcarErroQuandoCursoInvalido() {
+        for (String curso : new String[]{"ADS", "Sistemas", "CD"}) {
+            LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", null, curso));
+
+            assertEquals(SituacaoLinha.ERRO, linha.situacao());
+            assertEquals(List.of("Curso inválido: " + curso), linha.mensagens());
+            assertNull(linha.curso());
+            assertNull(linha.cursoTexto());
+            assertFalse(linha.cursoDoFormulario());
+        }
+    }
+
+    @Test
+    void deveJuntarErroDeCursoComOutrosErros() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@utfpr", "12345", "abc", "ADS"));
+
+        assertEquals(SituacaoLinha.ERRO, linha.situacao());
+        assertEquals(List.of("E-mail inválido: ana@utfpr", "Horas inválidas: abc", "Curso inválido: ADS"), linha.mensagens());
+    }
+
+    @Test
+    void deveResumirCursoMuitoLongoNaMensagem() {
+        LinhaValidadaDTO linha = validarUma(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", "1", null, "X".repeat(100)));
+
+        assertEquals(List.of("Curso inválido: " + "X".repeat(30) + "…"), linha.mensagens());
     }
 
     // ---------- Horas por participante (F2) ----------
@@ -315,7 +393,7 @@ class ValidadorParticipantesTest {
     }
 
     private List<LinhaValidadaDTO> validar(List<LinhaCsv> linhas) {
-        return ValidadorParticipantes.validarLinhas(linhas, CARGA_PADRAO);
+        return ValidadorParticipantes.validarLinhas(linhas, CARGA_PADRAO, CURSO_PADRAO, INTERPRETADOR_CURSO);
     }
 
     private LinhaValidadaDTO validarUma(LinhaCsv linha) {

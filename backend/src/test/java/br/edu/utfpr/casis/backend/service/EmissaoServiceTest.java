@@ -18,11 +18,13 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -40,6 +42,8 @@ class EmissaoServiceTest {
     private static final String EVENTO = "Semana Acadêmica";
     private static final String PASTA = "pasta-teste";
     private static final byte[] PDF = {1, 2, 3};
+    private static final String SI_CURTO = "Sistemas de Informação";
+    private static final String CDIA_CURTO = "Ciência de Dados e Inteligência Artificial";
 
     @Mock
     private PdfService pdfService;
@@ -54,7 +58,8 @@ class EmissaoServiceTest {
 
     @BeforeEach
     void setUp() {
-        emissaoService = new EmissaoService(new CsvService(), pdfService, emailService, driveService, sheetsService);
+        emissaoService = new EmissaoService(new CsvService(), pdfService, emailService, driveService, sheetsService,
+                GestaoDeTeste.interpretador());
     }
 
     // ---------- Pré-visualização (CA1) ----------
@@ -92,12 +97,77 @@ class EmissaoServiceTest {
 
     @Test
     void deveRecusarPreVisualizacaoSemArquivo() {
-        EmissaoLoteEventoRequestDTO dto = new EmissaoLoteEventoRequestDTO(EVENTO, DATA, 2.0, null);
+        EmissaoLoteEventoRequestDTO dto = new EmissaoLoteEventoRequestDTO(EVENTO, DATA, 2.0, null, null);
 
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
                 () -> emissaoService.preVisualizarLote(dto));
 
         assertEquals("O arquivo CSV é obrigatório.", erro.getMessage());
+        semEfeitos();
+    }
+
+    // ---------- Curso padrão (F4: CA8, CA9) ----------
+
+    @Test
+    void devePreVisualizarComCursoDaLinhaECursoPadraoDoFormulario() {
+        String csv = """
+                Nome;E-mail;Curso
+                Ana Silva;ana@alunos.utfpr.edu.br;si
+                Bruno Souza;bruno@alunos.utfpr.edu.br;
+                Carla Lima;carla@alunos.utfpr.edu.br;ADS
+                """;
+
+        PreVisualizacaoLoteDTO previa = emissaoService.preVisualizarLote(lote(csv, 2.0, "CDIA"));
+
+        assertEquals(Arrays.asList("SI", "CDIA", null), previa.linhas().stream().map(l -> l.curso()).toList());
+        assertEquals(Arrays.asList(GestaoDeTeste.NOME_SI, GestaoDeTeste.NOME_CDIA, null),
+                previa.linhas().stream().map(l -> l.cursoTexto()).toList());
+        assertEquals(List.of(false, true, false), previa.linhas().stream().map(l -> l.cursoDoFormulario()).toList());
+        assertEquals(List.of("Curso inválido: ADS"), previa.linhas().get(2).mensagens());
+        semEfeitos();
+    }
+
+    @Test
+    void deveUsarSiQuandoCursoPadraoAusente() {
+        for (String ausente : new String[]{null, "", "  "}) {
+            PreVisualizacaoLoteDTO previa = emissaoService.preVisualizarLote(
+                    lote("Nome;E-mail\nAna;ana@alunos.utfpr.edu.br\n", 2.0, ausente));
+
+            assertEquals("SI", previa.linhas().getFirst().curso());
+            assertTrue(previa.linhas().getFirst().cursoDoFormulario());
+        }
+        semEfeitos();
+    }
+
+    @Test
+    void deveAceitarApelidoNoCursoPadrao() {
+        PreVisualizacaoLoteDTO previa = emissaoService.preVisualizarLote(
+                lote("Nome;E-mail\nAna;ana@alunos.utfpr.edu.br\n", 2.0, "ciencia de dados e inteligencia artificial"));
+
+        assertEquals("CDIA", previa.linhas().getFirst().curso());
+    }
+
+    @Test
+    void deveRecusarCursoPadraoInvalidoNaPreVisualizacaoENoLoteAntesDeQualquerEfeito() {
+        DadosInvalidosException erroPrevia = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.preVisualizarLote(lote("Nome;E-mail\nAna;ana@x.com\n", 2.0, "ADS")));
+        DadosInvalidosException erroLote = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissao(lote("Nome;E-mail\nAna;ana@x.com\n", 2.0, "ADS")));
+
+        assertEquals("Curso inválido: ADS", erroPrevia.getMessage());
+        assertEquals("Curso inválido: ADS", erroLote.getMessage());
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarCursoDoUnitarioInvalidoAntesDeQualquerEfeito() {
+        EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, 2.0,
+                "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", "ADS");
+
+        DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissaoIndividual(dto));
+
+        assertEquals("Curso inválido: ADS", erro.getMessage());
         semEfeitos();
     }
 
@@ -134,8 +204,8 @@ class EmissaoServiceTest {
         verify(emailService, never()).enviarCertificado(eq("carla@utfpr"), anyString(), anyString(), any());
         verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
         verify(driveService).fazerUploadCertificado(PDF, "Certificado_Bruno_Souza.pdf", PASTA);
-        verify(sheetsService).registrarEmissao("Ana Silva", "1", null, DATA, EVENTO, 2.0);
-        verify(sheetsService).registrarEmissao("Bruno Souza", "", null, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", SI_CURTO, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "", SI_CURTO, DATA, EVENTO, 2.0);
     }
 
     @Test
@@ -149,7 +219,7 @@ class EmissaoServiceTest {
         ordem.verify(pdfService).gerarCertificado(any(), any());
         ordem.verify(emailService).enviarCertificado(eq("ana@alunos.utfpr.edu.br"), eq("Ana Silva"), eq(EVENTO), eq(PDF));
         ordem.verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
-        ordem.verify(sheetsService).registrarEmissao("Ana Silva", "1", null, DATA, EVENTO, 2.0);
+        ordem.verify(sheetsService).registrarEmissao("Ana Silva", "1", SI_CURTO, DATA, EVENTO, 2.0);
     }
 
     @Test
@@ -207,10 +277,72 @@ class EmissaoServiceTest {
             assertEquals(DATA, dados.dataRealizacao());
         }
 
-        verify(sheetsService).registrarEmissao("Ana Silva", "1", null, DATA, EVENTO, 1.5);
-        verify(sheetsService).registrarEmissao("Bruno Souza", "2", null, DATA, EVENTO, 2.0);
-        verify(sheetsService).registrarEmissao("Carla Lima", "3", null, DATA, EVENTO, 1.0);
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", SI_CURTO, DATA, EVENTO, 1.5);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "2", SI_CURTO, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Carla Lima", "3", SI_CURTO, DATA, EVENTO, 1.0);
         verify(emailService, times(3)).enviarCertificado(anyString(), anyString(), eq(EVENTO), eq(PDF));
+    }
+
+    // ---------- Curso por participante (F4: CA10, CA11, CA14) ----------
+
+    @Test
+    void deveGerarPdfERegistrarPlanilhaComOCursoDeCadaParticipante() {
+        prepararDrive(Set.of());
+        String csv = """
+                Nome;RA;E-mail;Curso
+                Ana Silva;1;ana@alunos.utfpr.edu.br;CDIA
+                Bruno Souza;2;bruno@alunos.utfpr.edu.br;
+                Carla Lima;3;carla@alunos.utfpr.edu.br;sistemas de informacao
+                Davi Rocha;4;davi@alunos.utfpr.edu.br;ADS
+                """;
+
+        List<ResultadoEmissaoDTO> relatorio = emissaoService.processarEmissao(lote(csv, 2.0, "CDIA"));
+
+        ArgumentCaptor<EmissaoLoteEventoRequestDTO> dadosPdf = ArgumentCaptor.forClass(EmissaoLoteEventoRequestDTO.class);
+        verify(pdfService, times(3)).gerarCertificado(any(), dadosPdf.capture());
+        assertEquals(List.of("CDIA", "CDIA", "SI"), dadosPdf.getAllValues().stream().map(EmissaoLoteEventoRequestDTO::cursoPadrao).toList());
+
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", CDIA_CURTO, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "2", CDIA_CURTO, DATA, EVENTO, 2.0);
+        verify(sheetsService).registrarEmissao("Carla Lima", "3", SI_CURTO, DATA, EVENTO, 2.0);
+        assertEquals(new ResultadoEmissaoDTO("Davi Rocha", "davi@alunos.utfpr.edu.br", StatusEmissao.ERRO, "Curso inválido: ADS"),
+                relatorio.get(3));
+        verify(emailService, never()).enviarCertificado(eq("davi@alunos.utfpr.edu.br"), anyString(), anyString(), any());
+    }
+
+    @Test
+    void loteSemColunaCursoESemCursoPadraoEmiteComoSi() {
+        prepararDrive(Set.of());
+
+        emissaoService.processarEmissao(lote("Nome;RA;E-mail\nAna Silva;1;ana@alunos.utfpr.edu.br\n", 2.0));
+
+        ArgumentCaptor<EmissaoLoteEventoRequestDTO> dadosPdf = ArgumentCaptor.forClass(EmissaoLoteEventoRequestDTO.class);
+        verify(pdfService).gerarCertificado(any(), dadosPdf.capture());
+        assertEquals("SI", dadosPdf.getValue().cursoPadrao());
+        verify(sheetsService).registrarEmissao("Ana Silva", "1", SI_CURTO, DATA, EVENTO, 2.0);
+    }
+
+    @Test
+    void unitarioUsaOCursoDoParticipante() {
+        prepararDrive(Set.of());
+        EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, 2.0,
+                "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", "cdia");
+
+        emissaoService.processarEmissaoIndividual(dto);
+
+        ArgumentCaptor<EmissaoLoteEventoRequestDTO> dadosPdf = ArgumentCaptor.forClass(EmissaoLoteEventoRequestDTO.class);
+        verify(pdfService).gerarCertificado(any(), dadosPdf.capture());
+        assertEquals("CDIA", dadosPdf.getValue().cursoPadrao());
+        verify(sheetsService).registrarEmissao("Ana Silva", "12345", CDIA_CURTO, DATA, EVENTO, 2.0);
+    }
+
+    @Test
+    void unitarioSemCursoEmiteComoSi() {
+        prepararDrive(Set.of());
+
+        emissaoService.processarEmissaoIndividual(unitario("Ana Silva", "ana@alunos.utfpr.edu.br", 2.0));
+
+        verify(sheetsService).registrarEmissao("Ana Silva", "12345", SI_CURTO, DATA, EVENTO, 2.0);
     }
 
     @Test
@@ -230,7 +362,7 @@ class EmissaoServiceTest {
         ), relatorio);
         verify(pdfService, times(1)).gerarCertificado(any(), any());
         verify(emailService, never()).enviarCertificado(eq("ana@alunos.utfpr.edu.br"), anyString(), anyString(), any());
-        verify(sheetsService).registrarEmissao("Bruno Souza", "2", null, DATA, EVENTO, 3.0);
+        verify(sheetsService).registrarEmissao("Bruno Souza", "2", SI_CURTO, DATA, EVENTO, 3.0);
     }
 
     @Test
@@ -325,12 +457,16 @@ class EmissaoServiceTest {
     }
 
     private EmissaoLoteEventoRequestDTO lote(String csv, Double carga) {
+        return lote(csv, carga, null);
+    }
+
+    private EmissaoLoteEventoRequestDTO lote(String csv, Double carga, String cursoPadrao) {
         MockMultipartFile arquivo = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
                 csv.getBytes(StandardCharsets.UTF_8));
-        return new EmissaoLoteEventoRequestDTO(EVENTO, DATA, carga, arquivo);
+        return new EmissaoLoteEventoRequestDTO(EVENTO, DATA, carga, cursoPadrao, arquivo);
     }
 
     private EmissaoIndividualRequestDTO unitario(String nome, String email, Double carga) {
-        return new EmissaoIndividualRequestDTO(EVENTO, DATA, carga, nome, email, "12345");
+        return new EmissaoIndividualRequestDTO(EVENTO, DATA, carga, nome, email, "12345", null);
     }
 }

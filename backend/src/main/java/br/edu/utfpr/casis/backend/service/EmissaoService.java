@@ -34,6 +34,7 @@ public class EmissaoService {
     private final EmailService emailService;
     private final GoogleDriveService driveService;
     private final GoogleSheetsService sheetsService;
+    private final InterpretadorCurso interpretadorCurso;
 
     /**
      * Valida o lote e devolve a pré-visualização, sem nenhum efeito colateral:
@@ -64,11 +65,20 @@ public class EmissaoService {
         if (requestDTO.arquivoCsv() == null || requestDTO.arquivoCsv().isEmpty()) {
             throw new DadosInvalidosException("O arquivo CSV é obrigatório.");
         }
-        return ValidadorParticipantes.validarLinhas(csvService.lerLinhas(requestDTO.arquivoCsv()), requestDTO.cargaHoraria());
+        String cursoPadrao = ValidadorParticipantes.resolverCurso(requestDTO.cursoPadrao(), interpretadorCurso);
+        return ValidadorParticipantes.validarLinhas(csvService.lerLinhas(requestDTO.arquivoCsv()),
+                requestDTO.cargaHoraria(), cursoPadrao, interpretadorCurso);
     }
 
     private ResultadoEmissaoDTO resultadoErroValidacao(LinhaValidadaDTO linha) {
         return new ResultadoEmissaoDTO(linha.nome(), linha.email(), StatusEmissao.ERRO, String.join("; ", linha.mensagens()));
+    }
+
+    /**
+     * Nome curto do curso gravado no Sheets (ex.: "Sistemas de Informação"), a partir do código já validado.
+     */
+    private String nomeCurtoDoCurso(String codigo) {
+        return interpretadorCurso.curso(codigo).map(curso -> curso.nomeCurto()).orElse(null);
     }
 
     private int contar(List<LinhaValidadaDTO> linhas, SituacaoLinha situacao) {
@@ -126,9 +136,10 @@ public class EmissaoService {
                 continue;
             }
 
-            // Horas da própria linha (F2): coluna Horas do CSV ou, se vazia, a carga do formulário
+            // Horas e curso da própria linha (F2, F4): coluna do CSV ou, se vazia, o padrão do formulário.
+            // O código do curso da linha segue em cursoPadrao, que o PdfService usa no certificado.
             EmissaoLoteEventoRequestDTO dadosDaLinha = new EmissaoLoteEventoRequestDTO(
-                    requestDTO.nomeEvento(), requestDTO.dataRealizacao(), linha.horas(), requestDTO.arquivoCsv());
+                    requestDTO.nomeEvento(), requestDTO.dataRealizacao(), linha.horas(), linha.curso(), requestDTO.arquivoCsv());
 
             try {
                 // Gera, Envia e faz Upload apenas se for novo
@@ -136,8 +147,9 @@ public class EmissaoService {
                 emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), requestDTO.nomeEvento(), pdf);
                 driveService.fazerUploadCertificado(pdf, nomePdf, folderId);
 
-                // Registra na planilha de controle
-                sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), null, requestDTO.dataRealizacao(), requestDTO.nomeEvento(), linha.horas());
+                // Registra na planilha de controle, com o nome curto do curso (F4)
+                sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), nomeCurtoDoCurso(linha.curso()),
+                        requestDTO.dataRealizacao(), requestDTO.nomeEvento(), linha.horas());
 
                 relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), StatusEmissao.SUCESSO, null));
 
@@ -160,6 +172,7 @@ public class EmissaoService {
         // 0. Valida antes de qualquer efeito (F1). Lança DadosInvalidosException se algo estiver inválido.
         ValidadorParticipantes.validarEvento(dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria());
         ValidadorParticipantes.validarParticipante(dto.nomeParticipante(), dto.emailParticipante());
+        String curso = ValidadorParticipantes.resolverCurso(dto.cursoParticipante(), interpretadorCurso);
 
         // 1. Cria o aluno manualmente
         AlunoCertificado aluno = br.edu.utfpr.casis.backend.model.AlunoCertificadoEvento.builder()
@@ -170,7 +183,7 @@ public class EmissaoService {
 
         // 2. Cria um DTO de lote "falso" (sem arquivo) só para o PdfService aceitar os dados do evento
         EmissaoLoteEventoRequestDTO loteDto = new EmissaoLoteEventoRequestDTO(
-                dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria(), null
+                dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria(), curso, null
         );
 
         // 3. Resolve a pasta e checa se já existe (reaproveitando a lógica)
@@ -188,8 +201,9 @@ public class EmissaoService {
             emailService.enviarCertificado(aluno.getEmail(), aluno.getNome(), dto.nomeEvento(), pdf);
             driveService.fazerUploadCertificado(pdf, nomePdf, folderId);
             
-            // Registra na planilha de controle
-            sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), null, dto.dataRealizacao(), dto.nomeEvento(), dto.cargaHoraria());
+            // Registra na planilha de controle, com o nome curto do curso (F4)
+            sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), nomeCurtoDoCurso(curso),
+                    dto.dataRealizacao(), dto.nomeEvento(), dto.cargaHoraria());
 
             return new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), br.edu.utfpr.casis.backend.dto.StatusEmissao.SUCESSO, null);
         } catch (Exception e) {

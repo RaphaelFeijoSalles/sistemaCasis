@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seu Certificado do CASIS</title>
+    <title th:text="'Seu Certificado do ' + ${sigla_gestao}">Seu Certificado do DACOMP</title>
     <style>
         body {
             margin: 0;
@@ -109,7 +109,7 @@
                 </tr>
                 <tr>
                     <td class="header">
-                        <h1>Centro Acadêmico de Sistemas de Informação</h1>
+                        <h1 th:text="${nome_gestao}">Diretório Acadêmico de Computação</h1>
                         <p>UTFPR Londrina</p>
                     </td>
                 </tr>
@@ -133,7 +133,7 @@
                 </tr>
                 <tr>
                     <td class="footer">
-                        <p>Este é um e-mail automático gerado pelo Sistema Oficial de Certificados do CASIS.<br>&copy; 2026 CASIS UTFPR-LD. Todos os direitos reservados.</p>
+                        <p>Este é um e-mail automático gerado pelo Sistema Oficial de Certificados do <span th:text="${sigla_gestao}">DACOMP</span>.<br>&copy; 2026 <span th:text="${sigla_gestao}">DACOMP</span> UTFPR-LD. Todos os direitos reservados.</p>
                     </td>
                 </tr>
             </table>

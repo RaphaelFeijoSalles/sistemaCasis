@@ -20,6 +20,9 @@ final class ValidadorParticipantes {
     private static final Pattern PADRAO_EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final int TAMANHO_MAXIMO_VALOR_NA_MENSAGEM = 30;
 
+    /** Curso usado quando a requisição não informa curso (frontend anterior à F4), como era antes. */
+    static final String CURSO_LEGADO = "SI";
+
     private ValidadorParticipantes() {
     }
 
@@ -31,12 +34,23 @@ final class ValidadorParticipantes {
      * Repetição e homônimo só são comparados com linhas anteriores que serão emitidas.
      * <p>
      * Horas (F2): a coluna {@code Horas} preenchida prevalece; célula vazia ou coluna ausente usa a carga do formulário.
+     * <p>
+     * Curso (F4): a coluna {@code Curso} preenchida prevalece e precisa ser um apelido configurado
+     * (senão a linha é erro); célula vazia ou coluna ausente usa o curso padrão do formulário.
      *
      * @param linhas linhas brutas lidas do CSV.
      * @param cargaPadrao carga horária do formulário, em horas decimais, usada quando a linha não traz horas.
+     * @param cursoPadrao código do curso padrão do formulário (ex.: "SI"), já validado, usado quando a linha não traz curso.
+     * @param interpretadorCurso cursos configurados da gestão.
      * @return uma {@link LinhaValidadaDTO} por linha, na mesma ordem.
      */
-    static List<LinhaValidadaDTO> validarLinhas(List<LinhaCsv> linhas, Double cargaPadrao) {
+    static List<LinhaValidadaDTO> validarLinhas(List<LinhaCsv> linhas, Double cargaPadrao,
+                                                String cursoPadrao, InterpretadorCurso interpretadorCurso) {
+        return validar(linhas, cargaPadrao, cursoPadrao, interpretadorCurso);
+    }
+
+    private static List<LinhaValidadaDTO> validar(List<LinhaCsv> linhas, Double cargaPadrao,
+                                                  String cursoPadrao, InterpretadorCurso interpretadorCurso) {
         Map<String, Integer> linhaPorEmail = new HashMap<>();
         Map<String, Integer> linhaPorArquivo = new HashMap<>();
         List<LinhaValidadaDTO> resultado = new ArrayList<>();
@@ -47,6 +61,13 @@ final class ValidadorParticipantes {
             Double horas = horasDoFormulario
                     ? cargaPadrao
                     : InterpretadorHoras.interpretar(linha.horas()).orElse(null);
+
+            boolean cursoDoFormulario = linha.curso() == null || linha.curso().isBlank();
+            String curso = cursoDoFormulario
+                    ? cursoPadrao
+                    : interpretadorCurso.interpretar(linha.curso()).orElse(null);
+            String cursoTexto = curso == null ? null
+                    : interpretadorCurso.curso(curso).map(c -> c.nomeCompleto()).orElse(null);
 
             if (linha.nome().isBlank()) {
                 erros.add("Nome não informado");
@@ -65,8 +86,14 @@ final class ValidadorParticipantes {
                 erros.add("Horas inválidas: " + resumir(linha.horas()));
             }
 
+            if (curso == null) {
+                erros.add("Curso inválido: " + resumir(linha.curso()));
+            }
+
+            Curso dadosCurso = new Curso(curso, cursoTexto, cursoDoFormulario);
+
             if (!erros.isEmpty()) {
-                resultado.add(montar(linha, horas, horasDoFormulario, SituacaoLinha.ERRO, erros));
+                resultado.add(montar(linha, horas, horasDoFormulario, dadosCurso, SituacaoLinha.ERRO, erros));
                 continue;
             }
 
@@ -81,7 +108,7 @@ final class ValidadorParticipantes {
 
             linhaPorEmail.put(chaveEmail, linha.linha());
             linhaPorArquivo.putIfAbsent(nomeArquivo, linha.linha());
-            resultado.add(montar(linha, horas, horasDoFormulario, avisos.isEmpty() ? SituacaoLinha.VALIDA : SituacaoLinha.AVISO, avisos));
+            resultado.add(montar(linha, horas, horasDoFormulario, dadosCurso, avisos.isEmpty() ? SituacaoLinha.VALIDA : SituacaoLinha.AVISO, avisos));
         }
 
         return resultado;
@@ -109,6 +136,23 @@ final class ValidadorParticipantes {
         if (!InterpretadorHoras.dentroDosLimites(cargaHoraria)) {
             throw new DadosInvalidosException("A carga horária deve ser um número maior que zero.");
         }
+    }
+
+    /**
+     * Resolve o curso padrão do formulário (lote) ou o curso do participante (unitário).
+     * Ausente ou em branco vale {@link #CURSO_LEGADO}, para o frontend anterior à F4.
+     *
+     * @param valor código ou apelido informado na requisição, ou {@code null}.
+     * @param interpretadorCurso cursos configurados da gestão.
+     * @return o código do curso (ex.: "SI").
+     * @throws DadosInvalidosException se o valor não for um curso configurado.
+     */
+    static String resolverCurso(String valor, InterpretadorCurso interpretadorCurso) {
+        if (valor == null || valor.isBlank()) {
+            return CURSO_LEGADO;
+        }
+        return interpretadorCurso.interpretar(valor)
+                .orElseThrow(() -> new DadosInvalidosException("Curso inválido: " + resumir(valor.trim())));
     }
 
     /**
@@ -140,10 +184,15 @@ final class ValidadorParticipantes {
                 : valor;
     }
 
-    private static LinhaValidadaDTO montar(LinhaCsv linha, Double horas, boolean horasDoFormulario,
+    /** Curso resolvido de uma linha: código, nome completo e se veio do formulário. */
+    private record Curso(String codigo, String texto, boolean doFormulario) {
+    }
+
+    private static LinhaValidadaDTO montar(LinhaCsv linha, Double horas, boolean horasDoFormulario, Curso curso,
                                            SituacaoLinha situacao, List<String> mensagens) {
         String horasTexto = horas == null ? null : CargaHorariaFormatter.formatarTexto(horas);
         return new LinhaValidadaDTO(linha.linha(), linha.nome(), linha.email(), linha.ra(),
-                horas, horasTexto, horasDoFormulario, situacao, List.copyOf(mensagens));
+                horas, horasTexto, horasDoFormulario, curso.codigo(), curso.texto(), curso.doFormulario(),
+                situacao, List.copyOf(mensagens));
     }
 }

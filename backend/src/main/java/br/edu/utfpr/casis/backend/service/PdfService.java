@@ -1,5 +1,6 @@
 package br.edu.utfpr.casis.backend.service;
 
+import br.edu.utfpr.casis.backend.config.GestaoProperties;
 import br.edu.utfpr.casis.backend.dto.EmissaoLoteEventoRequestDTO;
 import br.edu.utfpr.casis.backend.model.AlunoCertificado;
 import com.lowagie.text.DocumentException;
@@ -20,19 +21,30 @@ import java.io.InputStream;
 /**
  * Serviço responsável por gerar arquivos PDF a partir de templates HTML renderizados pelo Thymeleaf.
  * Funde os dados dinâmicos do aluno e evento com o layout visual para criar o certificado final em memória.
+ * <p>
+ * Desde a F4, o nome e a sigla da gestão, a cidade, a imagem de fundo e o curso vêm da configuração
+ * {@code certificado.*} ({@link GestaoProperties}).
  */
 @Service
 public class PdfService {
 
+    private static final Locale PT_BR = Locale.of("pt", "BR");
+
     private final SpringTemplateEngine templateEngine;
+    private final GestaoProperties gestao;
+    private final InterpretadorCurso interpretadorCurso;
 
     /**
-     * Construtor com injeção de dependência para o motor de templates do Thymeleaf.
+     * Construtor com injeção de dependência para o motor de templates e os dados da gestão.
      *
      * @param templateEngine A instância do SpringTemplateEngine.
+     * @param gestao Dados da gestão (nome, sigla, cidade e imagem de fundo).
+     * @param interpretadorCurso Cursos configurados, para obter o nome completo do curso.
      */
-    public PdfService(SpringTemplateEngine templateEngine) {
+    public PdfService(SpringTemplateEngine templateEngine, GestaoProperties gestao, InterpretadorCurso interpretadorCurso) {
         this.templateEngine = templateEngine;
+        this.gestao = gestao;
+        this.interpretadorCurso = interpretadorCurso;
     }
 
     /**
@@ -41,43 +53,16 @@ public class PdfService {
      * converte esse HTML em um array de bytes PDF usando o Flying Saucer.
      *
      * @param aluno Os dados do participante (nome, RA, e-mail) a constar no certificado.
-     * @param dadosEvento Os dados do evento (nome, data, carga horária).
+     * @param dadosEvento Os dados do evento (nome, data, carga horária) e o curso do participante em
+     *                    {@code cursoPadrao} (código; ausente = "SI").
      * @return Um array de bytes que representa o arquivo PDF do certificado.
      * @throws RuntimeException Se ocorrer erro na leitura da imagem de fundo ou na geração do PDF.
      */
     public byte[] gerarCertificado(AlunoCertificado aluno, EmissaoLoteEventoRequestDTO dadosEvento) {
 
-        // 1. Configura as variáveis que serão injetadas no HTML
-        Context context = new Context();
-        context.setVariable("nomeAluno", aluno.getNome());
-        context.setVariable("nomeEvento", dadosEvento.nomeEvento());
-        context.setVariable("cargaHoraria", CargaHorariaFormatter.formatarTexto(dadosEvento.cargaHoraria()));
+        String htmlProcessado = montarHtml(aluno, dadosEvento);
 
-        // Formata a data de realização (Ex: 15 de Março de 2026)
-        DateTimeFormatter diaMesAno = DateTimeFormatter.ofPattern("dd' de 'MMMM' de 'yyyy", Locale.of("pt", "BR"));
-        context.setVariable("dataRealizacao", dadosEvento.dataRealizacao().format(diaMesAno));
-
-        // Formata a data automática rodapé ("Londrina, 15 de Março de 2026")
-        DateTimeFormatter cidadeDiaMesAno = DateTimeFormatter.ofPattern("'Londrina, 'dd' de 'MMMM' de 'yyyy", Locale.of("pt", "BR"));
-        context.setVariable("dataEmissao", LocalDate.now().format(cidadeDiaMesAno));
-
-        // Lê a imagem da pasta resources e converte para Base64 em memória
-        try (InputStream is = new ClassPathResource("static/images/bg_certificado_evento.png").getInputStream()) {
-            String base64Image = Base64.getEncoder().encodeToString(is.readAllBytes());
-            context.setVariable("imagemFundoBase64", "data:image/png;base64," + base64Image);
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao carregar a imagem de fundo do certificado.", e);
-        }
-
-        // Além disso, vamos garantir que o RA seja passado pro HTML:
-        context.setVariable("ra", aluno.getRa() != null ? aluno.getRa() : "N/A");
-
-        // 2. Renderiza o HTML (Escolhe o arquivo .html baseado no tipo)
-        String templateName = "certificado_evento";
-
-        String htmlProcessado = templateEngine.process(templateName, context);
-
-        // 3. Converte o HTML para PDF em memória usando ITextRenderer (OpenPDF/FlyingSaucer)
+        // Converte o HTML para PDF em memória usando ITextRenderer (OpenPDF/FlyingSaucer)
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
             ITextRenderer renderer = new ITextRenderer();
@@ -95,5 +80,55 @@ public class PdfService {
         catch (Exception e) {
             throw new RuntimeException("Erro inesperado ao gerar o PDF de " + aluno.getNome(), e);
         }
+    }
+
+    /**
+     * Renderiza o HTML do certificado, antes da conversão para PDF.
+     * Separado de {@link #gerarCertificado} para permitir testar o texto sem gerar o PDF.
+     *
+     * @param aluno Os dados do participante.
+     * @param dadosEvento Os dados do evento e o curso do participante em {@code cursoPadrao}.
+     * @return O HTML processado pelo Thymeleaf.
+     * @throws DadosInvalidosException Se o curso não for um curso configurado.
+     * @throws RuntimeException Se ocorrer erro na leitura da imagem de fundo.
+     */
+    public String montarHtml(AlunoCertificado aluno, EmissaoLoteEventoRequestDTO dadosEvento) {
+
+        // 1. Configura as variáveis que serão injetadas no HTML
+        Context context = new Context();
+        context.setVariable("nomeAluno", aluno.getNome());
+        context.setVariable("nomeEvento", dadosEvento.nomeEvento());
+        context.setVariable("cargaHoraria", CargaHorariaFormatter.formatarTexto(dadosEvento.cargaHoraria()));
+
+        // Dados da gestão (F4)
+        context.setVariable("nomeGestao", gestao.nome());
+        context.setVariable("siglaGestao", gestao.sigla());
+
+        // Curso do participante (F4): código já validado; ausente = SI
+        String codigoCurso = ValidadorParticipantes.resolverCurso(dadosEvento.cursoPadrao(), interpretadorCurso);
+        context.setVariable("cursoNome", interpretadorCurso.curso(codigoCurso)
+                .map(GestaoProperties.Curso::nomeCompleto)
+                .orElseThrow(() -> new DadosInvalidosException("Curso inválido: " + codigoCurso)));
+
+        // Formata a data de realização (Ex: 15 de Março de 2026)
+        DateTimeFormatter diaMesAno = DateTimeFormatter.ofPattern("dd' de 'MMMM' de 'yyyy", PT_BR);
+        context.setVariable("dataRealizacao", dadosEvento.dataRealizacao().format(diaMesAno));
+
+        // Formata a data automática do rodapé ("Londrina, 15 de Março de 2026"), com a cidade configurada
+        context.setVariable("dataEmissao", gestao.cidade() + ", " + LocalDate.now().format(diaMesAno));
+
+        // Lê a imagem configurada da pasta resources e converte para Base64 em memória
+        try (InputStream is = new ClassPathResource(gestao.imagemFundo()).getInputStream()) {
+            String base64Image = Base64.getEncoder().encodeToString(is.readAllBytes());
+            context.setVariable("imagemFundoBase64", "data:image/png;base64," + base64Image);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao carregar a imagem de fundo do certificado.", e);
+        }
+
+        // RA: sem RA, o trecho "portador(a) do RA ..." some do certificado (F4)
+        context.setVariable("ra", aluno.getRa() != null && !aluno.getRa().isBlank() ? aluno.getRa().trim() : null);
+
+        // 2. Renderiza o HTML
+        return templateEngine.process("certificado_evento", context);
     }
 }

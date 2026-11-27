@@ -47,12 +47,14 @@ export default function AjudaEmissao({ emissaoTipo }) {
                 <li>E-mail (obrigatória)</li>
                 <li>RA (opcional; sem ele a linha gera aviso)</li>
                 <li>Horas (opcional; o cabeçalho deve ser exatamente <code>Horas</code>)</li>
+                <li>Curso (opcional; o cabeçalho deve ser <code>Curso</code>)</li>
               </ol>
             </li>
+            <li><strong>Curso por participante:</strong> use <code>SI</code> ou <code>Sistemas de Informação</code>, <code>CDIA</code> ou <code>Ciência de Dados e Inteligência Artificial</code> (maiúsculas, minúsculas e acentos tanto faz). Célula vazia ou planilha sem a coluna usa o <strong>Curso padrão</strong> do formulário. Qualquer outro valor é erro e a linha não é emitida.</li>
             <li><strong>Horas por participante:</strong> use <code>2</code>, <code>1.5</code>, <code>1,5</code> ou <code>01:30</code> (segundos são ignorados). Célula vazia ou planilha sem a coluna usa a carga horária do formulário. Valor inválido, abaixo de 1 minuto ou acima de 1000 horas é erro e a linha não é emitida.
               Se o CSV for separado por vírgula, um valor como <code>1,5</code> precisa estar entre aspas (o Google Sheets já exporta assim) ou use <code>1.5</code>.</li>
             <li><strong>Revise:</strong> duplicados, campos vazios, e-mails inválidos e espaços extras. Linhas totalmente em branco são ignoradas automaticamente; a pré-visualização aponta o resto.</li>
-            <li><strong>Pré-visualização:</strong> o botão do lote só valida a planilha. Linhas com <strong>erro</strong> (nome vazio, e-mail inválido ou repetido, horas inválidas) não serão emitidas; linhas com <strong>aviso</strong> (RA vazio, nomes iguais) serão. Nada é enviado até você confirmar.</li>
+            <li><strong>Pré-visualização:</strong> o botão do lote só valida a planilha. Linhas com <strong>erro</strong> (nome vazio, e-mail inválido ou repetido, horas ou curso inválidos) não serão emitidas; linhas com <strong>aviso</strong> (RA vazio, nomes iguais) serão. Nada é enviado até você confirmar.</li>
             <li><strong>Resultado:</strong> o lote pode terminar com sucessos, já emitidos e falhas. Confira a tabela antes de reenviar.</li>
           </ul>
         </section>
@@ -64,6 +66,7 @@ export default function AjudaEmissao({ emissaoTipo }) {
           <ul>
             <li><strong>Nome:</strong> escreva o nome completo exatamente como deve aparecer no certificado.</li>
             <li><strong>E-mail e RA:</strong> confira antes de enviar; ambos entram no fluxo de emissão e relatório.</li>
+            <li><strong>Curso:</strong> escolha o curso do participante; ele aparece no certificado e no registro de backup.</li>
             <li><strong>Reenvio:</strong> se já existir certificado no Drive, o relatório pode indicar que ele já foi emitido.</li>
           </ul>
         </section>

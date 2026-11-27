@@ -2,23 +2,22 @@
 
 > Sobrescrito a cada `/encerrar-sessao`. Lido no início de toda sessão.
 
-**Data:** 2026-11-20
-**Branch:** `feature/F2-horas-por-participante` (local, sem push; saiu de `main` após o merge da F1, `b8ec006`).
+**Data:** 2026-11-26
+**Branch:** `feature/F3-eventos-longos` (local, saiu de `main` do fork em `4f51ad9`, sem push)
 **Remotos:** `origin` = fork (GuilhermeSMathias/EmissorCertificadoDacomp), `upstream` = original
-**Spec em andamento:** nenhuma. F2 concluída (verificação manual feita; revisões `/revisar` e subagente `revisor` sem bloqueios, ajustes aplicados).
+**Spec em andamento:** F3 (eventos longos), ainda não escrita.
 
 ## O que foi feito
-- F1 (validação pré-disparo) especificada, planejada (P1–P9) e implementada em 14 commits (`6e27955` → `2d3a059`).
-- Backend: `ValidadorParticipantes`, `CsvService.lerLinhas`, `NomeArquivoCertificado`, rota `POST /api/certificados/pre-visualizar-lote`, erros de validação → 400. 59 testes verdes.
-- Frontend: etapas formulário → prévia → relatório (`PreVisualizacaoLote.jsx`), motivo do erro visível no relatório, ajuda atualizada.
-- Verificação manual feita pelo desenvolvedor com credenciais de teste: tudo bateu.
-- F1 mergeada em `main` do fork (PR #1, `b8ec006`).
-- F2 (horas por participante): spec, plano P1–P6 e implementação (`c747d3c` → `ad55005` + ajustes da revisão do subagente). Coluna opcional `Horas` (decimal ou `HH:MM[:SS]`), célula vazia usa o formulário, inválida é `ERRO`; limites de 1 minuto a 1.000 h em `InterpretadorHoras.dentroDosLimites` (coluna e formulário). PDF e Sheets com as horas de cada linha; coluna Horas na prévia. 123 testes verdes. Decisão D-05: features saem de `main` do fork, sem `v2.0`.
+- F1 mergeada em `main` do fork (PR #1, `b8ec006`). D-05: features saem de `main` do fork, sem `v2.0`.
+- F2 (horas por participante) mergeada em `main` do fork (PR #2, `4f51ad9`), aberto manualmente pela web. 123 testes verdes; `contextLoads` verde.
+- `main` local sincronizada com `origin/main`; branch da F3 criada.
 
 ## Próximo passo
-1. Conferir na tela o campo Carga Horária (aceita `1.25`, recusa `0` e `1001` com toast) e a ajuda, depois dos ajustes da revisão.
-2. `git push -u origin feature/F2-horas-por-participante` e abrir o PR para `main` **do fork** (trocar o *base repository*). No PR: deploy do backend (Render) antes do frontend (Vercel).
-3. Próxima feature: `/nova-spec F3` (eventos longos), começando pelos pontos em aberto de `progresso.md`.
+1. Desenvolvedor sobe backend + frontend em localhost (credenciais de **teste**) e faz a conferência visual abaixo.
+2. Depois: `/nova-spec F3` (eventos longos), começando pelos pontos em aberto de `progresso.md`.
 
 ## Pendências / bloqueios
-- Nenhuma. `BackendApplicationTests.contextLoads` rodado manualmente pelo desenvolvedor na branch da F2, com o `secrets.properties` de teste (2026-11-20): verde. A seção "Pendência conhecida" da descrição do PR da F2 pode ser removida.
+- ~~Conferência visual depois de `23bd293`~~: feita pelo desenvolvedor em localhost (2026-11-26), tudo correto.
+- Deploy da F2 na produção oficial (Render antes da Vercel): não confirmado.
+- **Deploy próprio adiado** (2026-11-26, decisão do desenvolvedor: testes só em localhost por enquanto). Quando retomar: backend no Render (conta própria, Docker, root `backend`, `SPRING_PROFILES_ACTIVE=prod`, `PORT=8080`, variáveis do `application-prod.properties`; a pasta raiz é `DRIVE_PASTA_RAIZ_ID`) e frontend na Vercel (root `frontend`, `VITE_API_URL` sem barra final, redeploy ao mudar).
+- **CORS bloqueia o deploy próprio (só quando ele for retomado):** `CertificadoController` tem `@CrossOrigin` fixo em `https://sistema-casis.vercel.app/` e `http://localhost:5173`. Um frontend em outra URL da Vercel é recusado pelo navegador. Precisa de mudança de código (ex.: origens vindas de propriedade/variável de ambiente), a combinar com o desenvolvedor.

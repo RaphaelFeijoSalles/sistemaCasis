@@ -6,6 +6,7 @@ import RelatorioEmissao from './components/RelatorioEmissao';
 import PreVisualizacaoLote from './components/PreVisualizacaoLote';
 import AjudaEmissao from './components/AjudaEmissao';
 import './App.css';
+import { CURSO_PADRAO } from './cursos';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -210,6 +211,7 @@ const montarPayloadLote = (formData, arquivoCsv) => {
   payload.append('nomeEvento', formData.nomeEvento.trim());
   payload.append('dataRealizacao', formData.dataRealizacao);
   payload.append('cargaHoraria', String(formData.cargaHoraria).replace(',', '.'));
+  payload.append('cursoPadrao', formData.cursoPadrao);
   payload.append('arquivoCsv', arquivoCsv);
   return payload;
 };
@@ -225,7 +227,8 @@ function App() {
   const casisContainerRef = useRef(null);
   const [formData, setFormData] = useState({
     nomeEvento: '', dataRealizacao: '', cargaHoraria: '',
-    nomeParticipante: '', emailParticipante: '', raParticipante: ''
+    nomeParticipante: '', emailParticipante: '', raParticipante: '',
+    cursoPadrao: CURSO_PADRAO, cursoParticipante: CURSO_PADRAO
   });
   const [arquivoCsv, setArquivoCsv] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -382,7 +385,8 @@ function App() {
     setArquivoCsv(null);
     setFormData({
       nomeEvento: '', dataRealizacao: '', cargaHoraria: '',
-      nomeParticipante: '', emailParticipante: '', raParticipante: ''
+      nomeParticipante: '', emailParticipante: '', raParticipante: '',
+      cursoPadrao: CURSO_PADRAO, cursoParticipante: CURSO_PADRAO
     });
   };
 
@@ -398,7 +402,7 @@ function App() {
 
           <div className="header">
             <h1>Emissão de Certificados</h1>
-            <p>Sistema Oficial do CASIS - Eventos</p>
+            <p>Sistema Oficial do DACOMP - Eventos</p>
           </div>
 
           {etapa === 'formulario' && (
@@ -424,7 +428,7 @@ function App() {
         </div>
 
         <footer className="casis-footer">
-          &copy; {new Date().getFullYear()} Centro Acadêmico de Sistemas de Informação UTFPR-Londrina<br/>
+          &copy; {new Date().getFullYear()} Diretório Acadêmico de Computação (DACOMP) UTFPR-Londrina<br/>
           Desenvolvido por <a href="https://linktr.ee/raphaelfeijosalles" target="_blank" rel="noopener noreferrer">Raphael Salles</a>
         </footer>
       </>

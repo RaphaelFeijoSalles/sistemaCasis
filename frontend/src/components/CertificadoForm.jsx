@@ -2,6 +2,7 @@ import { useDropzone } from 'react-dropzone';
 import { useCallback } from 'react';
 import { AlertCircle, Eye, Loader2, FileSpreadsheet, KeyRound, UploadCloud, User } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CURSOS } from '../cursos';
 
 export default function CertificadoForm({
                                             formData, setFormData, arquivoCsv, setArquivoCsv, apiKey, setApiKey, isSubmitting, onSubmit,
@@ -93,6 +94,24 @@ export default function CertificadoForm({
                 </div>
             </div>
 
+            {/* Curso (F4): no lote é o padrão para quem não tiver a coluna Curso; no unitário é o curso do participante */}
+            {emissaoTipo === 'lote' ? (
+                <div className="form-group">
+                    <label>Curso padrão</label>
+                    <select name="cursoPadrao" required value={formData.cursoPadrao} onChange={handleInputChange}>
+                        {CURSOS.map(curso => <option key={curso.codigo} value={curso.codigo}>{curso.nome}</option>)}
+                    </select>
+                    <small className="form-hint">Vale para quem não tiver curso na coluna <strong>Curso</strong> do CSV.</small>
+                </div>
+            ) : (
+                <div className="form-group">
+                    <label>Curso do Participante</label>
+                    <select name="cursoParticipante" required value={formData.cursoParticipante} onChange={handleInputChange}>
+                        {CURSOS.map(curso => <option key={curso.codigo} value={curso.codigo}>{curso.nome}</option>)}
+                    </select>
+                </div>
+            )}
+
             {/* Renderização Condicional: Dropzone vs Campos Manuais */}
             {emissaoTipo === 'lote' ? (
                 <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
@@ -109,7 +128,7 @@ export default function CertificadoForm({
                         <div className="dropzone-empty">
                             <UploadCloud size={32} />
                             <p>Clique ou arraste a planilha CSV aqui</p>
-                            <small>Colunas lidas pelo cabeçalho: Nome e E-mail (obrigatórias), RA e Horas (opcionais), em qualquer ordem.</small>
+                            <small>Colunas lidas pelo cabeçalho: Nome e E-mail (obrigatórias), RA, Horas e Curso (opcionais), em qualquer ordem.</small>
                         </div>
                     )}
                 </div>

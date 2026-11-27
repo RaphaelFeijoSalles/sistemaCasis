@@ -8,15 +8,24 @@ Atualize esta tabela sempre que uma spec mudar de status.
 | F1 | Etapa de validação antes do disparo: pré-visualização do lote e validação de dados em Java (duplicados, e-mails, vazios, horas), com confirmação explícita antes de gerar PDFs e enviar e-mails | — | concluída | [F1-validacao-pre-disparo.md](../specs/F1-validacao-pre-disparo.md) |
 | F2 | Planilha com horas por participante (lote com cargas horárias diferentes) | F1 | concluída | [F2-horas-por-participante.md](../specs/F2-horas-por-participante.md) |
 | F3 | Eventos longos: data de início e fim | — | backlog | — |
-| F4 | Modelo de certificado que permite preencher o nome do curso | — | backlog | — |
+| F4 | Gestão configurável (nome, sigla, cidade, fundo, cursos) e curso por participante na planilha | F2 | concluída | [F4-gestao-configuravel-e-curso.md](../specs/F4-gestao-configuravel-e-curso.md) |
 | F5 | Banco de dados (PostgreSQL + JPA): eventos, participantes, histórico; ativar `FonteDadosBancoStrategy` | F1 | backlog | — |
 | F6 | Check-in via QR Code com painel de aprovação e emissão em massa | F5 | backlog | — |
 | F7 | Qualidade e segurança: testes com mocks, validação de DTOs, tratamento de erros, autenticação | contínuo | backlog | — |
+| F8 | RA obrigatório: RA vazio vira ERRO no lote (hoje é AVISO, regra da F1) e o backend passa a exigir RA no unitário (hoje só o frontend exige) | F4 | backlog | — |
 
 ## Ordem sugerida
-F1 → F2 → F3 → F4 → F7 (em paralelo, em pequenas fatias) → F5 → F6
+F1 → F2 → F4 → F3 → F7 (em paralelo, em pequenas fatias) → F5 → F6
 
 ## Pontos em aberto (resolver na spec, perguntando ao dono do projeto)
-- **F4:** "modelo de certificado" significa (a) um campo `curso` injetado no template atual, (b) upload de template ou fundo por evento, ou (c) escolher entre modelos fixos?
+- ~~**F4:** "modelo de certificado"~~: resolvido em 2026-11-26 (gestão configurável + curso por linha; veja a spec).
 - **F3:** como o certificado exibe o período? A carga horária continua sendo total? Em qual semestre ou pasta do Drive fica um evento que cruza semestres?
+- **F8** (pedido em 2026-11-26, depois da F4): RA vazio deve bloquear a linha. Decidir: o Sheets ainda grava "N/A"? O trecho condicional do RA no certificado (F4) continua necessário? Participantes externos sem RA deixam de poder receber certificado?
 - **F5:** onde hospedar o PostgreSQL? Precisa de ferramenta de migração (Flyway)?
+
+## Backlog da F7 (fatias pequenas)
+Vindos do `/revisar` da F4 (2026-11-26), nenhum bloqueante:
+- [ ] `certificado_evento.html`: trocar `th:if="${ra}"` por `th:if="${ra != null}"` (o Thymeleaf trata "false", "off" e "no" como falso).
+- [ ] `GestaoProperties`: `@Validated` + `@NotBlank` em nome, sigla, cidade e imagem, para o backend não subir com configuração incompleta (hoje sairia "promovida pelo null (null)").
+- [ ] `InterpretadorCurso`: recusar na inicialização um apelido repetido em dois cursos (hoje o último vence sem aviso).
+- [ ] `LinhaCsv`: o construtor de 5 argumentos só existe para testes antigos; migrar os testes e removê-lo.

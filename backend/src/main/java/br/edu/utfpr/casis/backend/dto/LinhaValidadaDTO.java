@@ -12,6 +12,9 @@ import java.util.List;
  * @param horas Horas decimais que irão no certificado, ou nulo se o valor da coluna Horas for inválido.
  * @param horasTexto Horas como aparecem no certificado (ex.: "1 hora e 30 minutos"), ou nulo se inválidas.
  * @param horasDoFormulario Verdadeiro quando as horas vieram da carga horária do formulário (coluna ausente ou célula vazia).
+ * @param curso Código do curso (ex.: "SI") que irá no certificado (F4), ou nulo se o valor da coluna Curso for inválido.
+ * @param cursoTexto Nome completo do curso como aparece no certificado, ou nulo se o curso for inválido.
+ * @param cursoDoFormulario Verdadeiro quando o curso veio do curso padrão do formulário (coluna ausente ou célula vazia).
  * @param situacao Situação da linha: VALIDA, AVISO ou ERRO.
  * @param mensagens Motivos do erro ou do aviso; vazia quando a linha é válida.
  */
@@ -23,6 +26,9 @@ public record LinhaValidadaDTO(
         Double horas,
         String horasTexto,
         boolean horasDoFormulario,
+        String curso,
+        String cursoTexto,
+        boolean cursoDoFormulario,
         SituacaoLinha situacao,
         List<String> mensagens
 ) {}

@@ -10,11 +10,14 @@ import java.time.LocalDate;
  * @param nomeEvento Nome do evento ou curso.
  * @param dataRealizacao Data em que o evento ocorreu.
  * @param cargaHoraria Carga horária total do evento.
+ * @param cursoPadrao Curso padrão do formulário (F4), por código ou apelido (ex.: "SI", "CDIA"),
+ *                    usado nas linhas sem curso. Ausente = "SI", para o frontend anterior à F4.
  * @param arquivoCsv Arquivo CSV contendo os dados dos participantes.
  */
 public record EmissaoLoteEventoRequestDTO(
         String nomeEvento,
         LocalDate dataRealizacao,
         Double cargaHoraria,
+        String cursoPadrao,
         MultipartFile arquivoCsv
 ) {}
