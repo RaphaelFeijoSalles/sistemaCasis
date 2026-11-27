@@ -40,9 +40,14 @@ public class CsvService {
         int indexCurso = -1;
 
         boolean isValido() {
-            // Não obrigatoriedade do RA para proporcionar mais flexibilidade para outros tipos de emissões
+            // Não obrigatoriedade do RA para proporcionar mais flexibilidade para outros tipos de emissões.
+            // Vale só para extrairAlunos; lerLinhas exige o RA (F8) com isValidoComRa.
             return indexNome != -1 && indexEmail != -1;
 
+        }
+
+        boolean isValidoComRa() {
+            return isValido() && indexRa != -1;
         }
     }
 
@@ -122,7 +127,7 @@ public class CsvService {
      *
      * @param arquivoCsv O arquivo CSV (MultipartFile) carregado via requisição HTTP.
      * @return As linhas de participantes na ordem do arquivo.
-     * @throws DadosInvalidosException Se o arquivo estiver vazio, sem as colunas Nome e E-mail ou ilegível.
+     * @throws DadosInvalidosException Se o arquivo estiver vazio, sem as colunas Nome, E-mail e RA ou ilegível.
      */
     public List<LinhaCsv> lerLinhas(MultipartFile arquivoCsv) {
         List<LinhaCsv> linhas = new ArrayList<>();
@@ -143,8 +148,8 @@ public class CsvService {
                 }
 
                 HeaderMap map = mapearCabecalhos(cabecalho);
-                if (!map.isValido()) {
-                    throw new DadosInvalidosException("Cabeçalho inválido. Não foi possível identificar as colunas de 'Nome' e 'E-mail'.");
+                if (!map.isValidoComRa()) {
+                    throw new DadosInvalidosException("Cabeçalho inválido. Não foi possível identificar as colunas 'Nome', 'E-mail' e 'RA'.");
                 }
 
                 String[] celulas;

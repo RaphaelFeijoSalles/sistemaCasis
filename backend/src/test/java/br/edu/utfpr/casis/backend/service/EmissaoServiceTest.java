@@ -89,7 +89,7 @@ class EmissaoServiceTest {
     @Test
     void deveRecusarPreVisualizacaoComEventoInvalido() {
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
-                () -> emissaoService.preVisualizarLote(lote("Nome;E-mail\nAna;ana@x.com\n", 0.0)));
+                () -> emissaoService.preVisualizarLote(lote("Nome;RA;E-mail\nAna;1;ana@x.com\n", 0.0)));
 
         assertEquals("A carga horária deve ser um número maior que zero.", erro.getMessage());
         semEfeitos();
@@ -111,10 +111,10 @@ class EmissaoServiceTest {
     @Test
     void devePreVisualizarComCursoDaLinhaECursoPadraoDoFormulario() {
         String csv = """
-                Nome;E-mail;Curso
-                Ana Silva;ana@alunos.utfpr.edu.br;si
-                Bruno Souza;bruno@alunos.utfpr.edu.br;
-                Carla Lima;carla@alunos.utfpr.edu.br;ADS
+                Nome;RA;E-mail;Curso
+                Ana Silva;1;ana@alunos.utfpr.edu.br;si
+                Bruno Souza;2;bruno@alunos.utfpr.edu.br;
+                Carla Lima;3;carla@alunos.utfpr.edu.br;ADS
                 """;
 
         PreVisualizacaoLoteDTO previa = emissaoService.preVisualizarLote(lote(csv, 2.0, "CDIA"));
@@ -131,7 +131,7 @@ class EmissaoServiceTest {
     void deveUsarSiQuandoCursoPadraoAusente() {
         for (String ausente : new String[]{null, "", "  "}) {
             PreVisualizacaoLoteDTO previa = emissaoService.preVisualizarLote(
-                    lote("Nome;E-mail\nAna;ana@alunos.utfpr.edu.br\n", 2.0, ausente));
+                    lote("Nome;RA;E-mail\nAna;1;ana@alunos.utfpr.edu.br\n", 2.0, ausente));
 
             assertEquals("SI", previa.linhas().getFirst().curso());
             assertTrue(previa.linhas().getFirst().cursoDoFormulario());
@@ -142,7 +142,7 @@ class EmissaoServiceTest {
     @Test
     void deveAceitarApelidoNoCursoPadrao() {
         PreVisualizacaoLoteDTO previa = emissaoService.preVisualizarLote(
-                lote("Nome;E-mail\nAna;ana@alunos.utfpr.edu.br\n", 2.0, "ciencia de dados e inteligencia artificial"));
+                lote("Nome;RA;E-mail\nAna;1;ana@alunos.utfpr.edu.br\n", 2.0, "ciencia de dados e inteligencia artificial"));
 
         assertEquals("CDIA", previa.linhas().getFirst().curso());
     }
@@ -150,9 +150,9 @@ class EmissaoServiceTest {
     @Test
     void deveRecusarCursoPadraoInvalidoNaPreVisualizacaoENoLoteAntesDeQualquerEfeito() {
         DadosInvalidosException erroPrevia = assertThrows(DadosInvalidosException.class,
-                () -> emissaoService.preVisualizarLote(lote("Nome;E-mail\nAna;ana@x.com\n", 2.0, "ADS")));
+                () -> emissaoService.preVisualizarLote(lote("Nome;RA;E-mail\nAna;1;ana@x.com\n", 2.0, "ADS")));
         DadosInvalidosException erroLote = assertThrows(DadosInvalidosException.class,
-                () -> emissaoService.processarEmissao(lote("Nome;E-mail\nAna;ana@x.com\n", 2.0, "ADS")));
+                () -> emissaoService.processarEmissao(lote("Nome;RA;E-mail\nAna;1;ana@x.com\n", 2.0, "ADS")));
 
         assertEquals("Curso inválido: ADS", erroPrevia.getMessage());
         assertEquals("Curso inválido: ADS", erroLote.getMessage());
@@ -384,7 +384,7 @@ class EmissaoServiceTest {
     @Test
     void deveRecusarLoteComEventoInvalidoAntesDeQualquerEfeito() {
         assertThrows(DadosInvalidosException.class,
-                () -> emissaoService.processarEmissao(lote("Nome;E-mail\nAna;ana@x.com\n", null)));
+                () -> emissaoService.processarEmissao(lote("Nome;RA;E-mail\nAna;1;ana@x.com\n", null)));
         semEfeitos();
     }
 
@@ -433,7 +433,7 @@ class EmissaoServiceTest {
     @Test
     void deveRecusarLoteComCargaAbaixoDeUmMinutoAntesDeQualquerEfeito() {
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
-                () -> emissaoService.processarEmissao(lote("Nome;E-mail\nAna;ana@x.com\n", 0.001)));
+                () -> emissaoService.processarEmissao(lote("Nome;RA;E-mail\nAna;1;ana@x.com\n", 0.001)));
 
         assertEquals("A carga horária deve ser um número maior que zero.", erro.getMessage());
         semEfeitos();
@@ -486,7 +486,7 @@ class EmissaoServiceTest {
 
         emissaoService.processarEmissao(loteComFim(DATA.plusDays(4)));
 
-        verify(sheetsService).registrarEmissao("Ana Silva", null, SI_CURTO, DATA, EVENTO, 2.0, DATA.plusDays(4));
+        verify(sheetsService).registrarEmissao("Ana Silva", "12345", SI_CURTO, DATA, EVENTO, 2.0, DATA.plusDays(4));
     }
 
     @Test
@@ -513,7 +513,7 @@ class EmissaoServiceTest {
         when(driveService.listarArquivosNaPasta(PASTA)).thenReturn(Set.of());
         when(pdfService.gerarCertificado(any(), any())).thenReturn(PDF);
         MockMultipartFile arquivo = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
-                "Nome;E-mail\nAna Silva;ana@alunos.utfpr.edu.br\n".getBytes(StandardCharsets.UTF_8));
+                "Nome;RA;E-mail\nAna Silva;12345;ana@alunos.utfpr.edu.br\n".getBytes(StandardCharsets.UTF_8));
 
         emissaoService.processarEmissao(new EmissaoLoteEventoRequestDTO(
                 EVENTO, INICIO_1O_SEMESTRE, FIM_2O_SEMESTRE, 2.0, null, arquivo));
@@ -540,7 +540,7 @@ class EmissaoServiceTest {
 
     private EmissaoLoteEventoRequestDTO loteComFim(LocalDate dataFim) {
         MockMultipartFile arquivo = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
-                "Nome;E-mail\nAna Silva;ana@alunos.utfpr.edu.br\n".getBytes(StandardCharsets.UTF_8));
+                "Nome;RA;E-mail\nAna Silva;12345;ana@alunos.utfpr.edu.br\n".getBytes(StandardCharsets.UTF_8));
         return new EmissaoLoteEventoRequestDTO(EVENTO, DATA, dataFim, 2.0, null, arquivo);
     }
 

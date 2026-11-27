@@ -96,16 +96,46 @@ class CsvServiceTest {
         ), linhas);
     }
 
+    // F8 CA1: sem a coluna RA, o arquivo é recusado como quando falta Nome ou E-mail.
     @Test
-    void deveRetornarRaNuloQuandoNaoHaColunaRa() {
+    void deveLancarDadosInvalidosQuandoCabecalhoNaoTemRa() {
         String csv = """
-                Nome,E-mail
-                Ana Silva,ana@alunos.utfpr.edu.br
+                Nome;E-mail
+                Ana Silva;ana@alunos.utfpr.edu.br
+                """;
+
+        DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                () -> csvService.lerLinhas(criarArquivoCsv(csv)));
+
+        assertEquals("Cabeçalho inválido. Não foi possível identificar as colunas 'Nome', 'E-mail' e 'RA'.", erro.getMessage());
+    }
+
+    // F8: a coluna RA é obrigatória, mas a célula pode vir vazia (o erro de RA vazio é do validador).
+    @Test
+    void deveLerRaVazioOuNuloConformeCelula() {
+        String csv = """
+                Nome;E-mail;RA
+                Ana Silva;ana@alunos.utfpr.edu.br;
+                Bruno Souza;bruno@alunos.utfpr.edu.br
                 """;
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
 
-        assertEquals(List.of(new LinhaCsv(2, "Ana Silva", "ana@alunos.utfpr.edu.br", null, null)), linhas);
+        assertEquals("", linhas.get(0).ra());
+        assertNull(linhas.get(1).ra());
+    }
+
+    @Test
+    void deveManterExtrairAlunosSemColunaRa() {
+        String csv = """
+                Nome;E-mail
+                Ana Silva;ana@alunos.utfpr.edu.br
+                """;
+
+        List<AlunoCertificado> alunos = csvService.extrairAlunos(criarArquivoCsv(csv));
+
+        assertEquals(1, alunos.size());
+        assertNull(alunos.getFirst().getRa());
     }
 
     @Test
@@ -127,8 +157,8 @@ class CsvServiceTest {
     @Test
     void deveReconhecerCabecalhoHorasSemDiferenciarMaiusculasEEspacos() {
         String csv = """
-                Nome,E-mail,  HORAS\s
-                Ana Silva,ana@alunos.utfpr.edu.br,"1,5"
+                Nome,E-mail,RA,  HORAS\s
+                Ana Silva,ana@alunos.utfpr.edu.br,12345,"1,5"
                 """;
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
@@ -139,8 +169,8 @@ class CsvServiceTest {
     @Test
     void deveRetornarHorasNulaQuandoNaoHaColunaHoras() {
         String csv = """
-                Nome;E-mail
-                Ana Silva;ana@alunos.utfpr.edu.br
+                Nome;E-mail;RA
+                Ana Silva;ana@alunos.utfpr.edu.br;12345
                 """;
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
@@ -151,9 +181,9 @@ class CsvServiceTest {
     @Test
     void deveRetornarHorasVaziaOuNulaConformeCelula() {
         String csv = """
-                Nome;E-mail;Horas
-                Ana Silva;ana@alunos.utfpr.edu.br;
-                Bruno Souza;bruno@alunos.utfpr.edu.br
+                Nome;E-mail;RA;Horas
+                Ana Silva;ana@alunos.utfpr.edu.br;12345;
+                Bruno Souza;bruno@alunos.utfpr.edu.br;67890
                 """;
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
@@ -165,8 +195,8 @@ class CsvServiceTest {
     @Test
     void naoDeveReconhecerOutrosNomesDeColunaDeHoras() {
         String csv = """
-                Nome;E-mail;Carga horária;CH;Hora
-                Ana Silva;ana@alunos.utfpr.edu.br;2;2;2
+                Nome;E-mail;RA;Carga horária;CH;Hora
+                Ana Silva;ana@alunos.utfpr.edu.br;12345;2;2;2
                 """;
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
@@ -193,8 +223,8 @@ class CsvServiceTest {
     @Test
     void deveReconhecerCabecalhoCursoSemDiferenciarMaiusculasEEspacos() {
         String csv = """
-                Nome,E-mail,  CURSO\s
-                Ana Silva,ana@alunos.utfpr.edu.br,CDIA
+                Nome,E-mail,RA,  CURSO\s
+                Ana Silva,ana@alunos.utfpr.edu.br,12345,CDIA
                 """;
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
@@ -205,8 +235,8 @@ class CsvServiceTest {
     @Test
     void deveRetornarCursoNuloQuandoNaoHaColunaCurso() {
         String csv = """
-                Nome;E-mail;Horas
-                Ana Silva;ana@alunos.utfpr.edu.br;2
+                Nome;E-mail;RA;Horas
+                Ana Silva;ana@alunos.utfpr.edu.br;12345;2
                 """;
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
@@ -217,9 +247,9 @@ class CsvServiceTest {
     @Test
     void deveRetornarCursoVazioOuNuloConformeCelula() {
         String csv = """
-                Nome;E-mail;Curso
-                Ana Silva;ana@alunos.utfpr.edu.br;
-                Bruno Souza;bruno@alunos.utfpr.edu.br
+                Nome;E-mail;RA;Curso
+                Ana Silva;ana@alunos.utfpr.edu.br;12345;
+                Bruno Souza;bruno@alunos.utfpr.edu.br;67890
                 """;
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
@@ -231,8 +261,8 @@ class CsvServiceTest {
     @Test
     void naoDeveReconhecerOutrosNomesDeColunaDeCurso() {
         String csv = """
-                Nome;E-mail;Cursos;Graduação
-                Ana Silva;ana@alunos.utfpr.edu.br;SI;SI
+                Nome;E-mail;RA;Cursos;Graduação
+                Ana Silva;ana@alunos.utfpr.edu.br;12345;SI;SI
                 """;
 
         List<LinhaCsv> linhas = csvService.lerLinhas(criarArquivoCsv(csv));
@@ -258,7 +288,7 @@ class CsvServiceTest {
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
                 () -> csvService.lerLinhas(criarArquivoCsv(csv)));
 
-        assertEquals("Cabeçalho inválido. Não foi possível identificar as colunas de 'Nome' e 'E-mail'.", erro.getMessage());
+        assertEquals("Cabeçalho inválido. Não foi possível identificar as colunas 'Nome', 'E-mail' e 'RA'.", erro.getMessage());
     }
 
     private MockMultipartFile criarArquivoCsv(String conteudo) {

@@ -49,7 +49,7 @@ class CertificadoControllerTest {
     private EmissaoService emissaoService;
 
     private final MockMultipartFile csv = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
-            "Nome;E-mail\nAna;ana@alunos.utfpr.edu.br\n".getBytes(StandardCharsets.UTF_8));
+            "Nome;RA;E-mail\nAna;1;ana@alunos.utfpr.edu.br\n".getBytes(StandardCharsets.UTF_8));
 
     // ---------- /pre-visualizar-lote ----------
 
