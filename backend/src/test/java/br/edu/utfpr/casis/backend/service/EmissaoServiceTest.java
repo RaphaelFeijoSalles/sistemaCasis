@@ -446,6 +446,44 @@ class EmissaoServiceTest {
         semEfeitos();
     }
 
+    // ---------- Data de fim (F3: CA6, CA7) ----------
+
+    @Test
+    void deveRecusarPreVisualizacaoComFimAnteriorAoInicioSemEfeitos() {
+        DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.preVisualizarLote(loteComFim(DATA.minusDays(1))));
+
+        assertEquals("A data de fim não pode ser anterior à data de início.", erro.getMessage());
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarLoteComEventoLongoDemaisSemEfeitos() {
+        DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissao(loteComFim(DATA.plusDays(367))));
+
+        assertEquals("O evento deve durar no máximo 366 dias.", erro.getMessage());
+        semEfeitos();
+    }
+
+    @Test
+    void deveRecusarUnitarioComFimAnteriorAoInicioSemEfeitos() {
+        EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, DATA.minusDays(1), 2.0,
+                "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", null);
+
+        DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
+                () -> emissaoService.processarEmissaoIndividual(dto));
+
+        assertEquals("A data de fim não pode ser anterior à data de início.", erro.getMessage());
+        semEfeitos();
+    }
+
+    private EmissaoLoteEventoRequestDTO loteComFim(LocalDate dataFim) {
+        MockMultipartFile arquivo = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
+                "Nome;E-mail\nAna Silva;ana@alunos.utfpr.edu.br\n".getBytes(StandardCharsets.UTF_8));
+        return new EmissaoLoteEventoRequestDTO(EVENTO, DATA, dataFim, 2.0, null, arquivo);
+    }
+
     private void prepararDrive(Set<String> existentes) {
         when(driveService.obterOuCriarPastaEvento(EVENTO, DATA)).thenReturn(PASTA);
         when(driveService.listarArquivosNaPasta(PASTA)).thenReturn(existentes);

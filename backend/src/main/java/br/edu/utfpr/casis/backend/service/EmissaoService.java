@@ -61,7 +61,8 @@ public class EmissaoService {
      * Usado pela pré-visualização e pela emissão, para que as duas apliquem as mesmas regras.
      */
     private List<LinhaValidadaDTO> validarLote(EmissaoLoteEventoRequestDTO requestDTO) {
-        ValidadorParticipantes.validarEvento(requestDTO.nomeEvento(), requestDTO.dataRealizacao(), requestDTO.cargaHoraria());
+        ValidadorParticipantes.validarEvento(requestDTO.nomeEvento(), requestDTO.dataRealizacao(), requestDTO.dataFim(),
+                requestDTO.cargaHoraria());
         if (requestDTO.arquivoCsv() == null || requestDTO.arquivoCsv().isEmpty()) {
             throw new DadosInvalidosException("O arquivo CSV é obrigatório.");
         }
@@ -171,7 +172,7 @@ public class EmissaoService {
      */
     public ResultadoEmissaoDTO processarEmissaoIndividual(EmissaoIndividualRequestDTO dto) {
         // 0. Valida antes de qualquer efeito (F1). Lança DadosInvalidosException se algo estiver inválido.
-        ValidadorParticipantes.validarEvento(dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria());
+        ValidadorParticipantes.validarEvento(dto.nomeEvento(), dto.dataRealizacao(), dto.dataFim(), dto.cargaHoraria());
         ValidadorParticipantes.validarParticipante(dto.nomeParticipante(), dto.emailParticipante());
         String curso = ValidadorParticipantes.resolverCurso(dto.cursoParticipante(), interpretadorCurso);
 
