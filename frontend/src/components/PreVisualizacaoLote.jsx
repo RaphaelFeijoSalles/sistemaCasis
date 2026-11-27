@@ -1,4 +1,5 @@
 import { AlertCircle, AlertTriangle, CheckCircle2, ChevronLeft, Loader2, Send, XCircle } from 'lucide-react';
+import { ehExterno } from '../registroAcademico';
 
 const SITUACOES = {
     VALIDA: { rowClass: 'row-success', icone: CheckCircle2, rotulo: 'Válida', classe: 'previa-situacao valida' },
@@ -66,7 +67,7 @@ export default function PreVisualizacaoLote({ previa, isSubmitting, onConfirmar,
                                             <span>{linha.cursoTexto}</span>
                                             {linha.cursoDoFormulario && <span className="previa-horas-origem">(formulário)</span>}
                                         </>
-                                    ) : '—'}
+                                    ) : ehExterno(linha.ra) ? 'Externo' : '—'}
                                 </td>
                                 <td className="status-cell">
                                     <div className={situacao.classe}>

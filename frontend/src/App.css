@@ -137,6 +137,7 @@
   color: var(--success);
 }
 
+/* Qualquer campo desabilitado do formulário (hoje só RA e Curso do participante externo, F8) */
 .form-group input:disabled,
 .form-group select:disabled {
   opacity: 0.5;

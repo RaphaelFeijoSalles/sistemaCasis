@@ -7,11 +7,9 @@ import PreVisualizacaoLote from './components/PreVisualizacaoLote';
 import AjudaEmissao from './components/AjudaEmissao';
 import './App.css';
 import { CURSO_PADRAO } from './cursos';
+import { RA_EXTERNO, ehExterno } from './registroAcademico';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-
-// Marcador de participante externo (F8), igual a RegistroAcademico.EXTERNO no backend
-const RA_EXTERNO = 'EXTERNO';
 
 const campoVazio = (valor) => !String(valor ?? '').trim();
 
@@ -137,6 +135,14 @@ const validarFormulario = ({ formData, arquivoCsv, apiKey, emissaoTipo }) => {
     return {
       titulo: 'RA obrigatório',
       detalhe: 'Informe o Registro Acadêmico do participante. Se ele não tiver RA (palestrante, aluno de outra instituição), marque "Participante externo".'
+    };
+  }
+
+  // EXTERNO digitado no RA: sem o checkbox o curso iria junto e o backend recusaria (F8)
+  if (!formData.participanteExterno && ehExterno(formData.raParticipante)) {
+    return {
+      titulo: 'Participante externo',
+      detalhe: 'Para quem não tem RA, marque "Participante externo" em vez de digitar EXTERNO no campo RA.'
     };
   }
 
