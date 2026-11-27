@@ -22,3 +22,10 @@ F1 → F2 → F4 → F3 → F7 (em paralelo, em pequenas fatias) → F5 → F6
 - **F3:** como o certificado exibe o período? A carga horária continua sendo total? Em qual semestre ou pasta do Drive fica um evento que cruza semestres?
 - **F8** (pedido em 2026-11-26, depois da F4): RA vazio deve bloquear a linha. Decidir: o Sheets ainda grava "N/A"? O trecho condicional do RA no certificado (F4) continua necessário? Participantes externos sem RA deixam de poder receber certificado?
 - **F5:** onde hospedar o PostgreSQL? Precisa de ferramenta de migração (Flyway)?
+
+## Backlog da F7 (fatias pequenas)
+Vindos do `/revisar` da F4 (2026-11-26), nenhum bloqueante:
+- [ ] `certificado_evento.html`: trocar `th:if="${ra}"` por `th:if="${ra != null}"` (o Thymeleaf trata "false", "off" e "no" como falso).
+- [ ] `GestaoProperties`: `@Validated` + `@NotBlank` em nome, sigla, cidade e imagem, para o backend não subir com configuração incompleta (hoje sairia "promovida pelo null (null)").
+- [ ] `InterpretadorCurso`: recusar na inicialização um apelido repetido em dois cursos (hoje o último vence sem aviso).
+- [ ] `LinhaCsv`: o construtor de 5 argumentos só existe para testes antigos; migrar os testes e removê-lo.
