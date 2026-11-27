@@ -139,7 +139,8 @@ public class EmissaoService {
             // Horas e curso da própria linha (F2, F4): coluna do CSV ou, se vazia, o padrão do formulário.
             // O código do curso da linha segue em cursoPadrao, que o PdfService usa no certificado.
             EmissaoLoteEventoRequestDTO dadosDaLinha = new EmissaoLoteEventoRequestDTO(
-                    requestDTO.nomeEvento(), requestDTO.dataRealizacao(), linha.horas(), linha.curso(), requestDTO.arquivoCsv());
+                    requestDTO.nomeEvento(), requestDTO.dataRealizacao(), requestDTO.dataFim(), linha.horas(), linha.curso(),
+                    requestDTO.arquivoCsv());
 
             try {
                 // Gera, Envia e faz Upload apenas se for novo
@@ -183,7 +184,7 @@ public class EmissaoService {
 
         // 2. Cria um DTO de lote "falso" (sem arquivo) só para o PdfService aceitar os dados do evento
         EmissaoLoteEventoRequestDTO loteDto = new EmissaoLoteEventoRequestDTO(
-                dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria(), curso, null
+                dto.nomeEvento(), dto.dataRealizacao(), dto.dataFim(), dto.cargaHoraria(), curso, null
         );
 
         // 3. Resolve a pasta e checa se já existe (reaproveitando a lógica)

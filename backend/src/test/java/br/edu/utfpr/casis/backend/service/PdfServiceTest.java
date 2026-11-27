@@ -38,7 +38,7 @@ class PdfServiceTest {
     }
 
     private EmissaoLoteEventoRequestDTO evento(String curso) {
-        return new EmissaoLoteEventoRequestDTO("Semana Acadêmica", DATA, 1.5, curso, null);
+        return new EmissaoLoteEventoRequestDTO("Semana Acadêmica", DATA, null, 1.5, curso, null);
     }
 
     /** Texto do HTML sem quebras, espaços repetidos nem {@code <span>}, para comparar frases inteiras. */

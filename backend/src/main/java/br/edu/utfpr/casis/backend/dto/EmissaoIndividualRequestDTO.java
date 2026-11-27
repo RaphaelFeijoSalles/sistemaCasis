@@ -7,7 +7,9 @@ import java.time.LocalDate;
  * Contém os dados do evento e do participante necessários para a geração do certificado.
  *
  * @param nomeEvento Nome do evento ou curso.
- * @param dataRealizacao Data em que o evento ocorreu.
+ * @param dataRealizacao Data de início do evento (para evento de um dia, a única data). Define o
+ *                       semestre da pasta no Drive.
+ * @param dataFim Data de fim do evento (F3), opcional. Ausente ou igual ao início = evento de um dia.
  * @param cargaHoraria Carga horária total do evento.
  * @param nomeParticipante Nome completo do participante.
  * @param emailParticipante E-mail do participante para o qual o certificado será enviado.
@@ -18,6 +20,7 @@ import java.time.LocalDate;
 public record EmissaoIndividualRequestDTO(
         String nomeEvento,
         LocalDate dataRealizacao,
+        LocalDate dataFim,
         Double cargaHoraria,
         String nomeParticipante,
         String emailParticipante,

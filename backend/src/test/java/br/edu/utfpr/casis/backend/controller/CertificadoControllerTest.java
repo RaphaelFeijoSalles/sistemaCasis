@@ -78,6 +78,7 @@ class CertificadoControllerTest {
         verify(emissaoService).preVisualizarLote(argThat((EmissaoLoteEventoRequestDTO dto) ->
                 dto.nomeEvento().equals("Semana Acadêmica")
                         && dto.dataRealizacao().equals(LocalDate.of(2026, 11, 20))
+                        && dto.dataFim() == null
                         && dto.cargaHoraria().equals(1.5)
                         && dto.cursoPadrao() == null
                         && dto.arquivoCsv() != null));
@@ -96,6 +97,23 @@ class CertificadoControllerTest {
                 .andExpect(status().isOk());
 
         verify(emissaoService).preVisualizarLote(argThat((EmissaoLoteEventoRequestDTO dto) -> "CDIA".equals(dto.cursoPadrao())));
+    }
+
+    @Test
+    void deveRepassarDataFimDoFormDataNaEmissaoEmLote() throws Exception {
+        when(emissaoService.processarEmissao(any())).thenReturn(List.of());
+
+        mockMvc.perform(multipart(BASE + "/emitir-lote").file(csv)
+                        .param("nomeEvento", "Semana Acadêmica")
+                        .param("dataRealizacao", "2026-04-01")
+                        .param("dataFim", "2026-04-05")
+                        .param("cargaHoraria", "10")
+                        .header("X-API-KEY", CHAVE))
+                .andExpect(status().isOk());
+
+        verify(emissaoService).processarEmissao(argThat((EmissaoLoteEventoRequestDTO dto) ->
+                dto.dataRealizacao().equals(LocalDate.of(2026, 4, 1))
+                        && LocalDate.of(2026, 4, 5).equals(dto.dataFim())));
     }
 
     @Test
@@ -209,7 +227,26 @@ class CertificadoControllerTest {
                 .andExpect(status().isOk());
 
         verify(emissaoService).processarEmissaoIndividual(argThat((EmissaoIndividualRequestDTO dto) ->
-                "CDIA".equals(dto.cursoParticipante())));
+                "CDIA".equals(dto.cursoParticipante()) && dto.dataFim() == null));
+    }
+
+    @Test
+    void deveRepassarDataFimNoUnitario() throws Exception {
+        when(emissaoService.processarEmissaoIndividual(any()))
+                .thenReturn(new ResultadoEmissaoDTO("Ana", "ana@alunos.utfpr.edu.br", StatusEmissao.SUCESSO, null));
+
+        mockMvc.perform(post(BASE + "/emitir-unitario")
+                        .header("X-API-KEY", CHAVE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nomeEvento":"Semana","dataRealizacao":"2026-04-01","dataFim":"2026-04-05",
+                                 "cargaHoraria":"10","nomeParticipante":"Ana",
+                                 "emailParticipante":"ana@alunos.utfpr.edu.br","raParticipante":"1"}
+                                """))
+                .andExpect(status().isOk());
+
+        verify(emissaoService).processarEmissaoIndividual(argThat((EmissaoIndividualRequestDTO dto) ->
+                LocalDate.of(2026, 4, 5).equals(dto.dataFim())));
     }
 
     @Test

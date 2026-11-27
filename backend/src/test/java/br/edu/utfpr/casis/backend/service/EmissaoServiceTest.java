@@ -97,7 +97,7 @@ class EmissaoServiceTest {
 
     @Test
     void deveRecusarPreVisualizacaoSemArquivo() {
-        EmissaoLoteEventoRequestDTO dto = new EmissaoLoteEventoRequestDTO(EVENTO, DATA, 2.0, null, null);
+        EmissaoLoteEventoRequestDTO dto = new EmissaoLoteEventoRequestDTO(EVENTO, DATA, null, 2.0, null, null);
 
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
                 () -> emissaoService.preVisualizarLote(dto));
@@ -161,7 +161,7 @@ class EmissaoServiceTest {
 
     @Test
     void deveRecusarCursoDoUnitarioInvalidoAntesDeQualquerEfeito() {
-        EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, 2.0,
+        EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, null, 2.0,
                 "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", "ADS");
 
         DadosInvalidosException erro = assertThrows(DadosInvalidosException.class,
@@ -325,7 +325,7 @@ class EmissaoServiceTest {
     @Test
     void unitarioUsaOCursoDoParticipante() {
         prepararDrive(Set.of());
-        EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, 2.0,
+        EmissaoIndividualRequestDTO dto = new EmissaoIndividualRequestDTO(EVENTO, DATA, null, 2.0,
                 "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", "cdia");
 
         emissaoService.processarEmissaoIndividual(dto);
@@ -463,10 +463,10 @@ class EmissaoServiceTest {
     private EmissaoLoteEventoRequestDTO lote(String csv, Double carga, String cursoPadrao) {
         MockMultipartFile arquivo = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
                 csv.getBytes(StandardCharsets.UTF_8));
-        return new EmissaoLoteEventoRequestDTO(EVENTO, DATA, carga, cursoPadrao, arquivo);
+        return new EmissaoLoteEventoRequestDTO(EVENTO, DATA, null, carga, cursoPadrao, arquivo);
     }
 
     private EmissaoIndividualRequestDTO unitario(String nome, String email, Double carga) {
-        return new EmissaoIndividualRequestDTO(EVENTO, DATA, carga, nome, email, "12345", null);
+        return new EmissaoIndividualRequestDTO(EVENTO, DATA, null, carga, nome, email, "12345", null);
     }
 }
