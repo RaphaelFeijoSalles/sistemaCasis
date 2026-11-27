@@ -1,7 +1,7 @@
 ---
 id: F3
 titulo: Eventos longos (data de início e fim)
-status: em andamento    # rascunho | aprovada | em andamento | concluída
+status: concluída       # rascunho | aprovada | em andamento | concluída
 branch: feature/F3-eventos-longos
 criada: 2026-11-27
 ---
@@ -19,17 +19,17 @@ Hoje o evento tem uma única data (`dataRealizacao`). Semanas acadêmicas e curs
 5. O Sheets ganha a coluna `data_fim` no final.
 
 ## 3. Critérios de aceitação
-- [ ] CA1: Dado fim vazio e início 15/03/2026, quando o PDF é gerado, então o texto diz "realizado em 15 de março de 2026".
-- [ ] CA2: Dado início 01/04/2026 e fim 05/04/2026, então "realizado no período de 01 a 05 de abril de 2026".
-- [ ] CA3: Dado 28/04/2026 a 02/05/2026, então "realizado no período de 28 de abril a 02 de maio de 2026".
-- [ ] CA4: Dado 28/12/2026 a 03/01/2027, então "realizado no período de 28 de dezembro de 2026 a 03 de janeiro de 2027".
-- [ ] CA5: Dado fim igual ao início, então o texto é o mesmo do CA1 (evento de um dia).
-- [ ] CA6: Dado fim anterior ao início, quando o lote é pré-visualizado ou emitido (ou o unitário é emitido), então a resposta é 400 com "A data de fim não pode ser anterior à data de início." e nada é enviado.
-- [ ] CA7: Dado fim mais de 366 dias depois do início, então a resposta é 400 com "O evento deve durar no máximo 366 dias." e nada é enviado.
-- [ ] CA8: Dado 28/06/2026 a 03/07/2026, então a pasta usada é `Raiz/2026-1/<Evento>` (semestre do início).
-- [ ] CA9: Dada uma requisição sem o campo `dataFim` (frontend antigo), então a emissão funciona como hoje e o certificado segue o CA1.
-- [ ] CA10: Dado um evento com fim, então a linha do Sheets é `nome | ra | curso | data (início) | evento | carga_horaria | data_fim (dd/MM/yyyy)`; sem fim, `data_fim` fica vazio.
-- [ ] CA11: No frontend, fim anterior ao início ou duração > 366 dias mostra toast `{ titulo, detalhe }` e não chama a API.
+- [x] CA1: Dado fim vazio e início 15/03/2026, quando o PDF é gerado, então o texto diz "realizado em 15 de março de 2026".
+- [x] CA2: Dado início 01/04/2026 e fim 05/04/2026, então "realizado no período de 01 a 05 de abril de 2026".
+- [x] CA3: Dado 28/04/2026 a 02/05/2026, então "realizado no período de 28 de abril a 02 de maio de 2026".
+- [x] CA4: Dado 28/12/2026 a 03/01/2027, então "realizado no período de 28 de dezembro de 2026 a 03 de janeiro de 2027".
+- [x] CA5: Dado fim igual ao início, então o texto é o mesmo do CA1 (evento de um dia).
+- [x] CA6: Dado fim anterior ao início, quando o lote é pré-visualizado ou emitido (ou o unitário é emitido), então a resposta é 400 com "A data de fim não pode ser anterior à data de início." e nada é enviado.
+- [x] CA7: Dado fim mais de 366 dias depois do início, então a resposta é 400 com "O evento deve durar no máximo 366 dias." e nada é enviado.
+- [x] CA8: Dado 28/06/2026 a 03/07/2026, então a pasta usada é `Raiz/2026-1/<Evento>` (semestre do início).
+- [x] CA9: Dada uma requisição sem o campo `dataFim` (frontend antigo), então a emissão funciona como hoje e o certificado segue o CA1.
+- [x] CA10: Dado um evento com fim, então a linha do Sheets é `nome | ra | curso | data (início) | evento | carga_horaria | data_fim (dd/MM/yyyy)`; sem fim, `data_fim` fica vazio.
+- [x] CA11: No frontend, fim anterior ao início ou duração > 366 dias mostra toast `{ titulo, detalhe }` e não chama a API.
 
 ## 4. Fora do escopo
 - Horas por dia ou cálculo de carga a partir das datas.
@@ -79,7 +79,7 @@ Hoje o evento tem uma única data (`dataRealizacao`). Semanas acadêmicas e curs
 - [x] P6 ⚠️ — Proteção da regra de pastas: testes garantindo que `obterOuCriarPastaEvento` recebe a **data de início** mesmo com fim em outro semestre, no lote e no unitário (CA8). Sem mudança de código de produção · arquivos: `EmissaoServiceTest` · commit: `test(drive): pasta do evento longo segue a data de início` · agente: `testador`
 - [x] P7 — Frontend: rótulo "Data de início", campo "Data de fim (opcional)" com `min` = início, validação em `App.jsx` (CA11, mesmas mensagens do backend), `dataFim` no FormData e no JSON do unitário (omitido quando vazio), limpeza do estado · arquivos: `App.jsx`, `components/CertificadoForm.jsx` · teste: `npm run lint` + `npm run build` + conferência manual em localhost pelo desenvolvedor · commit: `feat(front): data de início e de fim do evento` · agente: `dev-frontend`
 - [x] P8 — Guia lateral: explicar início/fim, fim opcional e que a pasta segue o início · arquivos: `components/AjudaEmissao.jsx` · teste: `npm run lint` · commit: `docs(front): ajuda sobre o período do evento` · agente: `dev-frontend`
-- [ ] P9 — Fechamento: `armadilhas.md` (coluna `data_fim` sem cabeçalho na planilha oficial; deploy Render antes da Vercel; pasta pela data de início), `./mvnw test` completo, spec `concluída` · arquivos: `.claude/memory/*`, spec · commit: `docs(spec): conclui F3`
+- [x] P9 — Fechamento: `armadilhas.md` (coluna `data_fim` sem cabeçalho na planilha oficial; deploy Render antes da Vercel; pasta pela data de início), `./mvnw test` completo, spec `concluída` · arquivos: `.claude/memory/*`, spec · commit: `docs(spec): conclui F3`
 
 ## 10. Registro de execução
 - P1: `PeriodoFormatter` + 6 testes (inclui mesmo mês em anos diferentes, sem compactar). Suíte: 183 verdes (sem `contextLoads`).
@@ -90,3 +90,4 @@ Hoje o evento tem uma única data (`dataRealizacao`). Semanas acadêmicas e curs
 - P6 ⚠️: 2 testes (lote e unitário, 28/06 a 03/07/2026) garantem que a pasta recebe a data de início e nunca a de fim. Sem mudança em produção. Suíte: 197 verdes.
 - P7: campos "Data de Início" e "Data de Fim (opcional)" numa linha própria (carga horária foi para a linha de baixo). `validarPeriodo` em `App.jsx` (limite conferido: +366 aceito, +367 recusado). `dataFim` omitido do FormData e do JSON quando vazio. **Desvio do plano:** sem `min` nativo no campo de fim, porque o `<form>` não tem `noValidate` e o navegador bloquearia o envio antes do toast (mesma armadilha da carga horária). lint e build verdes; conferência manual em localhost pendente (desenvolvedor).
 - P8: item "Datas" do guia lateral com os dois formatos e a regra da pasta. lint e build verdes.
+- P9: `armadilhas.md` com pasta pela data de início, contrato do período, deploy da F3, cabeçalho `data_fim` e Java 8 no PATH. Suíte: 197 verdes; `contextLoads` verde e teste manual em localhost ok (desenvolvedor, 2026-11-27).
