@@ -51,6 +51,8 @@ public class PdfService {
      * Gera o certificado em formato PDF para um participante específico em um evento.
      * Renderiza um template HTML com as informações do aluno e evento e, em seguida,
      * converte esse HTML em um array de bytes PDF usando o Flying Saucer.
+     * <p>
+     * Para participante externo (RA {@code EXTERNO}, F8), o certificado não traz RA nem curso.
      *
      * @param aluno Os dados do participante (nome, RA, e-mail) a constar no certificado.
      * @param dadosEvento Os dados do evento (nome, datas de início e fim, carga horária) e o curso do participante em
@@ -85,11 +87,14 @@ public class PdfService {
     /**
      * Renderiza o HTML do certificado, antes da conversão para PDF.
      * Separado de {@link #gerarCertificado} para permitir testar o texto sem gerar o PDF.
+     * <p>
+     * Para participante externo (RA {@code EXTERNO}, sem diferenciar maiúsculas, F8), define {@code externo}
+     * e não resolve o curso: {@code cursoNome} e {@code ra} ficam nulos e o trecho do RA e do curso some do texto.
      *
      * @param aluno Os dados do participante.
      * @param dadosEvento Os dados do evento e o curso do participante em {@code cursoPadrao}.
      * @return O HTML processado pelo Thymeleaf.
-     * @throws DadosInvalidosException Se o curso não for um curso configurado.
+     * @throws DadosInvalidosException Se o curso não for um curso configurado (participante não externo).
      * @throws RuntimeException Se ocorrer erro na leitura da imagem de fundo.
      */
     public String montarHtml(AlunoCertificado aluno, EmissaoLoteEventoRequestDTO dadosEvento) {
@@ -104,11 +109,17 @@ public class PdfService {
         context.setVariable("nomeGestao", gestao.nome());
         context.setVariable("siglaGestao", gestao.sigla());
 
-        // Curso do participante (F4): código já validado; ausente = SI
-        String codigoCurso = ValidadorParticipantes.resolverCurso(dadosEvento.cursoPadrao(), interpretadorCurso);
-        context.setVariable("cursoNome", interpretadorCurso.curso(codigoCurso)
-                .map(GestaoProperties.Curso::nomeCompleto)
-                .orElseThrow(() -> new DadosInvalidosException("Curso inválido: " + codigoCurso)));
+        // Participante externo (F8): sem RA e sem curso no certificado
+        boolean externo = RegistroAcademico.ehExterno(aluno.getRa());
+        context.setVariable("externo", externo);
+
+        // Curso do participante (F4): código já validado; ausente = SI. Externo não tem curso (F8)
+        if (!externo) {
+            String codigoCurso = ValidadorParticipantes.resolverCurso(dadosEvento.cursoPadrao(), interpretadorCurso);
+            context.setVariable("cursoNome", interpretadorCurso.curso(codigoCurso)
+                    .map(GestaoProperties.Curso::nomeCompleto)
+                    .orElseThrow(() -> new DadosInvalidosException("Curso inválido: " + codigoCurso)));
+        }
 
         // Período de realização (F3): "em 15 de março de 2026" ou "no período de 01 a 05 de abril de 2026"
         context.setVariable("periodoRealizacao",
@@ -127,8 +138,8 @@ public class PdfService {
             throw new RuntimeException("Erro ao carregar a imagem de fundo do certificado.", e);
         }
 
-        // RA: sem RA, o trecho "portador(a) do RA ..." some do certificado (F4)
-        context.setVariable("ra", aluno.getRa() != null && !aluno.getRa().isBlank() ? aluno.getRa().trim() : null);
+        // RA: sem RA, o trecho "portador(a) do RA ..." some do certificado (F4); externo nunca mostra "EXTERNO" (F8)
+        context.setVariable("ra", !externo && aluno.getRa() != null && !aluno.getRa().isBlank() ? aluno.getRa().trim() : null);
 
         // 2. Renderiza o HTML
         return templateEngine.process("certificado_evento", context);

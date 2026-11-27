@@ -97,6 +97,44 @@ class PdfServiceTest {
         }
     }
 
+    /** Trecho do {@code texto-descritivo}, para checar o texto sem o restante do HTML. */
+    private String textoDescritivo(String html) {
+        int inicio = html.indexOf("<div class=\"texto-descritivo\">");
+        return html.substring(inicio, html.indexOf("</div>", inicio));
+    }
+
+    @Test
+    void deveOmitirRaECursoQuandoParticipanteExterno() { // CA5
+        for (String ra : new String[]{"EXTERNO", " externo ", "Externo"}) {
+            String html = html(aluno(ra), evento(null));
+            String texto = textoDescritivo(html);
+
+            assertThat(html)
+                    .doesNotContain("portador(a) do RA")
+                    .doesNotContain("aluno(a) do curso de")
+                    .doesNotContain("EXTERNO")
+                    .doesNotContain("Sistemas de Informação")
+                    .contains("<div class=\"texto-descritivo\"> participou da <strong>Semana Acadêmica</strong>, promovida pelo");
+            assertThat(texto.toLowerCase()).doesNotContain("externo");
+        }
+    }
+
+    @Test
+    void deveOmitirCursoQuandoParticipanteExternoComCursoPadrao() { // CA5, defensivo
+        assertThat(html(aluno("EXTERNO"), evento("CDIA")))
+                .doesNotContain("aluno(a) do curso de")
+                .doesNotContain("Ciência de Dados")
+                .doesNotContain("portador(a) do RA")
+                .contains("<div class=\"texto-descritivo\"> participou da <strong>Semana Acadêmica</strong>");
+    }
+
+    @Test
+    void deveGerarPdfQuandoParticipanteExterno() { // CA5
+        byte[] pdf = pdfService.gerarCertificado(aluno("EXTERNO"), evento(null));
+
+        assertThat(new String(pdf, 0, 5, StandardCharsets.ISO_8859_1)).isEqualTo("%PDF-");
+    }
+
     @Test
     void usaAImagemDeFundoConfigurada() {
         assertThat(html(aluno("12345"), evento("SI"))).contains("src=\"data:image/png;base64,");
