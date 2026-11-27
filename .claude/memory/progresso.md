@@ -12,7 +12,7 @@ Atualize esta tabela sempre que uma spec mudar de status.
 | F5 | Banco de dados (PostgreSQL + JPA): eventos, participantes, histórico; ativar `FonteDadosBancoStrategy` | F1 | backlog | — |
 | F6 | Check-in via QR Code com painel de aprovação e emissão em massa | F5 | backlog | — |
 | F7 | Qualidade e segurança: testes com mocks, validação de DTOs, tratamento de erros, autenticação | contínuo | backlog | — |
-| F8 | RA obrigatório: RA vazio vira ERRO no lote (hoje é AVISO, regra da F1) e o backend passa a exigir RA no unitário (hoje só o frontend exige); externos por RA = `EXTERNO` | F4 | em andamento | [F8-ra-obrigatorio.md](../specs/F8-ra-obrigatorio.md) |
+| F8 | RA obrigatório: RA vazio vira ERRO no lote (hoje é AVISO, regra da F1) e o backend passa a exigir RA no unitário (hoje só o frontend exige); externos por RA = `EXTERNO` | F4 | concluída | [F8-ra-obrigatorio.md](../specs/F8-ra-obrigatorio.md) |
 
 ## Ordem sugerida
 F1 → F2 → F4 → F3 → F7 (em paralelo, em pequenas fatias) → F5 → F6

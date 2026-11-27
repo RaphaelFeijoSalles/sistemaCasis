@@ -1,7 +1,7 @@
 ---
 id: F8
 titulo: RA obrigatório, com marcador de participante externo
-status: em andamento        # rascunho | aprovada | em andamento | concluída
+status: concluída           # rascunho | aprovada | em andamento | concluída
 branch: feature/F8-ra-obrigatorio
 criada: 2026-11-27
 ---
@@ -21,16 +21,16 @@ Hoje o RA vazio é só um AVISO no lote (regra da F1), e no unitário só o fron
 7. O RA não tem validação de formato: qualquer texto não vazio vale.
 
 ## 3. Critérios de aceitação
-- [ ] CA1: Dado um CSV sem a coluna RA, quando ele é pré-visualizado ou emitido, então a resposta é 400 e nada é enviado.
-- [ ] CA2: Dada uma linha com RA vazio, então ela fica com ERRO "RA não informado" e não é emitida (o AVISO de mesmo texto deixa de existir).
-- [ ] CA3: Dada uma linha com RA `externo` ou ` EXTERNO `, sem Curso, então ela fica com AVISO "Participante externo" e é emitida.
-- [ ] CA4: Dada uma linha com RA `EXTERNO` e a coluna Curso preenchida (com um curso válido ou não), então ela fica com ERRO "Participante externo não tem curso" e não é emitida.
-- [ ] CA5: Dado um externo, quando o PDF é gerado, então o texto não contém "portador(a) do RA", "aluno(a) do curso de" nem "EXTERNO".
-- [ ] CA6: Dado um aluno com RA, então o certificado continua igual ao de hoje (RA e curso).
-- [ ] CA7: Dado um externo, então a linha do Sheets é `nome | EXTERNO | (vazio) | data | evento | carga_horaria | data_fim`.
-- [ ] CA8: Dado um unitário com `raParticipante` nulo ou em branco, então a resposta é 400 e nada é enviado.
-- [ ] CA9: Dado um unitário com `raParticipante = "EXTERNO"` e sem `cursoParticipante`, então ele é emitido conforme o CA5 e o CA7.
-- [ ] CA10: No frontend, marcar **Participante externo** desabilita e limpa RA e Curso. O guia lateral, a dica da dropzone e a mensagem de cabeçalho inválido passam a dizer que o RA é obrigatório e explicam o `EXTERNO`.
+- [x] CA1: Dado um CSV sem a coluna RA, quando ele é pré-visualizado ou emitido, então a resposta é 400 e nada é enviado.
+- [x] CA2: Dada uma linha com RA vazio, então ela fica com ERRO "RA não informado" e não é emitida (o AVISO de mesmo texto deixa de existir).
+- [x] CA3: Dada uma linha com RA `externo` ou ` EXTERNO `, sem Curso, então ela fica com AVISO "Participante externo" e é emitida.
+- [x] CA4: Dada uma linha com RA `EXTERNO` e a coluna Curso preenchida (com um curso válido ou não), então ela fica com ERRO "Participante externo não tem curso" e não é emitida.
+- [x] CA5: Dado um externo, quando o PDF é gerado, então o texto não contém "portador(a) do RA", "aluno(a) do curso de" nem "EXTERNO".
+- [x] CA6: Dado um aluno com RA, então o certificado continua igual ao de hoje (RA e curso).
+- [x] CA7: Dado um externo, então a linha do Sheets é `nome | EXTERNO | (vazio) | data | evento | carga_horaria | data_fim`.
+- [x] CA8: Dado um unitário com `raParticipante` nulo ou em branco, então a resposta é 400 e nada é enviado.
+- [x] CA9: Dado um unitário com `raParticipante = "EXTERNO"` e sem `cursoParticipante`, então ele é emitido conforme o CA5 e o CA7.
+- [x] CA10: No frontend, marcar **Participante externo** desabilita e limpa RA e Curso. O guia lateral, a dica da dropzone e a mensagem de cabeçalho inválido passam a dizer que o RA é obrigatório e explicam o `EXTERNO`.
 
 ## 4. Fora do escopo
 - Validar o formato ou o tamanho do RA.
@@ -94,3 +94,4 @@ Hoje o RA vazio é só um AVISO no lote (regra da F1), e no unitário só o fron
 - 2026-11-27 · P9 · Textos do RA obrigatório: guia lateral (coluna RA obrigatória com `EXTERNO`, item novo "Participante externo" com Curso vazio, erros/avisos da prévia, item "E-mail e RA" do unitário com o checkbox), dica da dropzone e detalhe padrão do 400 do lote em `App.jsx`. Só texto. Lint e build sem avisos.
 - 2026-11-27 · P10 · `armadilhas.md`: convenção `EXTERNO` (críticas), RA obrigatório e deploy da F8 (contrato), `extrairAlunos` sem a regra para a F5 (código morto). Fora do plano: ressalva "(exceto participante externo)" no item "Curso por participante" do guia (commit próprio). Suíte sem `contextLoads`: 251 verdes; lint e build limpos.
 - 2026-11-27 · `/revisar` · Sem bloqueios. Resolvidos: (1) `EXTERNO` digitado no RA do unitário sem o checkbox agora dá toast orientando a marcar "Participante externo" (antes ia com curso e o backend dava 400); (2) prévia mostra Curso "Externo"; (3) `LinhaValidadaDTO.ra` sai normalizado (`91e9ce7`); (4) seção 6 completada; (5) comentário no CSS de campo desabilitado. Marcador do frontend movido para `registroAcademico.js` (`7063fb8`). 251 testes verdes; lint e build limpos.
+- 2026-11-27 · Fechamento · Teste manual em localhost (roteiro do P8 + lote com externo, RA vazio e externo com curso; PDF do externo conferido) e `contextLoads` ok, rodados pelo desenvolvedor. Spec concluída.
