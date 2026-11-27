@@ -55,7 +55,9 @@ Hoje o RA vazio é só um AVISO no lote (regra da F1), e no unitário só o fron
 | `service/EmissaoService.java` | unitário e lote: externo sem curso; Sheets com `EXTERNO` e curso vazio |
 | `service/GoogleSheetsService.java` | curso vazio fica vazio para externo (hoje vira "Sistemas de Informação"); achado no `/planejar` |
 | `service/PdfService.java` + `certificado_evento.html` | variável `externo` que omite o trecho RA/curso |
-| `frontend/src/App.jsx`, `CertificadoForm.jsx` | checkbox externo; validação; não envia o curso |
+| `frontend/src/App.jsx`, `CertificadoForm.jsx`, `App.css` | checkbox externo; validação; não envia o curso; estilo do checkbox e dos campos desabilitados |
+| `frontend/src/registroAcademico.js` (novo, `/revisar`) | `RA_EXTERNO` e `ehExterno`, usados pelo `App.jsx` e pela prévia |
+| `dto/LinhaValidadaDTO.java`, `PreVisualizacaoLote.jsx` (`/revisar`) | RA normalizado na prévia; Curso "Externo" para externo |
 | `AjudaEmissao.jsx`, dicas e mensagens | textos do RA obrigatório e do `EXTERNO` |
 
 ## 7. Riscos e regras críticas tocadas
@@ -91,3 +93,4 @@ Hoje o RA vazio é só um AVISO no lote (regra da F1), e no unitário só o fron
 - 2026-11-27 · P8 · Checkbox **Participante externo** no unitário (`participanteExterno` no `formData`, `handleExternoChange`): marcado desabilita e limpa RA e Curso (opção "Sem curso (participante externo)"), dica `form-hint`; desmarcado volta RA vazio e curso `CURSO_PADRAO`. `validarFormulario` só exige RA de não externo (detalhe orienta a marcar o checkbox). Payload: externo envia `raParticipante: "EXTERNO"` (`RA_EXTERNO`) sem a chave `cursoParticipante`; `participanteExterno` nunca vai ao backend. Reset zera o estado; CSS de checkbox e campo desabilitado em `App.css`. Lint e build sem avisos; teste manual pendente com o desenvolvedor.
 - 2026-11-27 · P9 · Textos do RA obrigatório: guia lateral (coluna RA obrigatória com `EXTERNO`, item novo "Participante externo" com Curso vazio, erros/avisos da prévia, item "E-mail e RA" do unitário com o checkbox), dica da dropzone e detalhe padrão do 400 do lote em `App.jsx`. Só texto. Lint e build sem avisos.
 - 2026-11-27 · P10 · `armadilhas.md`: convenção `EXTERNO` (críticas), RA obrigatório e deploy da F8 (contrato), `extrairAlunos` sem a regra para a F5 (código morto). Fora do plano: ressalva "(exceto participante externo)" no item "Curso por participante" do guia (commit próprio). Suíte sem `contextLoads`: 251 verdes; lint e build limpos.
+- 2026-11-27 · `/revisar` · Sem bloqueios. Resolvidos: (1) `EXTERNO` digitado no RA do unitário sem o checkbox agora dá toast orientando a marcar "Participante externo" (antes ia com curso e o backend dava 400); (2) prévia mostra Curso "Externo"; (3) `LinhaValidadaDTO.ra` sai normalizado (`91e9ce7`); (4) seção 6 completada; (5) comentário no CSS de campo desabilitado. Marcador do frontend movido para `registroAcademico.js` (`7063fb8`). 251 testes verdes; lint e build limpos.

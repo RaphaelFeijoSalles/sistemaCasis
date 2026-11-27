@@ -25,7 +25,7 @@ F1 → F2 → F4 → F3 → F7 (em paralelo, em pequenas fatias) → F5 → F6
 
 ## Backlog da F7 (fatias pequenas)
 Vindos do `/revisar` da F4 (2026-11-26), nenhum bloqueante:
-- [ ] `certificado_evento.html`: trocar `th:if="${ra}"` por `th:if="${ra != null}"` (o Thymeleaf trata "false", "off" e "no" como falso).
+- [ ] `certificado_evento.html`: trocar `th:if="${ra}"` por `th:if="${ra != null}"` (o Thymeleaf trata "false", "off" e "no" como falso). Continua valendo depois da F8: o trecho agora fica dentro de `th:unless="${externo}"` e o `ra` nunca recebe "EXTERNO", mas um RA literal "false"/"off"/"no" ainda some.
 - [ ] `GestaoProperties`: `@Validated` + `@NotBlank` em nome, sigla, cidade e imagem, para o backend não subir com configuração incompleta (hoje sairia "promovida pelo null (null)").
 - [ ] `InterpretadorCurso`: recusar na inicialização um apelido repetido em dois cursos (hoje o último vence sem aviso).
 - [ ] `LinhaCsv`: o construtor de 5 argumentos só existe para testes antigos; migrar os testes e removê-lo.
@@ -37,3 +37,7 @@ Vindos do `/revisar` da F3 (2026-11-27), nenhum bloqueante:
 - [ ] Mensagem de data ausente: o backend diz "A data de realização é obrigatória." (`ValidadorParticipantes.validarEvento`) e o frontend diz "Data de início obrigatória". Alinhar o backend (e o teste) para "data de início".
 - [ ] `PreVisualizacaoLote.jsx`: mostrar os dados do evento (nome, período como sairá no certificado, carga) antes da confirmação do lote.
 - [ ] `EmissaoService`: logar o período do evento (início/fim) no começo do lote e do unitário, para diagnóstico no Render.
+
+Vindos do `/revisar` da F8 (2026-11-27): os 5 itens foram resolvidos na branch. Sobrou:
+- [ ] `EmissaoService` (lote): `.ra(RegistroAcademico.normalizar(linha.ra()))` ficou redundante desde que `LinhaValidadaDTO.ra` sai normalizado (`91e9ce7`). Inofensivo (`normalizar` é idempotente); simplificar para `linha.ra()` se quiser.
+- [ ] Frontend sem testes automatizados: `ehExterno` (`registroAcademico.js`), `validarFormulario` e o payload do unitário só têm verificação manual. Avaliar Vitest numa fatia própria.
