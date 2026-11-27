@@ -7,7 +7,7 @@ Atualize esta tabela sempre que uma spec mudar de status.
 |---|---|---|---|---|
 | F1 | Etapa de validação antes do disparo: pré-visualização do lote e validação de dados em Java (duplicados, e-mails, vazios, horas), com confirmação explícita antes de gerar PDFs e enviar e-mails | — | concluída | [F1-validacao-pre-disparo.md](../specs/F1-validacao-pre-disparo.md) |
 | F2 | Planilha com horas por participante (lote com cargas horárias diferentes) | F1 | concluída | [F2-horas-por-participante.md](../specs/F2-horas-por-participante.md) |
-| F3 | Eventos longos: data de início e fim | — | backlog | — |
+| F3 | Eventos longos: data de início e fim | — | aprovada | [F3-eventos-longos.md](../specs/F3-eventos-longos.md) |
 | F4 | Gestão configurável (nome, sigla, cidade, fundo, cursos) e curso por participante na planilha | F2 | concluída | [F4-gestao-configuravel-e-curso.md](../specs/F4-gestao-configuravel-e-curso.md) |
 | F5 | Banco de dados (PostgreSQL + JPA): eventos, participantes, histórico; ativar `FonteDadosBancoStrategy` | F1 | backlog | — |
 | F6 | Check-in via QR Code com painel de aprovação e emissão em massa | F5 | backlog | — |
@@ -19,7 +19,7 @@ F1 → F2 → F4 → F3 → F7 (em paralelo, em pequenas fatias) → F5 → F6
 
 ## Pontos em aberto (resolver na spec, perguntando ao dono do projeto)
 - ~~**F4:** "modelo de certificado"~~: resolvido em 2026-11-26 (gestão configurável + curso por linha; veja a spec).
-- **F3:** como o certificado exibe o período? A carga horária continua sendo total? Em qual semestre ou pasta do Drive fica um evento que cruza semestres?
+- ~~**F3:** período no certificado, carga total, semestre do Drive~~: resolvido em 2026-11-27 (veja a spec).
 - **F8** (pedido em 2026-11-26, depois da F4): RA vazio deve bloquear a linha. Decidir: o Sheets ainda grava "N/A"? O trecho condicional do RA no certificado (F4) continua necessário? Participantes externos sem RA deixam de poder receber certificado?
 - **F5:** onde hospedar o PostgreSQL? Precisa de ferramenta de migração (Flyway)?
 
