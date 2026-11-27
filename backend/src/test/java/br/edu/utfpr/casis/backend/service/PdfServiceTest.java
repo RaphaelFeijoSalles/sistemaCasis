@@ -55,11 +55,21 @@ class PdfServiceTest {
                 .contains("portador(a) do RA <strong>12345</strong> aluno(a) do curso de Bacharelado em Sistemas de Informação,")
                 .contains("participou da <strong>Semana Acadêmica</strong>")
                 .contains("promovida pelo Diretório Acadêmico de Computação (DACOMP)")
-                .contains("20 de novembro de 2026")
+                .contains("(DACOMP) realizado em 20 de novembro de 2026, com carga horária total")
                 .contains("<strong>1 hora e 30 minutos</strong>")
                 .containsPattern("Londrina, \\d{2} de \\p{L}+ de \\d{4}")
                 .doesNotContain("CASIS")
                 .doesNotContain("Centro Acadêmico de Sistemas de Informação");
+    }
+
+    @Test
+    void eventoDeVariosDiasMostraOPeriodo() {
+        EmissaoLoteEventoRequestDTO evento = new EmissaoLoteEventoRequestDTO("Semana Acadêmica",
+                LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 5), 10.0, "SI", null);
+
+        assertThat(html(aluno("12345"), evento))
+                .contains("(DACOMP) realizado no período de 01 a 05 de abril de 2026, com carga horária total de <strong>10 horas</strong>")
+                .doesNotContain("realizado em");
     }
 
     @Test

@@ -53,7 +53,7 @@ public class PdfService {
      * converte esse HTML em um array de bytes PDF usando o Flying Saucer.
      *
      * @param aluno Os dados do participante (nome, RA, e-mail) a constar no certificado.
-     * @param dadosEvento Os dados do evento (nome, data, carga horária) e o curso do participante em
+     * @param dadosEvento Os dados do evento (nome, datas de início e fim, carga horária) e o curso do participante em
      *                    {@code cursoPadrao} (código; ausente = "SI").
      * @return Um array de bytes que representa o arquivo PDF do certificado.
      * @throws RuntimeException Se ocorrer erro na leitura da imagem de fundo ou na geração do PDF.
@@ -110,9 +110,11 @@ public class PdfService {
                 .map(GestaoProperties.Curso::nomeCompleto)
                 .orElseThrow(() -> new DadosInvalidosException("Curso inválido: " + codigoCurso)));
 
-        // Formata a data de realização (Ex: 15 de Março de 2026)
+        // Período de realização (F3): "em 15 de março de 2026" ou "no período de 01 a 05 de abril de 2026"
+        context.setVariable("periodoRealizacao",
+                PeriodoFormatter.formatar(dadosEvento.dataRealizacao(), dadosEvento.dataFim()));
+
         DateTimeFormatter diaMesAno = DateTimeFormatter.ofPattern("dd' de 'MMMM' de 'yyyy", PT_BR);
-        context.setVariable("dataRealizacao", dadosEvento.dataRealizacao().format(diaMesAno));
 
         // Formata a data automática do rodapé ("Londrina, 15 de Março de 2026"), com a cidade configurada
         context.setVariable("dataEmissao", gestao.cidade() + ", " + LocalDate.now().format(diaMesAno));

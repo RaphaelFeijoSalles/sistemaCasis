@@ -78,7 +78,7 @@
     <div class="nome-aluno" th:text="${nomeAluno}">Alan Turing da Silva</div>
 
     <div class="texto-descritivo">
-        <th:block th:if="${ra}">portador(a) do RA <strong th:text="${ra}">0000000</strong> </th:block>aluno(a) do curso de <span th:text="${cursoNome}">Bacharelado em Sistemas de Informação</span>, participou da <strong th:text="${nomeEvento}">I SEMANA DE TECNOLOGIA</strong>, promovida pelo <span th:text="${nomeGestao}">Diretório Acadêmico de Computação</span> (<span th:text="${siglaGestao}">DACOMP</span>) realizado no período de <span th:text="${dataRealizacao}">01 a 05 de Abril de 2026</span>, com carga horária total de <strong th:text="${cargaHoraria}">10 horas</strong>.
+        <th:block th:if="${ra}">portador(a) do RA <strong th:text="${ra}">0000000</strong> </th:block>aluno(a) do curso de <span th:text="${cursoNome}">Bacharelado em Sistemas de Informação</span>, participou da <strong th:text="${nomeEvento}">I SEMANA DE TECNOLOGIA</strong>, promovida pelo <span th:text="${nomeGestao}">Diretório Acadêmico de Computação</span> (<span th:text="${siglaGestao}">DACOMP</span>) realizado <span th:text="${periodoRealizacao}">no período de 01 a 05 de abril de 2026</span>, com carga horária total de <strong th:text="${cargaHoraria}">10 horas</strong>.
     </div>
 
     <div class="data-assinatura" th:text="${dataEmissao}">
