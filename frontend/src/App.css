@@ -137,6 +137,38 @@
   color: var(--success);
 }
 
+.form-group input:disabled,
+.form-group select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Checkbox (F8: participante externo). Fora de .form-group para não herdar width: 100% */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--success);
+  cursor: pointer;
+}
+
+.checkbox-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.checkbox-field {
+  margin-bottom: 0.8rem;
+}
+
 .toast-message {
   display: flex;
   flex-direction: column;

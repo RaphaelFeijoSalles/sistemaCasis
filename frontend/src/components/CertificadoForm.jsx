@@ -2,7 +2,7 @@ import { useDropzone } from 'react-dropzone';
 import { useCallback } from 'react';
 import { AlertCircle, Eye, Loader2, FileSpreadsheet, KeyRound, UploadCloud, User } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { CURSOS } from '../cursos';
+import { CURSOS, CURSO_PADRAO } from '../cursos';
 
 export default function CertificadoForm({
                                             formData, setFormData, arquivoCsv, setArquivoCsv, apiKey, setApiKey, isSubmitting, onSubmit,
@@ -12,6 +12,17 @@ export default function CertificadoForm({
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // Externo (F8): sem RA e sem curso. Ao desmarcar, o RA volta vazio e o curso volta ao padrão.
+    const handleExternoChange = (e) => {
+        const { checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            participanteExterno: checked,
+            raParticipante: '',
+            cursoParticipante: checked ? '' : CURSO_PADRAO
+        }));
     };
 
     const descreverRejeicao = (rejection) => {
@@ -114,8 +125,13 @@ export default function CertificadoForm({
                 </div>
             ) : (
                 <div className="form-group">
-                    <label>Curso do Participante</label>
-                    <select name="cursoParticipante" required value={formData.cursoParticipante} onChange={handleInputChange}>
+                    <label htmlFor="cursoParticipante">Curso do Participante</label>
+                    <select
+                        id="cursoParticipante" name="cursoParticipante"
+                        required={!formData.participanteExterno} disabled={formData.participanteExterno}
+                        value={formData.cursoParticipante} onChange={handleInputChange}
+                    >
+                        {formData.participanteExterno && <option value="">Sem curso (participante externo)</option>}
                         {CURSOS.map(curso => <option key={curso.codigo} value={curso.codigo}>{curso.nome}</option>)}
                     </select>
                 </div>
@@ -161,9 +177,27 @@ export default function CertificadoForm({
                             <small className="form-hint">Use um e-mail válido. É para ele que o certificado será enviado.</small>
                         </div>
                         <div className="form-group" style={{ flex: 1 }}>
-                            <label>RA</label>
-                            <input type="text" name="raParticipante" required placeholder="Ex: 2345678" value={formData.raParticipante} onChange={handleInputChange} />
+                            <label htmlFor="raParticipante">RA</label>
+                            <input
+                                type="text" id="raParticipante" name="raParticipante"
+                                required={!formData.participanteExterno} disabled={formData.participanteExterno}
+                                placeholder={formData.participanteExterno ? 'Externo' : 'Ex: 2345678'}
+                                value={formData.raParticipante} onChange={handleInputChange}
+                            />
                         </div>
+                    </div>
+                    <div className="checkbox-field">
+                        <div className="checkbox-group">
+                            <input
+                                type="checkbox" id="participanteExterno" name="participanteExterno"
+                                checked={formData.participanteExterno} onChange={handleExternoChange}
+                                aria-describedby={formData.participanteExterno ? 'participanteExternoDica' : undefined}
+                            />
+                            <label htmlFor="participanteExterno">Participante externo</label>
+                        </div>
+                        {formData.participanteExterno && (
+                            <small id="participanteExternoDica" className="form-hint">Sem RA e sem curso no certificado.</small>
+                        )}
                     </div>
                 </div>
             )}

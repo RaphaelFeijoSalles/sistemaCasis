@@ -10,6 +10,9 @@ import { CURSO_PADRAO } from './cursos';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+// Marcador de participante externo (F8), igual a RegistroAcademico.EXTERNO no backend
+const RA_EXTERNO = 'EXTERNO';
+
 const campoVazio = (valor) => !String(valor ?? '').trim();
 
 const emailValido = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email ?? '').trim());
@@ -130,10 +133,10 @@ const validarFormulario = ({ formData, arquivoCsv, apiKey, emissaoTipo }) => {
     };
   }
 
-  if (campoVazio(formData.raParticipante)) {
+  if (!formData.participanteExterno && campoVazio(formData.raParticipante)) {
     return {
       titulo: 'RA obrigatório',
-      detalhe: 'Informe o Registro Acadêmico do participante. Caso ele não tenha RA, confirme o procedimento antes de emitir.'
+      detalhe: 'Informe o Registro Acadêmico do participante. Se ele não tiver RA (palestrante, aluno de outra instituição), marque "Participante externo".'
     };
   }
 
@@ -263,7 +266,7 @@ function App() {
   const [formData, setFormData] = useState({
     nomeEvento: '', dataRealizacao: '', dataFim: '', cargaHoraria: '',
     nomeParticipante: '', emailParticipante: '', raParticipante: '',
-    cursoPadrao: CURSO_PADRAO, cursoParticipante: CURSO_PADRAO
+    cursoPadrao: CURSO_PADRAO, cursoParticipante: CURSO_PADRAO, participanteExterno: false
   });
   const [arquivoCsv, setArquivoCsv] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -381,14 +384,20 @@ function App() {
     const toastId = toast.loading('Gerando certificado unitário, enviando e-mail e registrando backup...');
 
     try {
+      // participanteExterno é só do formulário: EmissaoIndividualRequestDTO não tem esse campo
+      const { participanteExterno, ...dadosFormulario } = formData;
       const payload = {
-        ...formData,
+        ...dadosFormulario,
         nomeEvento: formData.nomeEvento.trim(),
         cargaHoraria: String(formData.cargaHoraria).replace(',', '.'),
         nomeParticipante: formData.nomeParticipante.trim(),
         emailParticipante: formData.emailParticipante.trim(),
-        raParticipante: formData.raParticipante.trim()
+        raParticipante: participanteExterno ? RA_EXTERNO : formData.raParticipante.trim()
       };
+      // Externo (F8) não tem curso: a chave não vai, senão o backend responde 400
+      if (participanteExterno) {
+        delete payload.cursoParticipante;
+      }
       // Fim vazio = evento de um dia: o campo não vai, como no frontend anterior à F3
       if (campoVazio(payload.dataFim)) {
         delete payload.dataFim;
@@ -425,7 +434,7 @@ function App() {
     setFormData({
       nomeEvento: '', dataRealizacao: '', dataFim: '', cargaHoraria: '',
       nomeParticipante: '', emailParticipante: '', raParticipante: '',
-      cursoPadrao: CURSO_PADRAO, cursoParticipante: CURSO_PADRAO
+      cursoPadrao: CURSO_PADRAO, cursoParticipante: CURSO_PADRAO, participanteExterno: false
     });
   };
 
