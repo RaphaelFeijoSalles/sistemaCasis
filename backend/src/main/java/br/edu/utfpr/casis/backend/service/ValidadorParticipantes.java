@@ -114,21 +114,32 @@ final class ValidadorParticipantes {
         return resultado;
     }
 
+    /** Duração máxima de um evento (F3): data de fim até 366 dias depois do início. */
+    static final int MAXIMO_DIAS_EVENTO = 366;
+
     /**
      * Valida os dados do evento informados no formulário.
      * Interrompe no primeiro problema encontrado.
      *
      * @param nomeEvento nome oficial do evento.
-     * @param dataRealizacao data em que o evento ocorreu.
+     * @param dataRealizacao data de início do evento.
+     * @param dataFim data de fim do evento (F3), opcional; se informada, não pode ser anterior ao início
+     *                nem passar de {@link #MAXIMO_DIAS_EVENTO} dias depois dele.
      * @param cargaHoraria carga horária em horas decimais, entre 1 minuto e {@link InterpretadorHoras#MAXIMO_HORAS} horas.
      * @throws DadosInvalidosException se algum dado estiver ausente ou inválido.
      */
-    static void validarEvento(String nomeEvento, LocalDate dataRealizacao, Double cargaHoraria) {
+    static void validarEvento(String nomeEvento, LocalDate dataRealizacao, LocalDate dataFim, Double cargaHoraria) {
         if (nomeEvento == null || nomeEvento.isBlank()) {
             throw new DadosInvalidosException("O nome do evento é obrigatório.");
         }
         if (dataRealizacao == null) {
             throw new DadosInvalidosException("A data de realização é obrigatória.");
+        }
+        if (dataFim != null && dataFim.isBefore(dataRealizacao)) {
+            throw new DadosInvalidosException("A data de fim não pode ser anterior à data de início.");
+        }
+        if (dataFim != null && dataFim.isAfter(dataRealizacao.plusDays(MAXIMO_DIAS_EVENTO))) {
+            throw new DadosInvalidosException("A data de fim deve ser de no máximo " + MAXIMO_DIAS_EVENTO + " dias depois da data de início.");
         }
         if (cargaHoraria != null && Double.isFinite(cargaHoraria) && cargaHoraria > InterpretadorHoras.MAXIMO_HORAS) {
             throw new DadosInvalidosException("A carga horária deve ser de no máximo 1.000 horas.");

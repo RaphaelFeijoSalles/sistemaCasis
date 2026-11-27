@@ -61,7 +61,8 @@ public class EmissaoService {
      * Usado pela pré-visualização e pela emissão, para que as duas apliquem as mesmas regras.
      */
     private List<LinhaValidadaDTO> validarLote(EmissaoLoteEventoRequestDTO requestDTO) {
-        ValidadorParticipantes.validarEvento(requestDTO.nomeEvento(), requestDTO.dataRealizacao(), requestDTO.cargaHoraria());
+        ValidadorParticipantes.validarEvento(requestDTO.nomeEvento(), requestDTO.dataRealizacao(), requestDTO.dataFim(),
+                requestDTO.cargaHoraria());
         if (requestDTO.arquivoCsv() == null || requestDTO.arquivoCsv().isEmpty()) {
             throw new DadosInvalidosException("O arquivo CSV é obrigatório.");
         }
@@ -139,7 +140,8 @@ public class EmissaoService {
             // Horas e curso da própria linha (F2, F4): coluna do CSV ou, se vazia, o padrão do formulário.
             // O código do curso da linha segue em cursoPadrao, que o PdfService usa no certificado.
             EmissaoLoteEventoRequestDTO dadosDaLinha = new EmissaoLoteEventoRequestDTO(
-                    requestDTO.nomeEvento(), requestDTO.dataRealizacao(), linha.horas(), linha.curso(), requestDTO.arquivoCsv());
+                    requestDTO.nomeEvento(), requestDTO.dataRealizacao(), requestDTO.dataFim(), linha.horas(), linha.curso(),
+                    requestDTO.arquivoCsv());
 
             try {
                 // Gera, Envia e faz Upload apenas se for novo
@@ -149,7 +151,7 @@ public class EmissaoService {
 
                 // Registra na planilha de controle, com o nome curto do curso (F4)
                 sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), nomeCurtoDoCurso(linha.curso()),
-                        requestDTO.dataRealizacao(), requestDTO.nomeEvento(), linha.horas());
+                        requestDTO.dataRealizacao(), requestDTO.nomeEvento(), linha.horas(), requestDTO.dataFim());
 
                 relatorio.add(new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), StatusEmissao.SUCESSO, null));
 
@@ -170,7 +172,7 @@ public class EmissaoService {
      */
     public ResultadoEmissaoDTO processarEmissaoIndividual(EmissaoIndividualRequestDTO dto) {
         // 0. Valida antes de qualquer efeito (F1). Lança DadosInvalidosException se algo estiver inválido.
-        ValidadorParticipantes.validarEvento(dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria());
+        ValidadorParticipantes.validarEvento(dto.nomeEvento(), dto.dataRealizacao(), dto.dataFim(), dto.cargaHoraria());
         ValidadorParticipantes.validarParticipante(dto.nomeParticipante(), dto.emailParticipante());
         String curso = ValidadorParticipantes.resolverCurso(dto.cursoParticipante(), interpretadorCurso);
 
@@ -183,7 +185,7 @@ public class EmissaoService {
 
         // 2. Cria um DTO de lote "falso" (sem arquivo) só para o PdfService aceitar os dados do evento
         EmissaoLoteEventoRequestDTO loteDto = new EmissaoLoteEventoRequestDTO(
-                dto.nomeEvento(), dto.dataRealizacao(), dto.cargaHoraria(), curso, null
+                dto.nomeEvento(), dto.dataRealizacao(), dto.dataFim(), dto.cargaHoraria(), curso, null
         );
 
         // 3. Resolve a pasta e checa se já existe (reaproveitando a lógica)
@@ -203,7 +205,7 @@ public class EmissaoService {
             
             // Registra na planilha de controle, com o nome curto do curso (F4)
             sheetsService.registrarEmissao(aluno.getNome(), aluno.getRa(), nomeCurtoDoCurso(curso),
-                    dto.dataRealizacao(), dto.nomeEvento(), dto.cargaHoraria());
+                    dto.dataRealizacao(), dto.nomeEvento(), dto.cargaHoraria(), dto.dataFim());
 
             return new ResultadoEmissaoDTO(aluno.getNome(), aluno.getEmail(), br.edu.utfpr.casis.backend.dto.StatusEmissao.SUCESSO, null);
         } catch (Exception e) {

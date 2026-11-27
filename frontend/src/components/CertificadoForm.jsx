@@ -73,12 +73,21 @@ export default function CertificadoForm({
                 <input type="text" name="nomeEvento" required placeholder="Ex: Recepção de Calouros" value={formData.nomeEvento} onChange={handleInputChange} />
             </div>
 
+            {/* Período (F3): fim opcional; sem min nativo, para a validação em App.jsx mostrar o toast */}
             <div className="responsive-row">
                 <div className="form-group" style={{ flex: 1 }}>
-                    <label>Data de Realização</label>
+                    <label>Data de Início</label>
                     <input type="date" name="dataRealizacao" required value={formData.dataRealizacao} onChange={handleInputChange}/>
-                    <small className="form-hint">Data exibida por extenso no certificado.</small>
+                    <small className="form-hint">Para evento de um dia, basta esta data.</small>
                 </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                    <label>Data de Fim (opcional)</label>
+                    <input type="date" name="dataFim" value={formData.dataFim} onChange={handleInputChange}/>
+                    <small className="form-hint">Preencha só em eventos de vários dias.</small>
+                </div>
+            </div>
+
+            <div className="responsive-row">
                 <div className="form-group" style={{ flex: 1 }}>
                     <label>Carga Horária (Horas)</label>
                     <input type="number" name="cargaHoraria" step="any" required min="0" max="1000" placeholder="Ex: 1.5 para 1h30m" value={formData.cargaHoraria} onChange={handleInputChange}/>

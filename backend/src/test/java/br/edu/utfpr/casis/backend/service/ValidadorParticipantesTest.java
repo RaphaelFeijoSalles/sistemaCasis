@@ -287,28 +287,56 @@ class ValidadorParticipantesTest {
 
     @Test
     void deveAceitarEventoValido() {
-        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1.5));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, null, 1.5));
     }
 
     @Test
     void deveRecusarNomeDoEventoNuloOuVazio() {
         for (String nome : new String[]{null, "", "   "}) {
             assertMensagem("O nome do evento é obrigatório.",
-                    () -> ValidadorParticipantes.validarEvento(nome, DATA, 2.0));
+                    () -> ValidadorParticipantes.validarEvento(nome, DATA, null, 2.0));
         }
     }
 
     @Test
     void deveRecusarDataDeRealizacaoAusente() {
         assertMensagem("A data de realização é obrigatória.",
-                () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", null, 2.0));
+                () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", null, null, 2.0));
+    }
+
+    // ---------- Data de fim (F3: CA6, CA7) ----------
+
+    @Test
+    void deveAceitarDataDeFimAusenteIgualOuDentroDoLimite() {
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, null, 2.0));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, DATA, 2.0));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, DATA.plusDays(4), 2.0));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, DATA.plusDays(366), 2.0));
+    }
+
+    @Test
+    void deveRecusarDataDeFimAnteriorAoInicio() {
+        assertMensagem("A data de fim não pode ser anterior à data de início.",
+                () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, DATA.minusDays(1), 2.0));
+    }
+
+    @Test
+    void deveRecusarEventoComMaisDe366Dias() {
+        assertMensagem("A data de fim deve ser de no máximo 366 dias depois da data de início.",
+                () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, DATA.plusDays(367), 2.0));
+    }
+
+    @Test
+    void dataDeInicioAusenteTemPrioridadeSobreODataDeFim() {
+        assertMensagem("A data de realização é obrigatória.",
+                () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", null, DATA, 2.0));
     }
 
     @Test
     void deveRecusarCargaHorariaNulaZeroNegativaOuNaoNumerica() {
         for (Double carga : new Double[]{null, 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
             assertMensagem("A carga horária deve ser um número maior que zero.",
-                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, carga));
+                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, null, carga));
         }
     }
 
@@ -316,7 +344,7 @@ class ValidadorParticipantesTest {
     void deveRecusarCargaHorariaQueArredondaParaZeroMinutos() {
         for (Double carga : new Double[]{0.001, 0.008}) {
             assertMensagem("A carga horária deve ser um número maior que zero.",
-                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, carga));
+                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, null, carga));
         }
     }
 
@@ -324,16 +352,16 @@ class ValidadorParticipantesTest {
     void deveRecusarCargaHorariaAcimaDeMilHoras() {
         for (Double carga : new Double[]{1000.01, 1000.004, 99999999999.0}) {
             assertMensagem("A carga horária deve ser de no máximo 1.000 horas.",
-                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, carga));
+                    () -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, null, carga));
         }
     }
 
     @Test
     void deveAceitarCargaHorariaNosLimites() {
-        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1.0 / 60));
-        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 1000.0));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, null, 1.0 / 60));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, null, 1000.0));
         // O mínimo é medido depois do arredondamento ao minuto (0,0084 h = 0,504 min -> 1 minuto); o máximo, antes.
-        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, 0.0084));
+        assertDoesNotThrow(() -> ValidadorParticipantes.validarEvento("Semana Acadêmica", DATA, null, 0.0084));
     }
 
     @Test

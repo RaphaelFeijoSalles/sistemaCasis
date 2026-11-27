@@ -20,6 +20,34 @@ const validarCargaHoraria = (valor) => {
   return Number.isFinite(numero) && numero <= 1000 && Math.round(numero * 60) >= 1;
 };
 
+// Mesma regra do backend (F3): fim opcional, nunca antes do início e no máximo 366 dias depois dele
+const MAXIMO_DIAS_EVENTO = 366;
+const diasEntre = (inicio, fim) => {
+  const [ai, mi, di] = inicio.split('-').map(Number);
+  const [af, mf, df] = fim.split('-').map(Number);
+  return Math.round((Date.UTC(af, mf - 1, df) - Date.UTC(ai, mi - 1, di)) / 86400000);
+};
+
+const validarPeriodo = (dataInicio, dataFim) => {
+  if (campoVazio(dataFim)) return null;
+
+  if (dataFim < dataInicio) {
+    return {
+      titulo: 'Data de fim anterior ao início',
+      detalhe: 'A data de fim não pode ser anterior à data de início. Para evento de um dia, deixe a data de fim em branco.'
+    };
+  }
+
+  if (diasEntre(dataInicio, dataFim) > MAXIMO_DIAS_EVENTO) {
+    return {
+      titulo: 'Evento longo demais',
+      detalhe: `A data de fim deve ser de no máximo ${MAXIMO_DIAS_EVENTO} dias depois da data de início. Confira o ano digitado na data de fim.`
+    };
+  }
+
+  return null;
+};
+
 const validarCsv = (arquivo) => {
   if (!arquivo) {
     return {
@@ -69,10 +97,13 @@ const validarFormulario = ({ formData, arquivoCsv, apiKey, emissaoTipo }) => {
 
   if (campoVazio(formData.dataRealizacao)) {
     return {
-      titulo: 'Data de realização obrigatória',
-      detalhe: 'Selecione a data do evento para que o certificado seja emitido com a data correta.'
+      titulo: 'Data de início obrigatória',
+      detalhe: 'Selecione a data de início do evento (para evento de um dia, a própria data) para que o certificado saia com a data correta.'
     };
   }
+
+  const erroPeriodo = validarPeriodo(formData.dataRealizacao, formData.dataFim);
+  if (erroPeriodo) return erroPeriodo;
 
   if (!validarCargaHoraria(formData.cargaHoraria)) {
     return {
@@ -210,6 +241,10 @@ const montarPayloadLote = (formData, arquivoCsv) => {
   const payload = new FormData();
   payload.append('nomeEvento', formData.nomeEvento.trim());
   payload.append('dataRealizacao', formData.dataRealizacao);
+  // Fim vazio = evento de um dia: o campo não vai, como no frontend anterior à F3
+  if (!campoVazio(formData.dataFim)) {
+    payload.append('dataFim', formData.dataFim);
+  }
   payload.append('cargaHoraria', String(formData.cargaHoraria).replace(',', '.'));
   payload.append('cursoPadrao', formData.cursoPadrao);
   payload.append('arquivoCsv', arquivoCsv);
@@ -226,7 +261,7 @@ function App() {
   const mainWrapperRef = useRef(null);
   const casisContainerRef = useRef(null);
   const [formData, setFormData] = useState({
-    nomeEvento: '', dataRealizacao: '', cargaHoraria: '',
+    nomeEvento: '', dataRealizacao: '', dataFim: '', cargaHoraria: '',
     nomeParticipante: '', emailParticipante: '', raParticipante: '',
     cursoPadrao: CURSO_PADRAO, cursoParticipante: CURSO_PADRAO
   });
@@ -354,6 +389,10 @@ function App() {
         emailParticipante: formData.emailParticipante.trim(),
         raParticipante: formData.raParticipante.trim()
       };
+      // Fim vazio = evento de um dia: o campo não vai, como no frontend anterior à F3
+      if (campoVazio(payload.dataFim)) {
+        delete payload.dataFim;
+      }
 
       const response = await axios.post(`${API_BASE_URL}/api/certificados/emitir-unitario`, payload, {
         headers: { 'X-API-KEY': apiKey.trim() },
@@ -384,7 +423,7 @@ function App() {
     setEtapa('formulario');
     setArquivoCsv(null);
     setFormData({
-      nomeEvento: '', dataRealizacao: '', cargaHoraria: '',
+      nomeEvento: '', dataRealizacao: '', dataFim: '', cargaHoraria: '',
       nomeParticipante: '', emailParticipante: '', raParticipante: '',
       cursoPadrao: CURSO_PADRAO, cursoParticipante: CURSO_PADRAO
     });

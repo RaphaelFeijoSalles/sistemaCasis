@@ -7,28 +7,35 @@
 - **Anti-duplicação depende do nome do arquivo:** `"Certificado_" + nome.trim().replaceAll("\\s+", "_") + ".pdf"`, montado em **dois lugares** de `EmissaoService` (lote e unitário). Mudar esse formato faz o sistema reemitir certificados já enviados.
 - **O anexo do e-mail usa outra fórmula** (`EmailService`: sem `trim()`). Hoje não afeta a anti-duplicação, mas não confie que as duas sejam iguais.
 - **Pastas do Drive:** `Raiz/AAAA-S/NomeEvento`, buscadas por nome exato. Semestre 1 = meses 1 a 6. Renomear a pasta no Drive ou mudar a regra cria pastas duplicadas.
+- **Evento longo (F3):** a pasta segue a **data de início** (`dataRealizacao`), nunca a `dataFim`. Um evento de 28/06 a 03/07 fica em `AAAA-1`. Testes em `EmissaoServiceTest` protegem a regra.
+- **Período errado não se corrige reemitindo (F3):** a anti-duplicação só olha o nome do arquivo. Reemitir com a `dataFim` corrigida devolve EXISTENTE para todos e os PDFs já enviados ficam com o período errado. Com a **data de início** errada é pior: o evento cai em outra pasta (se o semestre mudar) e a reemissão envia e-mail de novo para todos. Correção manual: apagar os PDFs da pasta do evento no Drive (e as linhas no Sheets) antes de reemitir. O guia lateral avisa a diretoria.
 - **Falhas silenciosas:** `fazerUploadCertificado` e `registrarEmissao` engolem exceções. O participante pode receber o e-mail sem backup no Drive. Nesse caso, a próxima emissão envia o e-mail de novo.
 - **`listarArquivosNaPasta` retorna um conjunto vazio em caso de erro** e não pagina (a API do Drive devolve até 100 por página por padrão). Em pastas grandes ou com erro, a anti-duplicação falha.
 
 ## Contrato frontend ↔ backend
-- O lote usa `@ModelAttribute` com um record: os nomes dos campos do `FormData` (`nomeEvento`, `dataRealizacao`, `cargaHoraria`, `cursoPadrao`, `arquivoCsv`) têm de ser iguais aos componentes de `EmissaoLoteEventoRequestDTO`.
+- O lote usa `@ModelAttribute` com um record: os nomes dos campos do `FormData` (`nomeEvento`, `dataRealizacao`, `dataFim`, `cargaHoraria`, `cursoPadrao`, `arquivoCsv`) têm de ser iguais aos componentes de `EmissaoLoteEventoRequestDTO`.
 - A data trafega como `yyyy-MM-dd` (input date) e vira `LocalDate`.
 - A carga horária é `Double` em horas decimais. O frontend troca `,` por `.` antes de enviar.
 - Desde a F2, o limite da carga horária (formulário e coluna `Horas`) fica em `InterpretadorHoras.dentroDosLimites`: pelo menos 1 minuto depois do arredondamento e no máximo 1.000 h. O `validarCargaHoraria` do `App.jsx` repete a regra; mude os dois juntos. O `<input>` da carga usa `step="any" min="0" max="1000"` de propósito: um `min`/`step` nativo mais restritivo bloqueia o envio antes do `validarCargaHoraria` (o `<form>` não tem `noValidate`).
 - **Deploy da F2:** backend (Render) antes do frontend (Vercel). Frontend novo com backend antigo mostra "—" na coluna Horas da prévia.
 - **Cursos duplicados (F4):** a lista de cursos está em `certificado.cursos.*` (`application.properties`) **e** em `frontend/src/cursos.js`. Ao acrescentar ou remover um curso, mude os dois. `cursoPadrao`/`cursoParticipante` ausentes valem `SI` (compatibilidade com o frontend antigo); um código desconhecido dá 400.
+- **Período do evento (F3):** `dataRealizacao` continua sendo o nome do campo e passou a significar a data de **início**; `dataFim` é opcional e só vai no FormData/JSON quando preenchido. O limite (fim ≥ início, até 366 dias) está em `ValidadorParticipantes.validarEvento` **e** em `validarPeriodo` (`App.jsx`); mude os dois juntos. O campo de fim não tem `min` nativo de propósito (mesma razão da carga horária).
+- **Deploy da F3:** backend (Render) antes do frontend (Vercel). Frontend novo com backend antigo: o `dataFim` é ignorado sem erro e o certificado sai só com a data de início.
+- **Sheets com `data_fim` (F3):** a linha agora tem 7 colunas (`... | carga_horaria | data_fim`). O cabeçalho `data_fim` **não** é criado pelo sistema: acrescente-o à mão na planilha oficial antes do deploy (na de teste já foi feito).
 - O endpoint unitário retorna **um objeto**; o frontend o embrulha em array para reaproveitar `RelatorioEmissao`.
 - O frontend diz "ordem esperada: Nome, RA, E-mail", mas o backend mapeia **por nome de cabeçalho**, não por posição.
 - A senha da API fica em `localStorage` (`casis_api_key`) e vai no header `X-API-KEY`.
 
 ## Ambiente e testes
-- `BackendApplicationTests.contextLoads` precisa das propriedades `GOOGLE_*`. Sem `secrets.properties`, o teste falha (o CI só gera Javadoc, não roda testes). Rodar manualmente, só com credenciais de teste: `cd backend && ./mvnw test -Dtest=BackendApplicationTests` (PowerShell: `.\mvnw.cmd test "-Dtest=BackendApplicationTests"`). Passou na F2 (2026-11-20). O Claude não roda esse teste.
+- `BackendApplicationTests.contextLoads` precisa das propriedades `GOOGLE_*`. Sem `secrets.properties`, o teste falha (o CI só gera Javadoc, não roda testes). Rodar manualmente, só com credenciais de teste: `cd backend && ./mvnw test -Dtest=BackendApplicationTests` (PowerShell: `.\mvnw.cmd test "-Dtest=BackendApplicationTests"`). Passou na F2 (2026-11-20) e na F3 (2026-11-27). O Claude não roda esse teste.
+- **Java 8 no PATH (máquina do desenvolvedor):** sem `JAVA_HOME`, o Maven pega `C:\Program Files (x86)\Common Files\Oracle\Java\java8path` e falha com "No compiler is provided" (testes) ou "class file version 61.0 … up to 52.0" (`spring-boot:run`). Use o JDK 25 em `C:\Program Files\Eclipse Adoptium\jdk-25.0.5.8-hotspot` (`$env:JAVA_HOME = ...` e `%JAVA_HOME%\bin` no início do `Path`). Para o Claude rodar a suíte sem o `contextLoads`: `.\mvnw.cmd test "-Dtest=!BackendApplicationTests" "-Dsurefire.failIfNoSpecifiedTests=false"`.
 - Testes de controller: use `@WebMvcTest` (Boot 4: `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`) + `@MockitoBean EmissaoService` + `@ActiveProfiles("test")`. Sem esse perfil, o `dev` importa o `secrets.properties` (veja `CertificadoControllerTest`).
 - `GOOGLE_SHEETS_PLANILHA_ID` deve ser **só o ID**, sem `/edit?gid=...`.
 - `GOOGLE_SHEETS_NOME_ABA` tem padrão `Página1`.
 - O CORS está fixo no controller: `https://sistema-casis.vercel.app/` e `http://localhost:5173`.
 - **Acentos em `.properties`:** o Spring lê `application.properties` como ISO-8859-1. Textos com acento (nome da gestão, cursos) usam escapes `\uXXXX`; acento digitado direto vira lixo no certificado. `GestaoPropertiesTest` protege os padrões.
 - **Gestão configurável (F4):** nome, sigla, cidade, fundo e cursos ficam em `certificado.*` (`GestaoProperties`), sobrescrevíveis por variável de ambiente (ex.: `CERTIFICADO_SIGLA`). Códigos de curso são convertidos para maiúsculas. A imagem de fundo é **sempre** embutida como `data:image/png`: um JPG configurado em `imagem-fundo` sai quebrado.
+- **Escape `\uFEFF` em Java:** as ferramentas de edição do Claude (Edit, `sed`, heredoc) convertem `\uFEFF` no caractere BOM literal (invisível) ou comem a barra. Monte o texto com `chr(92) + "uFEFF"` num script Python e confira que o arquivo não tem os bytes `EF BB BF` (`od -c` mostra `357 273 277`). Há teste cobrindo em `InterpretadorCursoTest`.
 - Backend em `server.port=8081` no perfil dev; o Dockerfile expõe 8080.
 
 ## Git e GitHub

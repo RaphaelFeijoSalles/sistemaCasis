@@ -25,3 +25,9 @@
 - **Contexto:** o CLAUDE.md pede branches `feature/*` saindo de `v2.0`, mas essa branch nunca foi criada e a F1 saiu de `main`.
 - **Decisão:** cada feature sai de `main` do fork depois do merge da anterior (a F2 sai de `main` após o merge da F1).
 - **Motivo:** decisão do desenvolvedor; uma única linha de integração basta para um projeto com um desenvolvedor.
+
+## D-06 — Dados da gestão em configuração, frontend com textos fixos (2026-11-26)
+- **Contexto:** o CASIS virou DACOMP e passou a atender SI e CDIA; nome, cidade e curso estavam fixos no template e no e-mail (F4).
+- **Decisão:** nome, sigla, cidade, fundo e cursos em `certificado.*` (`GestaoProperties`), sobrescrevíveis por variável de ambiente. O frontend mantém textos DACOMP fixos e a lista de cursos duplicada em `frontend/src/cursos.js` (sem endpoint de configuração).
+- **Motivo:** troca de gestão sem mexer em Java/HTML no backend; um endpoint de configuração para o frontend não se pagava com dois cursos.
+- **Revisitar se:** os cursos mudarem com frequência ou houver mais de uma gestão usando o sistema.

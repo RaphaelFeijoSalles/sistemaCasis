@@ -40,6 +40,8 @@ public class GoogleSheetsService {
     @Value("${GOOGLE_SHEETS_NOME_ABA:Página1}")
     private String nomeAba;
 
+    private static final DateTimeFormatter DIA_MES_ANO = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     /**
      * Inicializa e retorna o serviço de comunicação com o Google Sheets utilizando
      * as credenciais OAuth 2.0 (Client ID, Client Secret e Refresh Token).
@@ -65,23 +67,41 @@ public class GoogleSheetsService {
     }
 
     /**
+     * Valor da coluna {@code data_fim} (F3): vazio para evento de um dia (fim ausente ou igual ao início),
+     * como no certificado; senão, a data de fim em {@code dd/MM/yyyy}.
+     *
+     * @param dataEvento data de início do evento.
+     * @param dataFim data de fim do evento, ou {@code null}.
+     * @return a data de fim formatada, ou {@code ""} para evento de um dia.
+     */
+    static String formatarDataFim(LocalDate dataEvento, LocalDate dataFim) {
+        if (dataFim == null || dataFim.equals(dataEvento)) {
+            return "";
+        }
+        return dataFim.format(DIA_MES_ANO);
+    }
+
+    /**
      * Adiciona uma nova linha à planilha do Google Sheets com os dados do certificado emitido.
      *
      * @param nome Nome do participante.
      * @param ra Registro Acadêmico do participante.
      * @param curso Curso do participante (ex: Sistemas de Informação).
-     * @param dataEvento Data de realização do evento.
+     * @param dataEvento Data de início do evento.
      * @param evento Nome do evento.
      * @param cargaHoraria Carga horária do evento.
+     * @param dataFim Data de fim do evento (F3); {@code null} ou igual ao início deixa a coluna {@code data_fim} vazia.
      */
-    public void registrarEmissao(String nome, String ra, String curso, LocalDate dataEvento, String evento, Double cargaHoraria) {
+    public void registrarEmissao(String nome, String ra, String curso, LocalDate dataEvento, String evento, Double cargaHoraria,
+                                 LocalDate dataFim) {
         log.debug("Iniciando registro na planilha para o aluno: {}", nome);
         
         try {
             Sheets sheetsService = obterServico();
             
             // Formatar a data para o padrão brasileiro
-            String dataFormatada = dataEvento != null ? dataEvento.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+            String dataFormatada = dataEvento != null ? dataEvento.format(DIA_MES_ANO) : "";
+            String dataFimFormatada = formatarDataFim(dataEvento, dataFim);
             
             // Tratar valores nulos (Fallback para curso padrão caso venha nulo)
             String raFinal = (ra != null && !ra.isEmpty()) ? ra : "N/A";
@@ -89,14 +109,15 @@ public class GoogleSheetsService {
 
             String cargaHorariaFormatada = CargaHorariaFormatter.formatarDuracaoPlanilha(cargaHoraria);
 
-            // Mapeia as colunas nesta exata ordem: nome | ra | curso | data_evento | evento | carga_horaria
+            // Mapeia as colunas nesta exata ordem: nome | ra | curso | data_evento | evento | carga_horaria | data_fim (F3)
             List<Object> rowData = Arrays.asList(
                     nome,
                     raFinal,
                     cursoFinal,
                     dataFormatada,
                     evento,
-                    cargaHorariaFormatada
+                    cargaHorariaFormatada,
+                    dataFimFormatada
             );
 
             ValueRange body = new ValueRange().setValues(Collections.singletonList(rowData));
