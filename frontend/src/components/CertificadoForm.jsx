@@ -153,7 +153,7 @@ export default function CertificadoForm({
                         <div className="dropzone-empty">
                             <UploadCloud size={32} />
                             <p>Clique ou arraste a planilha CSV aqui</p>
-                            <small>Colunas lidas pelo cabeçalho: Nome e E-mail (obrigatórias), RA, Horas e Curso (opcionais), em qualquer ordem.</small>
+                            <small>Colunas lidas pelo cabeçalho: Nome, E-mail e RA (obrigatórias), Horas e Curso (opcionais), em qualquer ordem. Use EXTERNO no RA de quem não tem RA.</small>
                         </div>
                     )}
                 </div>

@@ -178,7 +178,7 @@ const montarMensagemErro = (error, emissaoTipo, isPrevia = false) => {
       return {
         titulo: 'Dados recusados pelo servidor',
         detalhe: detalheServidor || (emissaoTipo === 'lote'
-          ? 'Confira se a primeira linha do CSV é o cabeçalho e tem as colunas Nome e E-mail (RA é opcional; a ordem não importa).'
+          ? 'Confira se a primeira linha do CSV é o cabeçalho e tem as colunas Nome, E-mail e RA (a ordem não importa).'
           : 'Confira nome, RA, e-mail, data e carga horária do participante.')
       };
     }
