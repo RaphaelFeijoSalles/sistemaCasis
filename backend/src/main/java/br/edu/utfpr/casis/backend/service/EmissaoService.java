@@ -124,7 +124,7 @@ public class EmissaoService {
             AlunoCertificado aluno = AlunoCertificadoEvento.builder()
                     .nome(linha.nome())
                     .email(linha.email())
-                    .ra(linha.ra())
+                    .ra(RegistroAcademico.normalizar(linha.ra())) // F8: externo vira "EXTERNO"
                     .tipoParticipacao(TipoParticipacao.OUVINTE) // Valor padrão para emissões em lote de forms comuns
                     .build();
 
@@ -182,7 +182,7 @@ public class EmissaoService {
         AlunoCertificado aluno = br.edu.utfpr.casis.backend.model.AlunoCertificadoEvento.builder()
                 .nome(dto.nomeParticipante().trim())
                 .email(dto.emailParticipante().trim())
-                .ra(dto.raParticipante())
+                .ra(RegistroAcademico.normalizar(dto.raParticipante())) // F8: externo vira "EXTERNO"
                 .build();
 
         // 2. Cria um DTO de lote "falso" (sem arquivo) só para o PdfService aceitar os dados do evento
