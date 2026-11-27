@@ -500,6 +500,44 @@ class EmissaoServiceTest {
         verify(sheetsService).registrarEmissao("Ana Silva", "12345", SI_CURTO, DATA, EVENTO, 2.0, DATA.plusDays(4));
     }
 
+    // ---------- Pasta do Drive em evento que cruza semestres (F3: CA8) ----------
+    // Regra crítica: a pasta Raiz/AAAA-S/Evento é escolhida pela data de INÍCIO. Usar a data de fim
+    // criaria pastas duplicadas e quebraria a anti-duplicação de eventos já emitidos.
+
+    private static final LocalDate INICIO_1O_SEMESTRE = LocalDate.of(2026, 6, 28);
+    private static final LocalDate FIM_2O_SEMESTRE = LocalDate.of(2026, 7, 3);
+
+    @Test
+    void lotePassaADataDeInicioParaAPastaDoDrive() {
+        when(driveService.obterOuCriarPastaEvento(EVENTO, INICIO_1O_SEMESTRE)).thenReturn(PASTA);
+        when(driveService.listarArquivosNaPasta(PASTA)).thenReturn(Set.of());
+        when(pdfService.gerarCertificado(any(), any())).thenReturn(PDF);
+        MockMultipartFile arquivo = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
+                "Nome;E-mail\nAna Silva;ana@alunos.utfpr.edu.br\n".getBytes(StandardCharsets.UTF_8));
+
+        emissaoService.processarEmissao(new EmissaoLoteEventoRequestDTO(
+                EVENTO, INICIO_1O_SEMESTRE, FIM_2O_SEMESTRE, 2.0, null, arquivo));
+
+        verify(driveService).obterOuCriarPastaEvento(EVENTO, INICIO_1O_SEMESTRE);
+        verify(driveService, never()).obterOuCriarPastaEvento(anyString(), eq(FIM_2O_SEMESTRE));
+        verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
+    }
+
+    @Test
+    void unitarioPassaADataDeInicioParaAPastaDoDrive() {
+        when(driveService.obterOuCriarPastaEvento(EVENTO, INICIO_1O_SEMESTRE)).thenReturn(PASTA);
+        when(driveService.listarArquivosNaPasta(PASTA)).thenReturn(Set.of());
+        when(pdfService.gerarCertificado(any(), any())).thenReturn(PDF);
+
+        emissaoService.processarEmissaoIndividual(new EmissaoIndividualRequestDTO(
+                EVENTO, INICIO_1O_SEMESTRE, FIM_2O_SEMESTRE, 2.0,
+                "Ana Silva", "ana@alunos.utfpr.edu.br", "12345", null));
+
+        verify(driveService).obterOuCriarPastaEvento(EVENTO, INICIO_1O_SEMESTRE);
+        verify(driveService, never()).obterOuCriarPastaEvento(anyString(), eq(FIM_2O_SEMESTRE));
+        verify(driveService).fazerUploadCertificado(PDF, "Certificado_Ana_Silva.pdf", PASTA);
+    }
+
     private EmissaoLoteEventoRequestDTO loteComFim(LocalDate dataFim) {
         MockMultipartFile arquivo = new MockMultipartFile("arquivoCsv", "participantes.csv", "text/csv",
                 "Nome;E-mail\nAna Silva;ana@alunos.utfpr.edu.br\n".getBytes(StandardCharsets.UTF_8));
