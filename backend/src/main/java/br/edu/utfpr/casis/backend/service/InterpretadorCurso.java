@@ -62,7 +62,7 @@ public class InterpretadorCurso {
 
     /** Minúsculas, sem acentos, sem espaços nas bordas e com espaços internos reduzidos a um. */
     private static String normalizar(String texto) {
-        String semAcento = Normalizer.normalize(texto.replace("﻿", ""), Normalizer.Form.NFD)
+        String semAcento = Normalizer.normalize(texto.replace("\uFEFF", ""), Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "");
         return semAcento.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }

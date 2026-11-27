@@ -57,6 +57,11 @@ class InterpretadorCursoTest {
     }
 
     @Test
+    void ignoraBomNoInicioDoValor() {
+        assertEquals(Optional.of("SI"), interpretador.interpretar("\uFEFFSI"));
+    }
+
+    @Test
     void devolveOCursoPeloCodigo() {
         assertEquals(Optional.of(SI), interpretador.curso("SI"));
         assertEquals(Optional.of(CDIA), interpretador.curso("cdia"));
