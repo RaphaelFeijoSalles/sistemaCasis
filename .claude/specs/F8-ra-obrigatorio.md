@@ -69,7 +69,7 @@ Hoje o RA vazio é só um AVISO no lote (regra da F1), e no unitário só o fron
 - [x] P2 (aprovada em 2026-11-27): Textos propostos: cabeçalho "Cabeçalho inválido. Não foi possível identificar as colunas 'Nome', 'E-mail' e 'RA'."; unitário "O RA do participante é obrigatório. Para participante externo, use EXTERNO."; erros/avisos como nos CA2–CA4. Pode ser assim?
 
 ## 9. Plano de implementação
-- [ ] P1 — `RegistroAcademico` (novo, puro): `EXTERNO`, `ehExterno(String)` (trim, sem caixa) e `normalizar(String)` (trim; externo vira `EXTERNO`) · arquivos: `service/RegistroAcademico.java` · teste: `RegistroAcademicoTest` · commit: `feat(ra): utilitário de RA e marcador EXTERNO` · agente: dev-backend
+- [x] P1 — `RegistroAcademico` (novo, puro): `EXTERNO`, `ehExterno(String)` (trim, sem caixa) e `normalizar(String)` (trim; externo vira `EXTERNO`) · arquivos: `service/RegistroAcademico.java` · teste: `RegistroAcademicoTest` · commit: `feat(ra): utilitário de RA e marcador EXTERNO` · agente: dev-backend
 - [ ] P2 — `CsvService.lerLinhas` exige a coluna RA, com a mensagem da P2 (`extrairAlunos`, sem uso, fica igual); migrar para `Nome;RA;E-mail` os fixtures sem RA (`CsvServiceTest`, `EmissaoServiceTest`, `CertificadoControllerTest`) · teste: `CsvServiceTest` (cabeçalho sem RA → `DadosInvalidosException`) · CA1 · commit: `feat(csv): coluna RA obrigatória no lote` · agente: dev-backend
 - [ ] P3 — `ValidadorParticipantes.validarLinhas`: RA vazio = ERRO; externo = AVISO "Participante externo"; externo com Curso = ERRO "Participante externo não tem curso"; externo sem curso resolvido (`curso`/`cursoTexto` nulos) · teste: `ValidadorParticipantesTest` · CA2–CA4 · commit: `feat(validacao): RA vazio vira erro e externo vira aviso` · agente: dev-backend
 - [ ] P4 — Unitário: `validarParticipante` exige RA (mensagem da P2); externo com `cursoParticipante` → 400; externo não passa por `resolverCurso` · arquivos: `ValidadorParticipantes`, `EmissaoService` (só a validação do unitário) · teste: `ValidadorParticipantesTest`, `EmissaoServiceTest` (nenhum mock Google chamado no 400) · CA8, P1 · commit: `feat(unitario): RA obrigatório no backend` · agente: dev-backend
@@ -81,3 +81,4 @@ Hoje o RA vazio é só um AVISO no lote (regra da F1), e no unitário só o fron
 - [ ] P10 — Memória: `armadilhas.md` (convenção `EXTERNO`; CSV sem RA recusado; `extrairAlunos`/Strategy sem a regra para a F5; deploy Render antes da Vercel e aviso à diretoria) · teste: suíte completa sem `contextLoads` · commit: `docs(memoria): armadilhas da F8`
 
 ## 10. Registro de execução
+- 2026-11-27 · P1 · `RegistroAcademico` (`EXTERNO`, `ehExterno`, `normalizar`) + `RegistroAcademicoTest` (14 casos); suíte sem `contextLoads`: 214 testes verdes.
