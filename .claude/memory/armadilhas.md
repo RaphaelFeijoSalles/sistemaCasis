@@ -29,6 +29,7 @@
 - O CORS está fixo no controller: `https://sistema-casis.vercel.app/` e `http://localhost:5173`.
 - **Acentos em `.properties`:** o Spring lê `application.properties` como ISO-8859-1. Textos com acento (nome da gestão, cursos) usam escapes `\uXXXX`; acento digitado direto vira lixo no certificado. `GestaoPropertiesTest` protege os padrões.
 - **Gestão configurável (F4):** nome, sigla, cidade, fundo e cursos ficam em `certificado.*` (`GestaoProperties`), sobrescrevíveis por variável de ambiente (ex.: `CERTIFICADO_SIGLA`). Códigos de curso são convertidos para maiúsculas. A imagem de fundo é **sempre** embutida como `data:image/png`: um JPG configurado em `imagem-fundo` sai quebrado.
+- **Escape `\uFEFF` em Java:** as ferramentas de edição do Claude (Edit, `sed`, heredoc) convertem `\uFEFF` no caractere BOM literal (invisível) ou comem a barra. Monte o texto com `chr(92) + "uFEFF"` num script Python e confira que o arquivo não tem os bytes `EF BB BF` (`od -c` mostra `357 273 277`). Há teste cobrindo em `InterpretadorCursoTest`.
 - Backend em `server.port=8081` no perfil dev; o Dockerfile expõe 8080.
 
 ## Git e GitHub
